@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>net10.0</TargetFramework>
+    <TargetFramework>$(AppTargetFramework)</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <AssemblyName>simple-bike-trainer-cli</AssemblyName>
@@ -17,17 +17,22 @@
 
   <ItemGroup>
     <PackageReference Include="Spectre.Console" Version="0.57.2" />
+    <PackageReference Include="Spectre.Console.Cli" Version="0.57.2" />
   </ItemGroup>
 
   <!--
     Trimmed and native AOT builds. Tmds.DBus, which Linux.Bluetooth and KeepAwake use, makes its D-Bus proxies with
     Reflection.Emit: trimming them silently breaks the Bluetooth scan, and native AOT cannot run them at all. Rooting the
     three assemblies keeps a trimmed Linux build working; their remaining trim and AOT warnings stay warnings.
+    Spectre.Console.Cli reads each command's settings type, and the settings' options, by reflection: trimmed, it
+    cannot start. Rooting it and this assembly, which holds the commands, keeps them.
   -->
   <ItemGroup>
     <TrimmerRootAssembly Include="Tmds.DBus" />
     <TrimmerRootAssembly Include="Linux.Bluetooth" />
     <TrimmerRootAssembly Include="SimpleBikeTrainer.Core" />
+    <TrimmerRootAssembly Include="Spectre.Console.Cli" />
+    <TrimmerRootAssembly Include="$(AssemblyName)" />
   </ItemGroup>
 
   <PropertyGroup>

@@ -55,7 +55,9 @@ public static class Dashboard
         var powerColor = s.TargetWatts is > 0 and var t && s.ErgActive
             ? Deviation(s.Power3s, t, Math.Max(10, t * 0.05), Math.Max(25, t * 0.12))
             : "white";
-        var targetText = s.TargetWatts is { } target
+        // In simulation the trainer sets the resistance from the road, so there is no target power.
+        var targetText = s.Simulating ? CliStrings.Dash_Sim
+            : s.TargetWatts is { } target
             ? $"{target} W [grey]{(s.ErgActive ? CliStrings.Dash_Erg + (s.ErgOffset != 0 ? $" {s.ErgOffset:+0;-0}" : string.Empty) : CliStrings.Dash_Gears)}[/]"
             : "-";
 
@@ -68,13 +70,13 @@ public static class Dashboard
         }
 
         var table = new Table { Border = TableBorder.Rounded, Expand = true };
-        foreach (var column in new[] { CliStrings.Dash_ColPower, CliStrings.Dash_ColTarget, CliStrings.Dash_ColCadence, CliStrings.Dash_ColHr, CliStrings.Dash_ColSpeed, s.ErgActive ? CliStrings.Dash_ColMode : CliStrings.Dash_ColGear })
+        foreach (var column in new[] { CliStrings.Dash_ColPower, CliStrings.Dash_ColTarget, CliStrings.Dash_ColCadence, CliStrings.Dash_ColHr, CliStrings.Dash_ColSpeed, s.ErgActive || !s.VirtualGears ? CliStrings.Dash_ColMode : CliStrings.Dash_ColGear })
         {
             table.AddColumn(new TableColumn($"[grey]{column}[/]").Centered());
         }
 
-        var gear = s.ErgActive
-            ? CliStrings.Dash_Erg
+        var gear = s.ErgActive ? CliStrings.Dash_Erg
+            : !s.VirtualGears ? $"{CliStrings.Dash_Sim} [grey]{s.Grade:+0.0;-0.0;0.0}%[/]"
             : $"{s.Gear}/{s.GearCount} [grey]{s.Grade:+0.0;-0.0;0.0}%[/]";
         table.AddRow(
             new Markup($"[bold {powerColor}]{s.Power3s} W[/] [grey]({s.Power})[/]"),
@@ -101,7 +103,7 @@ public static class Dashboard
         }
         else
         {
-            lines.Add(new Markup($"[bold]{CliStrings.Dash_FreeRide}[/] [grey]{CliStrings.Dash_OnGears}[/]"));
+            lines.Add(new Markup($"[bold]{CliStrings.Dash_FreeRide}[/] [grey]{(s.VirtualGears ? CliStrings.Dash_OnGears : CliStrings.Dash_OnBikeGears)}[/]"));
         }
 
         if (workout.Steps.Count > 1)
