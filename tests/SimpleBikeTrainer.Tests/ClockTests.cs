@@ -19,7 +19,8 @@ public class ClockTests
         await timer.WaitForNextTickAsync(TestContext.Current.CancellationToken);
         await Task.Delay(TimeSpan.FromSeconds(1), clock, TestContext.Current.CancellationToken);
 
-        Assert.True(clock.GetElapsedTime(start) >= TimeSpan.FromSeconds(2));
+        // Timers are scheduled on the millisecond tick count, so each 10 ms wait can end slightly early.
+        Assert.True(clock.GetElapsedTime(start) >= TimeSpan.FromSeconds(1.8), $"elapsed {clock.GetElapsedTime(start)}");
         Assert.True(real.Elapsed < TimeSpan.FromSeconds(1), $"took {real.Elapsed}");
     }
 

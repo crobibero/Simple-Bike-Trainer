@@ -66,7 +66,6 @@ public sealed class DesktopTests(HeadlessSession headless) : IDisposable
 
     private async Task<bool> RideThroughEveryPageAsync()
     {
-        Directory.CreateDirectory(_shots);
         var config = AppConfig.Load(Path.Combine(_dir, "config.json"));
         config.RidesDirectory = Path.Combine(_dir, "rides");
         config.Rider.Ftp = 240;
@@ -825,5 +824,6 @@ public sealed class DesktopTests(HeadlessSession headless) : IDisposable
         Dispatcher.UIThread.RunJobs();
         AvaloniaHeadlessPlatform.ForceRenderTimerTick();
         var frame = window.CaptureRenderedFrame() ?? throw new InvalidOperationException("no frame rendered");
+        Directory.CreateDirectory(_shots);
         frame.Save(Path.Combine(_shots, name), Avalonia.Media.Imaging.PngBitmapEncoderOptions.Default);
     }}
