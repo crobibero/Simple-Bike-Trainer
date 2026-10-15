@@ -1,0 +1,299 @@
+﻿<UserControl x:Class="SimpleBikeTrainer.Desktop.Views.SettingsView"
+             xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:r="using:SimpleBikeTrainer.Desktop.Resources"
+             xmlns:shadui="clr-namespace:ShadUI;assembly=ShadUI"
+             xmlns:vm="using:SimpleBikeTrainer.Desktop.ViewModels"
+             x:DataType="vm:SettingsViewModel">
+    <DockPanel Margin="24">
+        <Grid Margin="0,0,0,16"
+              ColumnDefinitions="*,Auto"
+              DockPanel.Dock="Top">
+            <StackPanel Spacing="4">
+                <StackPanel Orientation="Horizontal"
+                            Spacing="12">
+                    <Path Width="34"
+                          Height="34"
+                          Classes="bike" />
+                    <TextBlock Classes="h1"
+                               Text="{x:Static r:Strings.Settings_Title}" />
+                </StackPanel>
+                <TextBlock Classes="muted"
+                           FontSize="12"
+                           Text="{Binding ConfigPath}" />
+            </StackPanel>
+            <StackPanel Grid.Column="1"
+                        VerticalAlignment="Center"
+                        Orientation="Horizontal"
+                        Spacing="10">
+                <Button Classes="Outline"
+                        Command="{Binding CancelCommand}"
+                        Content="{x:Static r:Strings.Common_Cancel}" />
+                <Button Classes="Primary"
+                        Command="{Binding SaveCommand}"
+                        Content="{x:Static r:Strings.Common_Save}" />
+            </StackPanel>
+        </Grid>
+        <TextBlock Margin="0,0,0,12"
+                   DockPanel.Dock="Top"
+                   Foreground="{DynamicResource BadBrush}"
+                   IsVisible="{Binding Error, Converter={x:Static ObjectConverters.IsNotNull}}"
+                   Text="{Binding Error}" />
+
+        <ScrollViewer HorizontalScrollBarVisibility="Disabled">
+            <Grid MaxWidth="1400"
+                  HorizontalAlignment="Stretch"
+                  ColumnDefinitions="*,24,*">
+
+                <!--  Left: where rides come from and go to.  -->
+                <StackPanel Spacing="16">
+                    <TextBlock Classes="section"
+                               Text="{x:Static r:Strings.Settings_Accounts}" />
+
+                    <Border Classes="card">
+                        <StackPanel Spacing="8">
+                            <TextBlock Classes="label"
+                                       Text="{x:Static r:Strings.Settings_Intervals}" />
+                            <TextBlock Classes="muted"
+                                       Text="{x:Static r:Strings.Settings_IntervalsNote}"
+                                       TextWrapping="Wrap" />
+                            <Grid ColumnDefinitions="2*,12,*">
+                                <StackPanel>
+                                    <TextBlock Classes="muted"
+                                               FontSize="12"
+                                               Text="{x:Static r:Strings.Settings_ApiKey}" />
+                                    <TextBox PasswordChar="•"
+                                             Text="{Binding ApiKey}" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="2">
+                                    <TextBlock Classes="muted"
+                                               FontSize="12"
+                                               Text="{x:Static r:Strings.Settings_AthleteId}" />
+                                    <TextBox Text="{Binding AthleteId}" />
+                                </StackPanel>
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Classes="card">
+                        <StackPanel Spacing="8">
+                            <TextBlock Classes="label"
+                                       Text="{x:Static r:Strings.Settings_Garmin}" />
+                            <TextBlock Classes="muted"
+                                       Text="{x:Static r:Strings.Settings_GarminNote}"
+                                       TextWrapping="Wrap" />
+                            <StackPanel IsVisible="{Binding GarminSignedOut}"
+                                        Spacing="8">
+                                <TextBox PlaceholderText="{x:Static r:Strings.Settings_GarminEmail}"
+                                         Text="{Binding GarminEmail}" />
+                                <TextBox PasswordChar="•"
+                                         PlaceholderText="{x:Static r:Strings.Settings_GarminPassword}"
+                                         Text="{Binding GarminPassword}" />
+                                <Button HorizontalAlignment="Left"
+                                        Classes="Outline"
+                                        Command="{Binding GarminSignInCommand}"
+                                        Content="{x:Static r:Strings.Settings_SignIn}"
+                                        IsEnabled="{Binding !GarminBusy}" />
+                            </StackPanel>
+                            <StackPanel IsVisible="{Binding GarminNeedsCode}"
+                                        Orientation="Horizontal"
+                                        Spacing="8">
+                                <TextBox Width="160"
+                                         PlaceholderText="{x:Static r:Strings.Settings_MfaCode}"
+                                         Text="{Binding GarminCode}" />
+                                <Button Classes="Outline"
+                                        Command="{Binding GarminSubmitCodeCommand}"
+                                        Content="{x:Static r:Strings.Settings_SubmitCode}"
+                                        IsEnabled="{Binding !GarminBusy}" />
+                            </StackPanel>
+                            <Button HorizontalAlignment="Left"
+                                    Classes="Outline"
+                                    Command="{Binding GarminSignOutCommand}"
+                                    Content="{x:Static r:Strings.Settings_SignOut}"
+                                    IsVisible="{Binding GarminSignedIn}" />
+                            <StackPanel Orientation="Horizontal"
+                                        Spacing="8">
+                                <shadui:Loading Width="20"
+                                                Height="20"
+                                                IsVisible="{Binding GarminBusy}" />
+                                <TextBlock Text="{Binding GarminStatus}"
+                                           TextWrapping="Wrap" />
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Classes="card">
+                        <StackPanel Spacing="8">
+                            <TextBlock Classes="label"
+                                       Text="{x:Static r:Strings.Settings_UploadTo}" />
+                            <CheckBox Content="{x:Static r:Strings.Service_Intervals}"
+                                      IsChecked="{Binding UploadIntervals}" />
+                            <CheckBox Content="{x:Static r:Strings.Service_Garmin}"
+                                      IsChecked="{Binding UploadGarmin}" />
+                            <CheckBox Content="{x:Static r:Strings.Settings_Automatic}"
+                                      IsChecked="{Binding Automatic}" />
+                            <TextBlock Classes="muted"
+                                       FontSize="12"
+                                       Text="{x:Static r:Strings.Settings_DuplicateNote}"
+                                       TextWrapping="Wrap" />
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+
+                <!--  Right: the rider, the app and the hardware.  -->
+                <StackPanel Grid.Column="2"
+                            Spacing="16">
+                    <TextBlock Classes="section"
+                               Text="{x:Static r:Strings.Settings_RiderAndApp}" />
+
+                    <Border Classes="card">
+                        <StackPanel Spacing="10">
+                            <TextBlock Classes="label"
+                                       Text="{x:Static r:Strings.Settings_Rider}" />
+                            <TextBlock Classes="muted"
+                                       Text="{x:Static r:Strings.Settings_RiderNote}"
+                                       TextWrapping="Wrap" />
+                            <StackPanel Orientation="Horizontal"
+                                        Spacing="16">
+                                <TextBlock Width="56"
+                                           VerticalAlignment="Center"
+                                           Classes="muted"
+                                           Text="{x:Static r:Strings.Settings_Units}" />
+                                <RadioButton Content="{x:Static r:Strings.Settings_Metric}"
+                                             GroupName="units"
+                                             IsChecked="{Binding !Imperial}" />
+                                <RadioButton Content="{x:Static r:Strings.Settings_Imperial}"
+                                             GroupName="units"
+                                             IsChecked="{Binding Imperial}" />
+                            </StackPanel>
+                            <Grid ColumnDefinitions="*,12,*"
+                                  RowDefinitions="Auto,10,Auto">
+                                <StackPanel>
+                                    <TextBlock Classes="muted"
+                                               FontSize="12"
+                                               Text="{x:Static r:Strings.Settings_Ftp}" />
+                                    <TextBox Text="{Binding Ftp}" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="2">
+                                    <TextBlock Classes="muted"
+                                               FontSize="12"
+                                               Text="{x:Static r:Strings.Settings_MaxHr}" />
+                                    <TextBox PlaceholderText="{x:Static r:Strings.Settings_Optional}"
+                                             Text="{Binding MaxHeartRate}" />
+                                </StackPanel>
+                                <StackPanel Grid.Row="2">
+                                    <TextBlock Classes="muted"
+                                               FontSize="12"
+                                               Text="{Binding WeightLabel}" />
+                                    <TextBox Text="{Binding Weight}" />
+                                </StackPanel>
+                                <StackPanel Grid.Row="2"
+                                            Grid.Column="2">
+                                    <TextBlock Classes="muted"
+                                               FontSize="12"
+                                               Text="{Binding BikeWeightLabel}" />
+                                    <TextBox Text="{Binding BikeWeight}" />
+                                </StackPanel>
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Classes="card">
+                        <StackPanel Spacing="10">
+                            <TextBlock Classes="label"
+                                       Text="{x:Static r:Strings.Settings_Appearance}" />
+                            <StackPanel Orientation="Horizontal"
+                                        Spacing="16">
+                                <TextBlock Width="56"
+                                           VerticalAlignment="Center"
+                                           Classes="muted"
+                                           Text="{x:Static r:Strings.Settings_Theme}" />
+                                <RadioButton Content="{x:Static r:Strings.Settings_ThemeSystem}"
+                                             GroupName="theme"
+                                             IsChecked="{Binding ThemeSystem}"
+                                             ToolTip.Tip="{x:Static r:Strings.Settings_ThemeSystemTip}" />
+                                <RadioButton Content="{x:Static r:Strings.Settings_ThemeLight}"
+                                             GroupName="theme"
+                                             IsChecked="{Binding ThemeLight}" />
+                                <RadioButton Content="{x:Static r:Strings.Settings_ThemeDark}"
+                                             GroupName="theme"
+                                             IsChecked="{Binding ThemeDark}" />
+                            </StackPanel>
+                            <CheckBox Content="{x:Static r:Strings.Settings_StartCountdown}"
+                                      IsChecked="{Binding StartCountdown}" />
+                            <CheckBox Content="{x:Static r:Strings.Settings_SoundCues}"
+                                      IsChecked="{Binding SoundCues}" />
+                        </StackPanel>
+                    </Border>
+
+                    <Border Classes="card">
+                        <StackPanel Spacing="8">
+                            <TextBlock Classes="label"
+                                       Text="{x:Static r:Strings.Common_Devices}" />
+                            <TextBlock IsVisible="{Binding !HasDevices}"
+                                       Text="{x:Static r:Strings.Settings_NoDevices}"
+                                       TextWrapping="Wrap" />
+                            <TextBlock Classes="muted"
+                                       FontSize="12"
+                                       IsVisible="{Binding HasDevices}"
+                                       Text="{x:Static r:Strings.Settings_DevicesHint}"
+                                       TextWrapping="Wrap" />
+
+                            <!--  Each saved device: its name to edit, and Forget, which asks once before it acts.  -->
+                            <ItemsControl ItemsSource="{Binding SavedDevices}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:DataType="vm:SavedDeviceSetting">
+                                        <Grid Margin="0,3"
+                                              ColumnDefinitions="90,*,Auto">
+                                            <TextBlock Margin="0,10,0,0"
+                                                       VerticalAlignment="Top"
+                                                       Classes="muted"
+                                                       Text="{Binding Kind}" />
+                                            <StackPanel Grid.Column="1"
+                                                        Spacing="2">
+                                                <TextBox PlaceholderText="{Binding AdvertisedName}"
+                                                         Text="{Binding Name}" />
+                                                <TextBlock Classes="muted"
+                                                           FontSize="12"
+                                                           Text="{Binding Address}" />
+                                            </StackPanel>
+                                            <StackPanel Grid.Column="2"
+                                                        Margin="8,0,0,0"
+                                                        VerticalAlignment="Top"
+                                                        Orientation="Horizontal"
+                                                        Spacing="8">
+                                                <Button Classes.Destructive="{Binding ConfirmForget}"
+                                                        Classes.Outline="{Binding !ConfirmForget}"
+                                                        Command="{Binding $parent[UserControl].((vm:SettingsViewModel)DataContext).ForgetDeviceCommand}"
+                                                        CommandParameter="{Binding}"
+                                                        Content="{Binding ForgetLabel}" />
+                                                <Button Classes="Outline"
+                                                        Command="{Binding $parent[UserControl].((vm:SettingsViewModel)DataContext).KeepDeviceCommand}"
+                                                        CommandParameter="{Binding}"
+                                                        Content="{x:Static r:Strings.Common_Cancel}"
+                                                        IsVisible="{Binding ConfirmForget}" />
+                                            </StackPanel>
+                                        </Grid>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+
+                            <StackPanel IsVisible="{Binding HasDevices}"
+                                        Orientation="Horizontal"
+                                        Spacing="8">
+                                <Button Classes.Destructive="{Binding ConfirmForgetAll}"
+                                        Classes.Outline="{Binding !ConfirmForgetAll}"
+                                        Command="{Binding ForgetDevicesCommand}"
+                                        Content="{Binding ForgetAllLabel}" />
+                                <Button Classes="Outline"
+                                        Command="{Binding KeepDevicesCommand}"
+                                        Content="{x:Static r:Strings.Common_Cancel}"
+                                        IsVisible="{Binding ConfirmForgetAll}" />
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </Grid>
+        </ScrollViewer>
+    </DockPanel>
+</UserControl>

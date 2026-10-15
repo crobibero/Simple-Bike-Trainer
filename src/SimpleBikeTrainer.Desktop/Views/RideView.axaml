@@ -1,0 +1,515 @@
+﻿<UserControl x:Class="SimpleBikeTrainer.Desktop.Views.RideView"
+             xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:c="using:SimpleBikeTrainer.Desktop.Controls"
+             xmlns:icons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+             xmlns:r="using:SimpleBikeTrainer.Desktop.Resources"
+             xmlns:s="using:SimpleBikeTrainer.Desktop.Services"
+             xmlns:v="using:SimpleBikeTrainer.Desktop.Views"
+             xmlns:vm="using:SimpleBikeTrainer.Desktop.ViewModels"
+             x:DataType="vm:RideViewModel">
+    <Panel>
+        <Grid Margin="20"
+              RowDefinitions="Auto,Auto,*,Auto,Auto">
+
+            <!--  Header  -->
+            <Grid Margin="0,0,0,14"
+                  ColumnDefinitions="Auto,*,Auto">
+                <StackPanel VerticalAlignment="Center"
+                            Orientation="Horizontal"
+                            Spacing="14">
+                    <Path Width="34"
+                          Height="34"
+                          Classes="bike" />
+                    <TextBlock Classes="h1"
+                               Text="{Binding Title}" />
+                    <Border VerticalAlignment="Center"
+                            Background="{Binding StateBrush}"
+                            Classes="pill">
+                        <TextBlock FontSize="12"
+                                   FontWeight="Bold"
+                                   Foreground="{DynamicResource OnStatusBrush}"
+                                   Text="{Binding State}" />
+                    </Border>
+                </StackPanel>
+                <StackPanel Grid.Column="2"
+                            VerticalAlignment="Center"
+                            Orientation="Horizontal"
+                            Spacing="24">
+                    <ItemsControl VerticalAlignment="Center"
+                                  ItemsSource="{Binding Devices.Rows}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel Orientation="Horizontal"
+                                            Spacing="14" />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="s:DeviceRow">
+                                <StackPanel Orientation="Horizontal"
+                                            Spacing="6"
+                                            ToolTip.Tip="{Binding Detail}">
+                                    <Ellipse Width="9"
+                                             Height="9"
+                                             Fill="{DynamicResource GoodBrush}"
+                                             IsVisible="{Binding Connected}" />
+                                    <Ellipse Width="9"
+                                             Height="9"
+                                             Fill="{DynamicResource BadBrush}"
+                                             IsVisible="{Binding !Connected}" />
+                                    <TextBlock Classes="muted"
+                                               FontSize="12"
+                                               Text="{Binding Name}" />
+                                </StackPanel>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                    <StackPanel ToolTip.Tip="{Binding AwakeStatus}">
+                        <TextBlock HorizontalAlignment="Right"
+                                   Classes="label"
+                                   Text="{x:Static r:Strings.Ride_Elapsed}" />
+                        <TextBlock HorizontalAlignment="Right"
+                                   Classes="medium"
+                                   Text="{Binding Elapsed}" />
+                    </StackPanel>
+                    <StackPanel>
+                        <TextBlock HorizontalAlignment="Right"
+                                   Classes="label"
+                                   Text="{x:Static r:Strings.Common_DistanceCaps}" />
+                        <TextBlock HorizontalAlignment="Right"
+                                   Classes="medium"
+                                   Text="{Binding Distance}" />
+                    </StackPanel>
+                    <Button VerticalAlignment="Center"
+                            Classes="help Ghost"
+                            Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ShowHelpCommand}"
+                            Content="{icons:MaterialIconExt Kind=HelpCircleOutline,
+                                                            IconSize=24}"
+                            ToolTip.Tip="{x:Static r:Strings.Common_HelpTip}" />
+                </StackPanel>
+            </Grid>
+
+            <!--  Live numbers  -->
+            <UniformGrid Grid.Row="1"
+                         Margin="-6,0,-6,12"
+                         Columns="7">
+                <UniformGrid.Styles>
+                    <!--  Big numbers shrink to fit narrow windows.  -->
+                    <Style Selector="Viewbox.fit">
+                        <Setter Property="StretchDirection" Value="DownOnly" />
+                        <Setter Property="HorizontalAlignment" Value="Left" />
+                    </Style>
+                    <Style Selector="TextBlock.muted">
+                        <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+                    </Style>
+                </UniformGrid.Styles>
+                <Border Margin="6"
+                        Classes="card">
+                    <StackPanel>
+                        <TextBlock Classes="label"
+                                   Text="{x:Static r:Strings.Ride_Power}" />
+                        <Viewbox Classes="fit">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Classes="big"
+                                           Foreground="{Binding PowerBrush}"
+                                           Text="{Binding Power}" />
+                                <TextBlock Classes="unit"
+                                           Text="{x:Static r:Strings.Unit_Watts}" />
+                            </StackPanel>
+                        </Viewbox>
+                        <TextBlock Classes="muted"
+                                   FontSize="13"
+                                   Text="{Binding PowerInstant}" />
+                    </StackPanel>
+                </Border>
+                <Border Margin="6"
+                        Classes="card">
+                    <StackPanel>
+                        <TextBlock Classes="label"
+                                   Text="{x:Static r:Strings.Ride_Target}" />
+                        <Viewbox Classes="fit">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Classes="big"
+                                           Text="{Binding Target}" />
+                                <TextBlock Classes="unit"
+                                           Text="{x:Static r:Strings.Unit_Watts}" />
+                            </StackPanel>
+                        </Viewbox>
+                        <TextBlock Classes="muted"
+                                   FontSize="13"
+                                   Text="{Binding TargetMode}" />
+                    </StackPanel>
+                </Border>
+                <Border Margin="6"
+                        Classes="card">
+                    <StackPanel>
+                        <TextBlock Classes="label"
+                                   Text="{x:Static r:Strings.Ride_Cadence}" />
+                        <Viewbox Classes="fit">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Classes="big"
+                                           Foreground="{Binding CadenceBrush}"
+                                           Text="{Binding Cadence}" />
+                                <TextBlock Classes="unit"
+                                           Text="{x:Static r:Strings.Unit_Rpm}" />
+                            </StackPanel>
+                        </Viewbox>
+                        <TextBlock Classes="muted"
+                                   FontSize="13"
+                                   Text="{Binding CadenceTarget}" />
+                    </StackPanel>
+                </Border>
+                <Border Margin="6"
+                        Classes="card">
+                    <StackPanel>
+                        <TextBlock Classes="label"
+                                   Text="{x:Static r:Strings.Ride_HeartRate}" />
+                        <Viewbox Classes="fit">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Classes="big"
+                                           Foreground="{Binding HeartRateBrush}"
+                                           Text="{Binding HeartRate}" />
+                                <TextBlock Classes="unit"
+                                           Text="{x:Static r:Strings.Unit_Bpm}" />
+                            </StackPanel>
+                        </Viewbox>
+                        <TextBlock Classes="muted"
+                                   FontSize="13"
+                                   Text="{Binding HeartRateZone}" />
+                    </StackPanel>
+                </Border>
+                <Border Margin="6"
+                        Classes="card">
+                    <StackPanel>
+                        <TextBlock Classes="label"
+                                   Text="{x:Static r:Strings.Ride_Speed}" />
+                        <Viewbox Classes="fit">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Classes="big"
+                                           Text="{Binding Speed}" />
+                                <TextBlock Classes="unit"
+                                           Text="{Binding SpeedUnit}" />
+                            </StackPanel>
+                        </Viewbox>
+                    </StackPanel>
+                </Border>
+                <Border Margin="6"
+                        Classes="card">
+                    <StackPanel>
+                        <TextBlock Classes="label"
+                                   Text="{x:Static r:Strings.Ride_Grade}" />
+                        <Viewbox Classes="fit">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Classes="big"
+                                           Foreground="{Binding GradeBrush}"
+                                           Text="{Binding Grade}" />
+                                <TextBlock Classes="unit"
+                                           Text="%" />
+                            </StackPanel>
+                        </Viewbox>
+                        <TextBlock Classes="muted"
+                                   FontSize="13"
+                                   Text="{Binding GradeDetail}" />
+                    </StackPanel>
+                </Border>
+                <Border Margin="6"
+                        Classes="card">
+                    <StackPanel>
+                        <TextBlock Classes="label"
+                                   Text="{Binding GearLabel}" />
+                        <TextBlock Classes="big"
+                                   Text="{Binding Gear}" />
+                        <TextBlock Classes="muted"
+                                   FontSize="13"
+                                   Text="{Binding GearDetail}" />
+                    </StackPanel>
+                </Border>
+            </UniformGrid>
+
+            <!--  Step and chart  -->
+            <Grid Grid.Row="2"
+                  Margin="0,0,0,12"
+                  ColumnDefinitions="340,*">
+                <Border Margin="0,0,12,0"
+                        Padding="20"
+                        Classes="card">
+                    <Grid RowDefinitions="Auto,Auto,Auto,*,Auto,Auto">
+                        <TextBlock Classes="label"
+                                   Text="{x:Static r:Strings.Ride_Step}" />
+                        <TextBlock Grid.Row="1"
+                                   Margin="0,6,0,0"
+                                   Classes="h1"
+                                   Text="{Binding StepLabel}"
+                                   TextWrapping="Wrap" />
+                        <TextBlock Grid.Row="2"
+                                   FontSize="16"
+                                   Foreground="{DynamicResource InfoBrush}"
+                                   Text="{Binding StepTarget}"
+                                   TextWrapping="Wrap" />
+                        <!--  The countdown shrinks when the window is short.  -->
+                        <Grid Grid.Row="3"
+                              Margin="0,4,0,12"
+                              RowDefinitions="*,Auto">
+                            <Viewbox HorizontalAlignment="Left"
+                                     VerticalAlignment="Bottom"
+                                     StretchDirection="DownOnly">
+                                <TextBlock FontFeatures="+tnum"
+                                           FontSize="76"
+                                           FontWeight="Bold"
+                                           Text="{Binding StepRemaining}" />
+                            </Viewbox>
+                            <c:Bar Grid.Row="1"
+                                   Height="10"
+                                   Value="{Binding StepProgress}" />
+                        </Grid>
+                        <TextBlock Grid.Row="4"
+                                   Margin="0,0,0,8"
+                                   Classes="muted"
+                                   Text="{Binding NextStep}"
+                                   TextWrapping="Wrap" />
+                        <TextBlock Grid.Row="5"
+                                   Classes="muted"
+                                   FontSize="13"
+                                   Text="{Binding WorkoutProgress}" />
+                    </Grid>
+                </Border>
+                <Border Grid.Column="1"
+                        Padding="12"
+                        Classes="card">
+                    <Grid>
+                        <DockPanel>
+                            <v:ChartLegend Margin="4,8,0,0"
+                                           DockPanel.Dock="Bottom"
+                                           IsRoute="{Binding IsRoute}" />
+                            <c:WorkoutChart Ftp="{Binding Ftp}"
+                                            Points="{Binding Points}"
+                                            Position="{Binding Position}"
+                                            Version="{Binding ChartVersion}"
+                                            Workout="{Binding Workout}" />
+                        </DockPanel>
+
+                        <!--  The step countdown: 5, 4, 3 (beep), 2 (beep), 1 (beep), then GO with the new step.  -->
+                        <Border Margin="0,16,0,0"
+                                Padding="22,10"
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Top"
+                                Background="{DynamicResource PrimaryColor}"
+                                BoxShadow="0 4 14 0 #55000000"
+                                CornerRadius="14"
+                                IsVisible="{Binding CueVisible}">
+                            <StackPanel Orientation="Horizontal"
+                                        Spacing="18">
+                                <TextBlock VerticalAlignment="Center"
+                                           FontFeatures="+tnum"
+                                           FontSize="46"
+                                           FontWeight="Bold"
+                                           Foreground="{DynamicResource PrimaryForegroundColor}"
+                                           Text="{Binding CueCount}" />
+                                <StackPanel VerticalAlignment="Center">
+                                    <TextBlock FontSize="20"
+                                               FontWeight="SemiBold"
+                                               Foreground="{DynamicResource PrimaryForegroundColor}"
+                                               Text="{Binding CueTitle}" />
+                                    <TextBlock FontSize="15"
+                                               Foreground="{DynamicResource PrimaryForegroundColor}"
+                                               Text="{Binding CueDetail}" />
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+                </Border>
+            </Grid>
+
+            <!--  Stats  -->
+            <Grid Grid.Row="3"
+                  Margin="0,0,0,12"
+                  ColumnDefinitions="*,*,*">
+                <Border Margin="0,0,12,0"
+                        Classes="card">
+                    <StackPanel Spacing="4">
+                        <TextBlock Classes="label"
+                                   Text="{x:Static r:Strings.Ride_Ride}" />
+                        <ItemsControl ItemsSource="{Binding RideStats}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate x:DataType="vm:StatRow">
+                                    <Grid Margin="0,2"
+                                          ColumnDefinitions="*,Auto">
+                                        <TextBlock Classes="muted"
+                                                   Text="{Binding Label}"
+                                                   ToolTip.Tip="{Binding Tip}" />
+                                        <TextBlock Grid.Column="1"
+                                                   Classes="stat"
+                                                   Text="{Binding Value}" />
+                                    </Grid>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                        <c:Bar Height="6"
+                               Margin="0,4,0,0"
+                               Fill="{DynamicResource WPrimeBrush}"
+                               IsVisible="{Binding ShowsWBalance}"
+                               ToolTip.Tip="{x:Static r:Strings.Ride_WPrimeTip}"
+                               Value="{Binding WBalanceFraction}" />
+                    </StackPanel>
+                </Border>
+                <Border Grid.Column="1"
+                        Margin="0,0,12,0"
+                        Classes="card">
+                    <StackPanel Spacing="4">
+                        <TextBlock Classes="label"
+                                   Text="{x:Static r:Strings.Ride_CurrentLap}" />
+                        <ItemsControl ItemsSource="{Binding LapStats}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate x:DataType="vm:StatRow">
+                                    <Grid Margin="0,2"
+                                          ColumnDefinitions="*,Auto">
+                                        <TextBlock Classes="muted"
+                                                   Text="{Binding Label}"
+                                                   ToolTip.Tip="{Binding Tip}" />
+                                        <TextBlock Grid.Column="1"
+                                                   Classes="stat"
+                                                   Text="{Binding Value}" />
+                                    </Grid>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </Border>
+                <Border Grid.Column="2"
+                        Classes="card">
+                    <StackPanel Spacing="4">
+                        <TextBlock Classes="label"
+                                   Text="{x:Static r:Strings.Ride_TimeInZones}" />
+                        <ItemsControl ItemsSource="{Binding Zones}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate x:DataType="vm:ZoneRow">
+                                    <Grid Margin="0,3"
+                                          ColumnDefinitions="110,*,60">
+                                        <TextBlock Classes="muted"
+                                                   FontSize="13"
+                                                   Text="{Binding Name}" />
+                                        <c:Bar Grid.Column="1"
+                                               Height="10"
+                                               Margin="0,0,8,0"
+                                               VerticalAlignment="Center"
+                                               Fill="{Binding Brush}"
+                                               Value="{Binding Fraction}" />
+                                        <TextBlock Grid.Column="2"
+                                                   Classes="stat"
+                                                   FontSize="13"
+                                                   Text="{Binding Time}" />
+                                    </Grid>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+            <!--  Controls  -->
+            <Grid Grid.Row="4"
+                  ColumnDefinitions="*,Auto">
+                <StackPanel Orientation="Horizontal"
+                            Spacing="10">
+                    <Button Classes="control Outline"
+                            Command="{Binding ShiftDownCommand}"
+                            Content="{x:Static r:Strings.Ride_Easier}"
+                            ToolTip.Tip="{x:Static r:Strings.Ride_EasierTip}" />
+                    <Button Classes="control Outline"
+                            Command="{Binding ShiftUpCommand}"
+                            Content="{x:Static r:Strings.Ride_Harder}"
+                            ToolTip.Tip="{x:Static r:Strings.Ride_HarderTip}" />
+                    <Button Classes="control Outline"
+                            Command="{Binding GradeDownCommand}"
+                            Content="{x:Static r:Strings.Ride_GradeDown}"
+                            ToolTip.Tip="{x:Static r:Strings.Ride_GradeDownTip}" />
+                    <Button Classes="control Outline"
+                            Command="{Binding GradeUpCommand}"
+                            Content="{x:Static r:Strings.Ride_GradeUp}"
+                            ToolTip.Tip="{x:Static r:Strings.Ride_GradeUpTip}" />
+                    <Button Classes="control Outline"
+                            Command="{Binding ToggleErgCommand}"
+                            Content="{Binding ErgButton}"
+                            ToolTip.Tip="{x:Static r:Strings.Ride_ErgTip}" />
+                    <Button Classes="control Outline"
+                            Command="{Binding SkipCommand}"
+                            Content="{x:Static r:Strings.Ride_Skip}"
+                            ToolTip.Tip="{x:Static r:Strings.Ride_SkipTip}" />
+                    <Button Classes="control Outline"
+                            Command="{Binding LapCommand}"
+                            Content="{x:Static r:Strings.Common_Lap}"
+                            ToolTip.Tip="{x:Static r:Strings.Ride_LapTip}" />
+                    <Button Classes="control Outline"
+                            Command="{Binding PauseCommand}"
+                            Content="{Binding PauseButton}"
+                            ToolTip.Tip="{x:Static r:Strings.Ride_PauseTip}" />
+                    <Button Classes="control Outline"
+                            Command="{Binding EndRampCommand}"
+                            Content="{x:Static r:Strings.Ride_EndRamp}"
+                            IsVisible="{Binding IsRampTest}"
+                            ToolTip.Tip="{x:Static r:Strings.Ride_EndRampTip}" />
+                </StackPanel>
+                <StackPanel Grid.Column="1"
+                            Orientation="Horizontal"
+                            Spacing="16">
+                    <Border MaxWidth="460"
+                            VerticalAlignment="Center"
+                            Background="{DynamicResource MessageBrush}"
+                            Classes="pill"
+                            IsVisible="{Binding Message, Converter={x:Static ObjectConverters.IsNotNull}}">
+                        <TextBlock Margin="4"
+                                   Foreground="{DynamicResource WarnBrush}"
+                                   Text="{Binding Message}"
+                                   TextWrapping="Wrap" />
+                    </Border>
+                    <Button MinWidth="160"
+                            Classes="control Primary"
+                            Command="{Binding FinishCommand}"
+                            Content="{Binding FinishButton}"
+                            ToolTip.Tip="{x:Static r:Strings.Ride_FinishTip}" />
+                </StackPanel>
+            </Grid>
+        </Grid>
+
+        <!--  3, 2, 1, GO before the ride starts. Nothing is recorded until it ends.  -->
+        <Border Background="{DynamicResource BackdropBrush}"
+                IsVisible="{Binding IsCountingDown}">
+            <Border Padding="56,36"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    BoxShadow="0 8 30 0 #66000000"
+                    Classes="card"
+                    CornerRadius="24">
+                <StackPanel Spacing="20">
+                    <TextBlock HorizontalAlignment="Center"
+                               Classes="label"
+                               Text="{x:Static r:Strings.Ride_GetReady}" />
+                    <TextBlock HorizontalAlignment="Center"
+                               Classes="h1"
+                               Text="{Binding Title}" />
+                    <Grid Width="200"
+                          Height="200"
+                          HorizontalAlignment="Center">
+                        <Ellipse Fill="{DynamicResource PrimaryColor}" />
+                        <TextBlock HorizontalAlignment="Center"
+                                   VerticalAlignment="Center"
+                                   FontFeatures="+tnum"
+                                   FontSize="96"
+                                   FontWeight="Bold"
+                                   Foreground="{DynamicResource PrimaryForegroundColor}"
+                                   Text="{Binding Countdown}" />
+                    </Grid>
+                    <TextBlock HorizontalAlignment="Center"
+                               Classes="muted"
+                               FontSize="16"
+                               Text="{Binding CountdownDetail}" />
+                    <Button HorizontalAlignment="Center"
+                            Classes="Outline"
+                            Command="{Binding CancelStartCommand}"
+                            Content="{x:Static r:Strings.Common_Cancel}"
+                            ToolTip.Tip="{x:Static r:Strings.Ride_CancelStartTip}" />
+                </StackPanel>
+            </Border>
+        </Border>
+    </Panel>
+</UserControl>

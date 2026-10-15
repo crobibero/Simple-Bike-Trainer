@@ -1,0 +1,92 @@
+﻿<UserControl x:Class="SimpleBikeTrainer.Desktop.Views.CalibrationView"
+             xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:icons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+             xmlns:r="using:SimpleBikeTrainer.Desktop.Resources"
+             xmlns:shadui="clr-namespace:ShadUI;assembly=ShadUI"
+             xmlns:vm="using:SimpleBikeTrainer.Desktop.ViewModels"
+             x:DataType="vm:CalibrationViewModel">
+    <DockPanel Margin="24">
+        <Grid Margin="0,0,0,16"
+              ColumnDefinitions="Auto,*,Auto"
+              DockPanel.Dock="Top">
+            <Path Width="44"
+                  Height="44"
+                  Margin="0,0,14,0"
+                  Classes="bike" />
+            <StackPanel Grid.Column="1"
+                        VerticalAlignment="Center"
+                        Spacing="2">
+                <TextBlock Classes="h1"
+                           Text="{x:Static r:Strings.Cal_Title}" />
+                <TextBlock Classes="muted"
+                           Text="{Binding TrainerName}" />
+            </StackPanel>
+            <Button Grid.Column="2"
+                    VerticalAlignment="Center"
+                    Classes="Primary"
+                    Command="{Binding BackCommand}">
+                <icons:MaterialIconText Kind="ArrowLeft"
+                                        Text="{x:Static r:Strings.Common_Back}" />
+            </Button>
+        </Grid>
+
+        <Border MaxWidth="900"
+                Padding="28"
+                HorizontalAlignment="Left"
+                VerticalAlignment="Top"
+                Classes="card">
+            <StackPanel Spacing="18">
+                <TextBlock Classes="label"
+                           Text="{x:Static r:Strings.Cal_SpinDown}" />
+                <TextBlock FontSize="15"
+                           Text="{Binding Instruction}"
+                           TextWrapping="Wrap" />
+
+                <StackPanel IsVisible="{Binding IsSupported}"
+                            Spacing="18">
+                    <StackPanel Orientation="Horizontal"
+                                Spacing="40">
+                        <StackPanel>
+                            <TextBlock Classes="label"
+                                       Text="{x:Static r:Strings.Cal_Speed}" />
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Classes="big"
+                                           Text="{Binding Speed}" />
+                                <TextBlock Classes="unit"
+                                           Text="{Binding SpeedUnit}" />
+                            </StackPanel>
+                        </StackPanel>
+                        <StackPanel MaxWidth="460"
+                                    VerticalAlignment="Center"
+                                    Spacing="6">
+                            <TextBlock FontSize="18"
+                                       FontWeight="SemiBold"
+                                       Text="{Binding Step}"
+                                       TextWrapping="Wrap" />
+                            <TextBlock Classes="muted"
+                                       Text="{Binding Target}"
+                                       TextWrapping="Wrap" />
+                        </StackPanel>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal"
+                                Spacing="12">
+                        <Button Classes="Primary"
+                                Command="{Binding StartCommand}">
+                            <icons:MaterialIconText Kind="Tune"
+                                                    Text="{x:Static r:Strings.Cal_Start}" />
+                        </Button>
+                        <shadui:Loading Width="24"
+                                        Height="24"
+                                        IsVisible="{Binding IsRunning}" />
+                        <icons:MaterialIcon Width="26"
+                                            Height="26"
+                                            Foreground="{DynamicResource GoodBrush}"
+                                            IsVisible="{Binding Succeeded, Converter={x:Static ObjectConverters.Equal}, ConverterParameter={x:True}}"
+                                            Kind="CheckCircleOutline" />
+                    </StackPanel>
+                </StackPanel>
+            </StackPanel>
+        </Border>
+    </DockPanel>
+</UserControl>

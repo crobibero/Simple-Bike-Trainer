@@ -1,0 +1,168 @@
+﻿<UserControl x:Class="SimpleBikeTrainer.Desktop.Views.HistoryView"
+             xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:icons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+             xmlns:r="using:SimpleBikeTrainer.Desktop.Resources"
+             xmlns:shadui="clr-namespace:ShadUI;assembly=ShadUI"
+             xmlns:vm="using:SimpleBikeTrainer.Desktop.ViewModels"
+             x:DataType="vm:HistoryViewModel">
+    <DockPanel Margin="24">
+        <Grid Margin="0,0,0,16"
+              ColumnDefinitions="Auto,*,Auto"
+              DockPanel.Dock="Top">
+            <Path Width="44"
+                  Height="44"
+                  Margin="0,0,14,0"
+                  Classes="bike" />
+            <StackPanel Grid.Column="1"
+                        VerticalAlignment="Center"
+                        Spacing="2">
+                <TextBlock Classes="h1"
+                           Text="{x:Static r:Strings.History_Title}" />
+                <TextBlock Classes="muted"
+                           Text="{Binding TotalText}" />
+            </StackPanel>
+            <StackPanel Grid.Column="2"
+                        VerticalAlignment="Center"
+                        Orientation="Horizontal"
+                        Spacing="10">
+                <Button Classes="Outline"
+                        Command="{Binding OpenFolderCommand}"
+                        ToolTip.Tip="{Binding Folder}">
+                    <icons:MaterialIconText Kind="FolderOutline"
+                                            Text="{x:Static r:Strings.History_Folder}" />
+                </Button>
+                <Button Classes="Primary"
+                        Command="{Binding BackCommand}">
+                    <icons:MaterialIconText Kind="ArrowLeft"
+                                            Text="{x:Static r:Strings.Common_Back}" />
+                </Button>
+            </StackPanel>
+        </Grid>
+
+        <Border Margin="0,0,0,16"
+                Classes="card"
+                DockPanel.Dock="Top">
+            <StackPanel Spacing="4">
+                <TextBlock Classes="label"
+                           Text="{x:Static r:Strings.History_ThisWeek}" />
+                <TextBlock Classes="h2"
+                           Text="{Binding WeekText}" />
+            </StackPanel>
+        </Border>
+
+        <TextBlock Margin="0,0,0,12"
+                   DockPanel.Dock="Top"
+                   Foreground="{DynamicResource BadBrush}"
+                   IsVisible="{Binding Status, Converter={x:Static ObjectConverters.IsNotNull}}"
+                   Text="{Binding Status}" />
+
+        <Border Padding="0"
+                Classes="card">
+            <Grid RowDefinitions="Auto,*">
+                <!--  Column headings, matching the row template's columns.  -->
+                <Grid Margin="20,14,20,8"
+                      ColumnDefinitions="2.4*,*,*,*,*,*,*,1.6*">
+                    <Grid.Styles>
+                        <Style Selector="TextBlock">
+                            <Setter Property="Foreground" Value="{DynamicResource MutedColor}" />
+                            <Setter Property="FontSize" Value="12" />
+                            <Setter Property="FontWeight" Value="SemiBold" />
+                        </Style>
+                    </Grid.Styles>
+                    <TextBlock Text="{x:Static r:Strings.History_Ride}" />
+                    <TextBlock Grid.Column="1"
+                               Text="{x:Static r:Strings.History_Time}" />
+                    <TextBlock Grid.Column="2"
+                               Text="{x:Static r:Strings.Common_DistanceCaps}" />
+                    <TextBlock Grid.Column="3"
+                               Text="{x:Static r:Strings.Common_AvgPowerCaps}" />
+                    <TextBlock Grid.Column="4"
+                               Text="{x:Static r:Strings.Common_Tss}" />
+                    <TextBlock Grid.Column="5"
+                               Text="{x:Static r:Strings.Common_ClimbingCaps}" />
+                    <TextBlock Grid.Column="6"
+                               Text="" />
+                    <TextBlock Grid.Column="7"
+                               Text="{x:Static r:Strings.History_UploadedTo}" />
+                </Grid>
+                <ScrollViewer Grid.Row="1"
+                              HorizontalScrollBarVisibility="Disabled">
+                    <StackPanel>
+                        <StackPanel Margin="20,12"
+                                    IsVisible="{Binding IsLoading}"
+                                    Orientation="Horizontal"
+                                    Spacing="12">
+                            <shadui:Loading Width="24"
+                                            Height="24" />
+                            <TextBlock VerticalAlignment="Center"
+                                       Classes="muted"
+                                       Text="{x:Static r:Strings.History_Loading}" />
+                        </StackPanel>
+                        <TextBlock Margin="20,12"
+                                   Classes="muted"
+                                   IsVisible="{Binding IsEmpty}"
+                                   Text="{x:Static r:Strings.History_Empty}"
+                                   TextWrapping="Wrap" />
+                        <ItemsControl ItemsSource="{Binding Rides}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate x:DataType="vm:HistoryRow">
+                                    <Button HorizontalAlignment="Stretch"
+                                            HorizontalContentAlignment="Stretch"
+                                            Classes="row"
+                                            Command="{Binding $parent[UserControl].((vm:HistoryViewModel)DataContext).OpenCommand}"
+                                            CommandParameter="{Binding}"
+                                            ToolTip.Tip="{x:Static r:Strings.History_OpenTip}">
+                                        <Grid ColumnDefinitions="2.4*,*,*,*,*,*,*,1.6*">
+                                            <StackPanel>
+                                                <TextBlock FontWeight="SemiBold"
+                                                           Text="{Binding Name}"
+                                                           TextTrimming="CharacterEllipsis" />
+                                                <TextBlock Classes="muted"
+                                                           FontSize="12"
+                                                           Text="{Binding When}" />
+                                            </StackPanel>
+                                            <TextBlock Grid.Column="1"
+                                                       VerticalAlignment="Center"
+                                                       Text="{Binding Duration}" />
+                                            <TextBlock Grid.Column="2"
+                                                       VerticalAlignment="Center"
+                                                       Text="{Binding Distance}" />
+                                            <TextBlock Grid.Column="3"
+                                                       VerticalAlignment="Center"
+                                                       Text="{Binding Power}" />
+                                            <TextBlock Grid.Column="4"
+                                                       VerticalAlignment="Center"
+                                                       Text="{Binding Tss}" />
+                                            <TextBlock Grid.Column="5"
+                                                       VerticalAlignment="Center"
+                                                       Text="{Binding Climbing}" />
+                                            <StackPanel Grid.Column="7"
+                                                        VerticalAlignment="Center"
+                                                        Orientation="Horizontal"
+                                                        Spacing="6">
+                                                <icons:MaterialIcon Width="18"
+                                                                    Height="18"
+                                                                    Foreground="{DynamicResource GoodBrush}"
+                                                                    IsVisible="{Binding IsUploaded}"
+                                                                    Kind="CloudCheckOutline" />
+                                                <icons:MaterialIcon Width="18"
+                                                                    Height="18"
+                                                                    Foreground="{DynamicResource MutedColor}"
+                                                                    IsVisible="{Binding !IsUploaded}"
+                                                                    Kind="CloudOffOutline" />
+                                                <TextBlock Classes="muted"
+                                                           FontSize="13"
+                                                           Text="{Binding Uploads}" />
+                                            </StackPanel>
+                                        </Grid>
+                                    </Button>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </ScrollViewer>
+            </Grid>
+        </Border>
+    </DockPanel>
+</UserControl>

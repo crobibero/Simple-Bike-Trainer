@@ -1,0 +1,124 @@
+# Tests every push and pull request, then builds the desktop app's download for each platform: one file per platform.
+# release.yml calls this workflow for v* tags and attaches the downloads to the release.
+name: Desktop
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+  workflow_dispatch:
+  workflow_call:
+
+permissions:
+  contents: read
+
+env:
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - name: Check XAML formatting
+        run: |
+          dotnet tool restore
+          DOTNET_ROLL_FORWARD=Major dotnet xstyler --recursive --directory . --passive
+      - name: Test
+        run: dotnet test --solution SimpleBikeTrainer.slnx
+        env:
+          SIMPLE_BIKE_TRAINER_SCREENSHOTS: ${{ github.workspace }}/screenshots
+      - name: Upload screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: screenshots
+          path: screenshots
+          if-no-files-found: ignore
+
+  publish:
+    needs: test
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: windows-latest, rid: win-x64 }
+          - { os: windows-latest, rid: win-arm64 }
+          - { os: macos-latest, rid: osx-arm64 }
+          - { os: macos-latest, rid: osx-x64 }
+          - { os: ubuntu-latest, rid: linux-x64 }
+          - { os: ubuntu-latest, rid: linux-arm64 }
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      # A v* tag sets the version; other builds are 0.0.<run number>. A called workflow sees the caller's tag.
+      - name: Version
+        id: version
+        run: |
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
+            echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+          else
+            echo "version=0.0.${GITHUB_RUN_NUMBER}" >> "$GITHUB_OUTPUT"
+          fi
+
+      # Windows and Linux: one trimmed, self-contained file, with Skia's native libraries inside it; they unpack to a
+      # cache folder on the first start. Native AOT cannot embed those libraries, so it would ship four files.
+      # macOS: native AOT inside the .app bundle, which holds the libraries anyway.
+      # Linux cannot use native AOT at all: Bluetooth goes through Tmds.DBus, which needs Reflection.Emit (see
+      # SimpleBikeTrainer.Desktop.csproj).
+      - name: Publish
+        run: |
+          if [[ "${{ matrix.rid }}" == osx-* ]]; then
+            mode="-p:PublishAot=true"
+          else
+            mode="--self-contained -p:PublishTrimmed=true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:EnableCompressionInSingleFile=true"
+          fi
+          dotnet publish src/SimpleBikeTrainer.Desktop -c Release -r ${{ matrix.rid }} $mode \
+            -p:Version=${{ steps.version.outputs.version }} -p:DebugType=none -o publish
+          # SkiaSharp's packages drop their native .pdb files next to the app.
+          rm -f publish/*.pdb publish/*.dbg
+          rm -rf publish/*.dSYM
+
+      - name: Name the download
+        if: ${{ !startsWith(matrix.rid, 'osx-') }}
+        run: |
+          if [[ "${{ matrix.rid }}" == win-* ]]; then
+            cp publish/simple-bike-trainer.exe simple-bike-trainer-${{ matrix.rid }}.exe
+          else
+            cp publish/simple-bike-trainer simple-bike-trainer-${{ matrix.rid }}
+          fi
+
+      # Ad-hoc signed only: macOS asks before the first launch (see the README).
+      - name: Package for macOS
+        if: startsWith(matrix.rid, 'osx-')
+        run: |
+          app="Simple Bike Trainer.app"
+          mkdir -p "$app/Contents/MacOS" "$app/Contents/Resources"
+          cp -R publish/ "$app/Contents/MacOS/"
+          sed "s/VERSION/${{ steps.version.outputs.version }}/g" packaging/macos/Info.plist > "$app/Contents/Info.plist"
+          iconset=icon.iconset
+          mkdir $iconset
+          for size in 16 32 128 256 512; do
+            sips -z $size $size src/SimpleBikeTrainer.Desktop/Assets/icon.png --out $iconset/icon_${size}x${size}.png > /dev/null
+            sips -z $((size * 2)) $((size * 2)) src/SimpleBikeTrainer.Desktop/Assets/icon.png --out $iconset/icon_${size}x${size}@2x.png > /dev/null
+          done
+          iconutil -c icns $iconset -o "$app/Contents/Resources/icon.icns"
+          codesign --force --deep --sign - "$app"
+          ditto -c -k --keepParent "$app" simple-bike-trainer-${{ matrix.rid }}.zip
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: simple-bike-trainer-${{ matrix.rid }}
+          path: simple-bike-trainer-${{ matrix.rid }}*
+          if-no-files-found: error

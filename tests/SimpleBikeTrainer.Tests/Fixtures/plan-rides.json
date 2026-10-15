@@ -1,0 +1,289 @@
+[
+ {
+  "spec": "easy 45",
+  "name": "Easy spin 45 min",
+  "text": "- 45m 55-65% 80rpm",
+  "seconds": 2700,
+  "steps": 1
+ },
+ {
+  "spec": "test 45",
+  "name": "FTP test 45 min",
+  "text": "",
+  "seconds": 2700,
+  "steps": 0
+ },
+ {
+  "spec": "long 90",
+  "name": "Long ride 90 min",
+  "text": "- Warmup 10m 55-65% 80rpm\n- Endurance 75m 65-75% 80rpm\n- Cooldown 5m 55-65% 80rpm",
+  "seconds": 5400,
+  "steps": 3
+ },
+ {
+  "spec": "steady 60",
+  "name": "Endurance ride 60 min",
+  "text": "- Warmup 10m 55-65% 80rpm\n- Endurance 45m 65-75% 80rpm\n- Cooldown 5m 55-65% 80rpm",
+  "seconds": 3600,
+  "steps": 3
+ },
+ {
+  "spec": "long 100",
+  "name": "Long ride 100 min",
+  "text": "- Warmup 10m 55-65% 80rpm\n- Endurance 85m 65-75% 80rpm\n- Cooldown 5m 55-65% 80rpm",
+  "seconds": 6000,
+  "steps": 3
+ },
+ {
+  "spec": "steady 65",
+  "name": "Endurance ride 65 min",
+  "text": "- Warmup 10m 55-65% 80rpm\n- Endurance 50m 65-75% 80rpm\n- Cooldown 5m 55-65% 80rpm",
+  "seconds": 3900,
+  "steps": 3
+ },
+ {
+  "spec": "long 110",
+  "name": "Long ride 110 min",
+  "text": "- Warmup 10m 55-65% 80rpm\n- Endurance 95m 65-75% 80rpm\n- Cooldown 5m 55-65% 80rpm",
+  "seconds": 6600,
+  "steps": 3
+ },
+ {
+  "spec": "easy 40",
+  "name": "Easy spin 40 min",
+  "text": "- 40m 55-65% 80rpm",
+  "seconds": 2400,
+  "steps": 1
+ },
+ {
+  "spec": "steady 45",
+  "name": "Endurance ride 45 min",
+  "text": "- Warmup 10m 55-65% 80rpm\n- Endurance 30m 65-75% 80rpm\n- Cooldown 5m 55-65% 80rpm",
+  "seconds": 2700,
+  "steps": 3
+ },
+ {
+  "spec": "long 75",
+  "name": "Long ride 75 min",
+  "text": "- Warmup 10m 55-65% 80rpm\n- Endurance 60m 65-75% 80rpm\n- Cooldown 5m 55-65% 80rpm",
+  "seconds": 4500,
+  "steps": 3
+ },
+ {
+  "spec": "easy 50",
+  "name": "Easy spin 50 min",
+  "text": "- 50m 55-65% 80rpm",
+  "seconds": 3000,
+  "steps": 1
+ },
+ {
+  "spec": "long 120",
+  "name": "Long ride 120 min",
+  "text": "- Warmup 10m 55-65% 80rpm\n- Endurance 105m 65-75% 80rpm\n- Cooldown 5m 55-65% 80rpm",
+  "seconds": 7200,
+  "steps": 3
+ },
+ {
+  "spec": "steady 70",
+  "name": "Endurance ride 70 min",
+  "text": "- Warmup 10m 55-65% 80rpm\n- Endurance 55m 65-75% 80rpm\n- Cooldown 5m 55-65% 80rpm",
+  "seconds": 4200,
+  "steps": 3
+ },
+ {
+  "spec": "steady 75",
+  "name": "Endurance ride 75 min",
+  "text": "- Warmup 10m 55-65% 80rpm\n- Endurance 60m 65-75% 80rpm\n- Cooldown 5m 55-65% 80rpm",
+  "seconds": 4500,
+  "steps": 3
+ },
+ {
+  "spec": "long 135",
+  "name": "Long ride 135 min",
+  "text": "- Warmup 10m 55-65% 80rpm\n- Endurance 120m 65-75% 80rpm\n- Cooldown 5m 55-65% 80rpm",
+  "seconds": 8100,
+  "steps": 3
+ },
+ {
+  "spec": "steady 50",
+  "name": "Endurance ride 50 min",
+  "text": "- Warmup 10m 55-65% 80rpm\n- Endurance 35m 65-75% 80rpm\n- Cooldown 5m 55-65% 80rpm",
+  "seconds": 3000,
+  "steps": 3
+ },
+ {
+  "spec": "easy 60",
+  "name": "Easy spin 60 min",
+  "text": "- 60m 55-65% 80rpm",
+  "seconds": 3600,
+  "steps": 1
+ },
+ {
+  "spec": "long 150",
+  "name": "Long ride 150 min",
+  "text": "- Warmup 10m 55-65% 80rpm\n- Endurance 135m 65-75% 80rpm\n- Cooldown 5m 55-65% 80rpm",
+  "seconds": 9000,
+  "steps": 3
+ },
+ {
+  "spec": "intervals 3x10/5 @sweet_spot",
+  "name": "Sweet spot 3x10 min",
+  "text": "- Warmup 10m 55-65% 80rpm\n\nSweet spot 3x\n- Sweet spot 10m 88-93%\n- Recover 5m 55-65% 80rpm\n\n- Cooldown 5m 55-65% 80rpm",
+  "seconds": 3600,
+  "steps": 8
+ },
+ {
+  "spec": "intervals 3x12/4 @sweet_spot",
+  "name": "Sweet spot 3x12 min",
+  "text": "- Warmup 10m 55-65% 80rpm\n\nSweet spot 3x\n- Sweet spot 12m 88-93%\n- Recover 4m 55-65% 80rpm\n\n- Cooldown 5m 55-65% 80rpm",
+  "seconds": 3780,
+  "steps": 8
+ },
+ {
+  "spec": "long 165",
+  "name": "Long ride 165 min",
+  "text": "- Warmup 10m 55-65% 80rpm\n- Endurance 150m 65-75% 80rpm\n- Cooldown 5m 55-65% 80rpm",
+  "seconds": 9900,
+  "steps": 3
+ },
+ {
+  "spec": "easy 120",
+  "name": "Easy spin 120 min",
+  "text": "- 120m 55-65% 80rpm",
+  "seconds": 7200,
+  "steps": 1
+ },
+ {
+  "spec": "intervals 2x20/5 @sweet_spot",
+  "name": "Sweet spot 2x20 min",
+  "text": "- Warmup 10m 55-65% 80rpm\n\nSweet spot 2x\n- Sweet spot 20m 88-93%\n- Recover 5m 55-65% 80rpm\n\n- Cooldown 5m 55-65% 80rpm",
+  "seconds": 3900,
+  "steps": 6
+ },
+ {
+  "spec": "long 180",
+  "name": "Long ride 180 min",
+  "text": "- Warmup 10m 55-65% 80rpm\n- Endurance 165m 65-75% 80rpm\n- Cooldown 5m 55-65% 80rpm",
+  "seconds": 10800,
+  "steps": 3
+ },
+ {
+  "spec": "intervals 4x8/4 @threshold",
+  "name": "Threshold 4x8 min",
+  "text": "- Warmup 10m 55-65% 80rpm\n\nThreshold 4x\n- Threshold 8m 95-105%\n- Recover 4m 55-65% 80rpm\n\n- Cooldown 5m 55-65% 80rpm",
+  "seconds": 3780,
+  "steps": 10
+ },
+ {
+  "spec": "intervals 3x15/5 @sweet_spot",
+  "name": "Sweet spot 3x15 min",
+  "text": "- Warmup 10m 55-65% 80rpm\n\nSweet spot 3x\n- Sweet spot 15m 88-93%\n- Recover 5m 55-65% 80rpm\n\n- Cooldown 5m 55-65% 80rpm",
+  "seconds": 4500,
+  "steps": 8
+ },
+ {
+  "spec": "intervals 3x10/5 @threshold",
+  "name": "Threshold 3x10 min",
+  "text": "- Warmup 10m 55-65% 80rpm\n\nThreshold 3x\n- Threshold 10m 95-105%\n- Recover 5m 55-65% 80rpm\n\n- Cooldown 5m 55-65% 80rpm",
+  "seconds": 3600,
+  "steps": 8
+ },
+ {
+  "spec": "long 180 2x15@tempo",
+  "name": "Long ride 180 min, 2x15 tempo",
+  "text": "- Warmup 10m 55-65% 80rpm\n- Endurance 125m 65-75% 80rpm\n\n2x\n- Tempo 15m 76-87%\n- Endurance 5m 65-75% 80rpm\n\n- Cooldown 5m 55-65% 80rpm",
+  "seconds": 10800,
+  "steps": 7
+ },
+ {
+  "spec": "long 195 2x20@tempo",
+  "name": "Long ride 195 min, 2x20 tempo",
+  "text": "- Warmup 10m 55-65% 80rpm\n- Endurance 130m 65-75% 80rpm\n\n2x\n- Tempo 20m 76-87%\n- Endurance 5m 65-75% 80rpm\n\n- Cooldown 5m 55-65% 80rpm",
+  "seconds": 11700,
+  "steps": 7
+ },
+ {
+  "spec": "long 195 3x15@tempo",
+  "name": "Long ride 195 min, 3x15 tempo",
+  "text": "- Warmup 10m 55-65% 80rpm\n- Endurance 120m 65-75% 80rpm\n\n3x\n- Tempo 15m 76-87%\n- Endurance 5m 65-75% 80rpm\n\n- Cooldown 5m 55-65% 80rpm",
+  "seconds": 11700,
+  "steps": 9
+ },
+ {
+  "spec": "intervals 4x10/5 @threshold",
+  "name": "Threshold 4x10 min",
+  "text": "- Warmup 10m 55-65% 80rpm\n\nThreshold 4x\n- Threshold 10m 95-105%\n- Recover 5m 55-65% 80rpm\n\n- Cooldown 5m 55-65% 80rpm",
+  "seconds": 4500,
+  "steps": 10
+ },
+ {
+  "spec": "long 195 2x25@tempo",
+  "name": "Long ride 195 min, 2x25 tempo",
+  "text": "- Warmup 10m 55-65% 80rpm\n- Endurance 120m 65-75% 80rpm\n\n2x\n- Tempo 25m 76-87%\n- Endurance 5m 65-75% 80rpm\n\n- Cooldown 5m 55-65% 80rpm",
+  "seconds": 11700,
+  "steps": 7
+ },
+ {
+  "spec": "long 210 3x20@tempo",
+  "name": "Long ride 210 min, 3x20 tempo",
+  "text": "- Warmup 10m 55-65% 80rpm\n- Endurance 120m 65-75% 80rpm\n\n3x\n- Tempo 20m 76-87%\n- Endurance 5m 65-75% 80rpm\n\n- Cooldown 5m 55-65% 80rpm",
+  "seconds": 12600,
+  "steps": 9
+ },
+ {
+  "spec": "intervals 3x12/4 @threshold",
+  "name": "Threshold 3x12 min",
+  "text": "- Warmup 10m 55-65% 80rpm\n\nThreshold 3x\n- Threshold 12m 95-105%\n- Recover 4m 55-65% 80rpm\n\n- Cooldown 5m 55-65% 80rpm",
+  "seconds": 3780,
+  "steps": 8
+ },
+ {
+  "spec": "long 210 2x30@race_pace",
+  "name": "Long ride 210 min, 2x30 race pace",
+  "text": "- Warmup 10m 55-65% 80rpm\n- Endurance 125m 65-75% 80rpm\n\n2x\n- Race pace 30m 72-78%\n- Endurance 5m 65-75% 80rpm\n\n- Cooldown 5m 55-65% 80rpm",
+  "seconds": 12600,
+  "steps": 7
+ },
+ {
+  "spec": "long 225 2x30@race_pace",
+  "name": "Long ride 225 min, 2x30 race pace",
+  "text": "- Warmup 10m 55-65% 80rpm\n- Endurance 140m 65-75% 80rpm\n\n2x\n- Race pace 30m 72-78%\n- Endurance 5m 65-75% 80rpm\n\n- Cooldown 5m 55-65% 80rpm",
+  "seconds": 13500,
+  "steps": 7
+ },
+ {
+  "spec": "long 225 2x40@race_pace",
+  "name": "Long ride 225 min, 2x40 race pace",
+  "text": "- Warmup 10m 55-65% 80rpm\n- Endurance 120m 65-75% 80rpm\n\n2x\n- Race pace 40m 72-78%\n- Endurance 5m 65-75% 80rpm\n\n- Cooldown 5m 55-65% 80rpm",
+  "seconds": 13500,
+  "steps": 7
+ },
+ {
+  "spec": "long 195 1x45@race_pace",
+  "name": "Long ride 195 min, 1x45 race pace",
+  "text": "- Warmup 10m 55-65% 80rpm\n- Endurance 135m 65-75% 80rpm\n- Race pace 45m 72-78%\n- Cooldown 5m 55-65% 80rpm",
+  "seconds": 11700,
+  "steps": 4
+ },
+ {
+  "spec": "intervals 3x8/4 @race_pace",
+  "name": "Race pace 3x8 min",
+  "text": "- Warmup 10m 55-65% 80rpm\n\nRace pace 3x\n- Race pace 8m 72-78%\n- Recover 4m 55-65% 80rpm\n\n- Cooldown 5m 55-65% 80rpm",
+  "seconds": 3060,
+  "steps": 8
+ },
+ {
+  "spec": "long 90 3x5@race_pace",
+  "name": "Long ride 90 min, 3x5 race pace",
+  "text": "- Warmup 10m 55-65% 80rpm\n- Endurance 45m 65-75% 80rpm\n\n3x\n- Race pace 5m 72-78%\n- Endurance 5m 65-75% 80rpm\n\n- Cooldown 5m 55-65% 80rpm",
+  "seconds": 5400,
+  "steps": 9
+ },
+ {
+  "spec": "intervals 3x3/3 @race_pace",
+  "name": "Race pace 3x3 min",
+  "text": "- Warmup 10m 55-65% 80rpm\n\nRace pace 3x\n- Race pace 3m 72-78%\n- Recover 3m 55-65% 80rpm\n\n- Cooldown 5m 55-65% 80rpm",
+  "seconds": 1980,
+  "steps": 8
+ }
+]

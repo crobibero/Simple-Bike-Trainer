@@ -1,0 +1,572 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="Cli_Help" xml:space="preserve">
+    <value>[bold]simple-bike-trainer-cli[/]: rides Intervals.icu workouts on a KICKR CORE 2 with Zwift Click controllers
+
+[bold]simple-bike-trainer-cli ride[/] [grey](the default)[/]
+  Pick a planned ride from Intervals.icu (today and the next 6 days), connect, and ride it.
+  --event &lt;id&gt;        ride this Intervals.icu event
+  --date &lt;yyyy-mm-dd&gt; list rides from this day instead of today
+  --free              free ride on the virtual gears
+  --ramp              built-in ramp FTP test   --ramp-start &lt;W&gt; (default 100)
+  --route &lt;distance&gt;  a generated rolling loop, in km (mi with imperial units)
+    [[--climb &lt;m or ft&gt;]] [[--seed &lt;n&gt;]]   its total climbing; the same seed gives the same route
+  --file &lt;path&gt;       a workout file: Intervals.icu workout text, or event or workout_doc JSON
+  --ftp &lt;W&gt;           override the FTP for this ride
+  --offline           do not contact Intervals.icu
+  --upload | --no-upload   upload the ride afterward without asking, or never
+  --upload-to intervals,garmin   pick the destinations for this ride
+  --no-hr, --no-click  skip the heart rate monitor or the Zwift Click
+  --simulate          use a simulated trainer and heart rate monitor instead of Bluetooth
+  --speed &lt;n&gt;         with --simulate, run n times faster
+  --no-ui             print a status line every 10 s instead of the dashboard
+
+[bold]simple-bike-trainer-cli scan[/] [[--seconds 15]]   list trainers, heart rate monitors, and Zwift controllers; save the picks
+[bold]simple-bike-trainer-cli probe[/] [[--seconds 30]]  connect read-only and print trainer data and Click presses
+    [[--control [[--watts 100]]]]   also take control and set ERG power (resets on exit)
+[bold]simple-bike-trainer-cli workouts[/] [[--days 7]]   list planned rides from Intervals.icu
+[bold]simple-bike-trainer-cli upload &lt;file.fit&gt;[/] [[--event &lt;id&gt;]] [[--name &lt;name&gt;]]
+[bold]simple-bike-trainer-cli connect garmin[/]   sign in to Garmin Connect (email, password, MFA code); saves session tokens only
+[bold]simple-bike-trainer-cli config[/] [[--api-key K]] [[--athlete-id ID]] [[--ftp W]] [[--units metric|imperial]]
+    [[--weight N]] [[--bike-weight N]]   (in kg, or lb with imperial units)   [[--max-hr BPM]]
+    [[--upload-to intervals,garmin]] [[--auto-upload true|false]] [[--forget-devices]]   show or change settings
+
+Settings are saved in ~/.config/simple-bike-trainer/config.json. INTERVALS_API_KEY overrides the saved key.
+</value>
+    <comment>Spectre.Console markup: keep the [bold] and [grey] tags, and write a literal [ as [[ and ] as ]].</comment>
+  </data>
+  <data name="Cli_ConfigUnreadable" xml:space="preserve">
+    <value>Could not read the config file:</value>
+  </data>
+  <data name="Cli_UnknownCommand" xml:space="preserve">
+    <value>Unknown command "{0}".</value>
+  </data>
+  <data name="Cli_LoadingSettings" xml:space="preserve">
+    <value>Loading Intervals.icu settings…</value>
+  </data>
+  <data name="Cli_WorkoutLine" xml:space="preserve">
+    <value>{0} steps, FTP {1} W</value>
+  </data>
+  <data name="Cli_WorkoutFtp" xml:space="preserve">
+    <value> (the workout was resolved at {0} W)</value>
+  </data>
+  <data name="Cli_AwakeReason" xml:space="preserve">
+    <value>Riding {0}</value>
+  </data>
+  <data name="Cli_StartingBluetooth" xml:space="preserve">
+    <value>Starting Bluetooth…</value>
+  </data>
+  <data name="Cli_Connected" xml:space="preserve">
+    <value>Connected</value>
+  </data>
+  <data name="Cli_NoClick" xml:space="preserve">
+    <value>No Zwift Click connected; shift with the keyboard (+/-).</value>
+  </data>
+  <data name="Cli_PressQAgain" xml:space="preserve">
+    <value>Press q again to finish the ride.</value>
+  </data>
+  <data name="Cli_StatusLine" xml:space="preserve">
+    <value>{0} {1,-14} {2,-22} power {3,4} W target {4,4} W cadence {5,3} HR {6,3} distance {7} NP {8:0} TSS {9:0}</value>
+    <comment>One line every 10 seconds with --no-ui; keep the alignment specifiers.</comment>
+  </data>
+  <data name="Cli_FreeRide" xml:space="preserve">
+    <value>free ride</value>
+  </data>
+  <data name="Cli_UploadPrompt" xml:space="preserve">
+    <value>Upload the ride to {0}?</value>
+  </data>
+  <data name="Cli_SetFtpPrompt" xml:space="preserve">
+    <value>Set FTP in Intervals.icu to {0} W{1}?</value>
+  </data>
+  <data name="Cli_SetFtpNow" xml:space="preserve">
+    <value> (now {0} W)</value>
+  </data>
+  <data name="Cli_FtpSet" xml:space="preserve">
+    <value>FTP set to {0} W.</value>
+  </data>
+  <data name="Cli_FtpZwift" xml:space="preserve">
+    <value>Set it in Zwift too if you ride there.</value>
+  </data>
+  <data name="Cli_EventNeedsKey" xml:space="preserve">
+    <value>--event needs an Intervals.icu API key: simple-bike-trainer-cli config --api-key &lt;key&gt;</value>
+  </data>
+  <data name="Cli_LoadingPlanned" xml:space="preserve">
+    <value>Loading planned rides…</value>
+  </data>
+  <data name="Cli_NoKey" xml:space="preserve">
+    <value>No Intervals.icu API key. Set one with: simple-bike-trainer-cli config --api-key &lt;key&gt;</value>
+  </data>
+  <data name="Cli_ChoiceFree" xml:space="preserve">
+    <value>Free ride</value>
+  </data>
+  <data name="Cli_ChoiceRamp" xml:space="preserve">
+    <value>Ramp FTP test</value>
+  </data>
+  <data name="Cli_ChoiceFile" xml:space="preserve">
+    <value>Workout file…</value>
+  </data>
+  <data name="Cli_ChoiceCancel" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
+  <data name="Cli_WhatRiding" xml:space="preserve">
+    <value>What are you riding?</value>
+  </data>
+  <data name="Cli_Path" xml:space="preserve">
+    <value>Path:</value>
+  </data>
+  <data name="Cli_NoStepsRamp" xml:space="preserve">
+    <value>{0} has no steps; riding the built-in ramp test for it.</value>
+  </data>
+  <data name="Cli_Length" xml:space="preserve">
+    <value>{0} min, {1} steps</value>
+  </data>
+  <data name="Cli_NoSteps" xml:space="preserve">
+    <value>no steps</value>
+  </data>
+  <data name="Cli_Today" xml:space="preserve">
+    <value>Today</value>
+  </data>
+  <data name="Cli_ShortDate" xml:space="preserve">
+    <value>ddd MMM d</value>
+    <comment>.NET date format: "Wed Oct 15".</comment>
+  </data>
+  <data name="Cli_PlannedChoice" xml:space="preserve">
+    <value>{0}: {1} ({2})</value>
+  </data>
+  <data name="Cli_ScanningFor" xml:space="preserve">
+    <value>Scanning for {0} s…</value>
+  </data>
+  <data name="Cli_ColKind" xml:space="preserve">
+    <value>Kind</value>
+  </data>
+  <data name="Cli_ColName" xml:space="preserve">
+    <value>Name</value>
+  </data>
+  <data name="Cli_ColAddress" xml:space="preserve">
+    <value>Address</value>
+  </data>
+  <data name="Cli_ColRssi" xml:space="preserve">
+    <value>RSSI</value>
+  </data>
+  <data name="Cli_Cached" xml:space="preserve">
+    <value>cached</value>
+  </data>
+  <data name="Cli_PickTrainer" xml:space="preserve">
+    <value>Trainer to use:</value>
+  </data>
+  <data name="Cli_PickHr" xml:space="preserve">
+    <value>Heart rate monitor:</value>
+  </data>
+  <data name="Cli_PickShifters" xml:space="preserve">
+    <value>Zwift controllers (none selected = any):</value>
+  </data>
+  <data name="Cli_Any" xml:space="preserve">
+    <value>(any)</value>
+  </data>
+  <data name="Cli_SavedTo" xml:space="preserve">
+    <value>Saved to {0}</value>
+  </data>
+  <data name="Cli_Scanning" xml:space="preserve">
+    <value>Scanning…</value>
+  </data>
+  <data name="Cli_ProbeTrainer" xml:space="preserve">
+    <value>trainer: {0} W, {1:0} rpm, {2:0.0} km/h{3}</value>
+  </data>
+  <data name="Cli_ProbeHr" xml:space="preserve">
+    <value>, {0} bpm</value>
+  </data>
+  <data name="Cli_ProbeControl" xml:space="preserve">
+    <value>control point: opcode 0x{0:x2} -&gt; {1}</value>
+  </data>
+  <data name="Cli_ProbeControlled" xml:space="preserve">
+    <value>connected with control. Setting ERG {0} W…</value>
+  </data>
+  <data name="Cli_ProbeConnected" xml:space="preserve">
+    <value>connected. Supports: {0}. Power range: {1}</value>
+  </data>
+  <data name="Cli_NoTrainer" xml:space="preserve">
+    <value>No trainer found.</value>
+  </data>
+  <data name="Cli_ProbeClick" xml:space="preserve">
+    <value>({0}) connected. Press its buttons.</value>
+  </data>
+  <data name="Cli_ProbeButtons" xml:space="preserve">
+    <value>{0}: [bold]{1}[/] (battery {2}%)</value>
+    <comment>Spectre.Console markup: keep the [bold] tags.</comment>
+  </data>
+  <data name="Cli_ProbeFailed" xml:space="preserve">
+    <value>{0} ({1}) failed: {2}</value>
+  </data>
+  <data name="Cli_Listening" xml:space="preserve">
+    <value>Listening for {0} s (Ctrl+C to stop)…</value>
+  </data>
+  <data name="Cli_NoPlanned" xml:space="preserve">
+    <value>No planned rides.</value>
+  </data>
+  <data name="Cli_PlannedDetail" xml:space="preserve">
+    <value>event {0}, {1}, {2} min, FTP {3}</value>
+  </data>
+  <data name="Cli_UploadUsage" xml:space="preserve">
+    <value>usage: simple-bike-trainer-cli upload &lt;file.fit&gt; [--event &lt;id&gt;] [--name &lt;name&gt;]</value>
+  </data>
+  <data name="Cli_FileMissing" xml:space="preserve">
+    <value>{0} does not exist.</value>
+  </data>
+  <data name="Cli_UploadedAt" xml:space="preserve">
+    <value>Uploaded:</value>
+  </data>
+  <data name="Cli_Uploaded" xml:space="preserve">
+    <value>Uploaded.</value>
+  </data>
+  <data name="Cli_GarminEmail" xml:space="preserve">
+    <value>Garmin email:</value>
+  </data>
+  <data name="Cli_GarminPassword" xml:space="preserve">
+    <value>Garmin password:</value>
+  </data>
+  <data name="Cli_GarminCode" xml:space="preserve">
+    <value>Garmin MFA code:</value>
+  </data>
+  <data name="Cli_GarminSignedIn" xml:space="preserve">
+    <value>Signed in to Garmin as {0}. Only session tokens were saved.</value>
+  </data>
+  <data name="Cli_ConnectUsage" xml:space="preserve">
+    <value>usage: simple-bike-trainer-cli connect garmin</value>
+  </data>
+  <data name="Cli_Saved" xml:space="preserve">
+    <value>Saved {0}</value>
+  </data>
+  <data name="Cli_RowConfig" xml:space="preserve">
+    <value>Config file</value>
+  </data>
+  <data name="Cli_RowKey" xml:space="preserve">
+    <value>Intervals.icu API key</value>
+  </data>
+  <data name="Cli_Set" xml:space="preserve">
+    <value>set</value>
+  </data>
+  <data name="Cli_NotSet" xml:space="preserve">
+    <value>not set</value>
+  </data>
+  <data name="Cli_RowAthlete" xml:space="preserve">
+    <value>Athlete</value>
+  </data>
+  <data name="Cli_RowFtp" xml:space="preserve">
+    <value>Fallback FTP / W'</value>
+  </data>
+  <data name="Cli_FtpValue" xml:space="preserve">
+    <value>{0} W / {1} J</value>
+  </data>
+  <data name="Cli_RowUnits" xml:space="preserve">
+    <value>Units</value>
+  </data>
+  <data name="Cli_Metric" xml:space="preserve">
+    <value>metric</value>
+  </data>
+  <data name="Cli_Imperial" xml:space="preserve">
+    <value>imperial</value>
+  </data>
+  <data name="Cli_RowWeights" xml:space="preserve">
+    <value>Rider + bike</value>
+  </data>
+  <data name="Cli_RowTrainer" xml:space="preserve">
+    <value>Trainer</value>
+  </data>
+  <data name="Cli_RowHr" xml:space="preserve">
+    <value>Heart rate</value>
+  </data>
+  <data name="Cli_RowShifters" xml:space="preserve">
+    <value>Zwift controllers</value>
+  </data>
+  <data name="Cli_AnyDevice" xml:space="preserve">
+    <value>any</value>
+  </data>
+  <data name="Cli_RowRides" xml:space="preserve">
+    <value>Rides saved to</value>
+  </data>
+  <data name="Cli_RowUpload" xml:space="preserve">
+    <value>Upload to</value>
+  </data>
+  <data name="Cli_Automatic" xml:space="preserve">
+    <value> (automatic)</value>
+  </data>
+  <data name="Cli_Ask" xml:space="preserve">
+    <value> (ask)</value>
+  </data>
+  <data name="Cli_RowMaxHr" xml:space="preserve">
+    <value>Max heart rate</value>
+  </data>
+  <data name="Cli_Bpm" xml:space="preserve">
+    <value>{0} bpm</value>
+  </data>
+  <data name="Cli_RowGarmin" xml:space="preserve">
+    <value>Garmin</value>
+  </data>
+  <data name="Cli_SignedIn" xml:space="preserve">
+    <value>signed in</value>
+  </data>
+  <data name="Cli_NotSignedIn" xml:space="preserve">
+    <value>not signed in</value>
+  </data>
+  <data name="Sum_Metric" xml:space="preserve">
+    <value>Metric</value>
+  </data>
+  <data name="Sum_Value" xml:space="preserve">
+    <value>Value</value>
+  </data>
+  <data name="Sum_ElapsedMoving" xml:space="preserve">
+    <value>Elapsed / moving</value>
+  </data>
+  <data name="Sum_Distance" xml:space="preserve">
+    <value>Distance</value>
+  </data>
+  <data name="Sum_DistanceValue" xml:space="preserve">
+    <value>{0} (avg {1})</value>
+  </data>
+  <data name="Sum_Climbing" xml:space="preserve">
+    <value>Climbing</value>
+  </data>
+  <data name="Sum_AvgPower" xml:space="preserve">
+    <value>Average power</value>
+  </data>
+  <data name="Sum_MaxPower" xml:space="preserve">
+    <value>Max power</value>
+  </data>
+  <data name="Sum_Np" xml:space="preserve">
+    <value>Normalized power</value>
+  </data>
+  <data name="Sum_If" xml:space="preserve">
+    <value>Intensity factor</value>
+  </data>
+  <data name="Sum_IfValue" xml:space="preserve">
+    <value>{0:0.00} (FTP {1} W)</value>
+  </data>
+  <data name="Sum_Tss" xml:space="preserve">
+    <value>Training stress</value>
+  </data>
+  <data name="Sum_TssValue" xml:space="preserve">
+    <value>{0:0} TSS</value>
+  </data>
+  <data name="Sum_Work" xml:space="preserve">
+    <value>Work</value>
+  </data>
+  <data name="Sum_WorkValue" xml:space="preserve">
+    <value>{0:0} kJ, about {1:0} kcal</value>
+  </data>
+  <data name="Sum_WPrimeLow" xml:space="preserve">
+    <value>Lowest W' balance</value>
+  </data>
+  <data name="Sum_WPrimeValue" xml:space="preserve">
+    <value>{0:0.0} of {1:0.0} kJ</value>
+  </data>
+  <data name="Sum_Hr" xml:space="preserve">
+    <value>Heart rate</value>
+  </data>
+  <data name="Sum_HrValue" xml:space="preserve">
+    <value>avg {0:0}, max {1} bpm</value>
+  </data>
+  <data name="Sum_Cadence" xml:space="preserve">
+    <value>Cadence</value>
+  </data>
+  <data name="Sum_CadenceValue" xml:space="preserve">
+    <value>avg {0:0}, max {1} rpm</value>
+  </data>
+  <data name="Sum_Best" xml:space="preserve">
+    <value>Best {0}</value>
+  </data>
+  <data name="Sum_Seconds" xml:space="preserve">
+    <value>{0} s</value>
+  </data>
+  <data name="Sum_Minutes" xml:space="preserve">
+    <value>{0} min</value>
+  </data>
+  <data name="Sum_Laps" xml:space="preserve">
+    <value>Laps</value>
+  </data>
+  <data name="Sum_FtpEstimate" xml:space="preserve">
+    <value>FTP estimate</value>
+  </data>
+  <data name="Sum_Saved" xml:space="preserve">
+    <value>Saved</value>
+  </data>
+  <data name="Fmt_Watts" xml:space="preserve">
+    <value>{0:0} W</value>
+  </data>
+  <data name="Dash_Keys" xml:space="preserve">
+    <value>+/- or ↑/↓ shift (ERG: ±5 W)  ←/→ grade  e ERG on/off  s skip step  l lap  p pause  </value>
+  </data>
+  <data name="Dash_KeysRamp" xml:space="preserve">
+    <value>x end ramp  </value>
+  </data>
+  <data name="Dash_KeysFinish" xml:space="preserve">
+    <value>q finish</value>
+  </data>
+  <data name="Dash_PedalToStart" xml:space="preserve">
+    <value>pedal to start</value>
+  </data>
+  <data name="Dash_Paused" xml:space="preserve">
+    <value>paused</value>
+  </data>
+  <data name="Dash_AutoPaused" xml:space="preserve">
+    <value>auto-paused</value>
+  </data>
+  <data name="Dash_WorkoutDone" xml:space="preserve">
+    <value>workout done</value>
+  </data>
+  <data name="Dash_Riding" xml:space="preserve">
+    <value>riding</value>
+  </data>
+  <data name="Dash_Elapsed" xml:space="preserve">
+    <value>elapsed</value>
+  </data>
+  <data name="Dash_Moving" xml:space="preserve">
+    <value>moving</value>
+  </data>
+  <data name="Dash_Erg" xml:space="preserve">
+    <value>ERG</value>
+  </data>
+  <data name="Dash_Gears" xml:space="preserve">
+    <value>gears</value>
+  </data>
+  <data name="Dash_ColPower" xml:space="preserve">
+    <value>POWER 3s</value>
+  </data>
+  <data name="Dash_ColTarget" xml:space="preserve">
+    <value>TARGET</value>
+  </data>
+  <data name="Dash_ColCadence" xml:space="preserve">
+    <value>CADENCE</value>
+  </data>
+  <data name="Dash_ColHr" xml:space="preserve">
+    <value>HEART RATE</value>
+  </data>
+  <data name="Dash_ColSpeed" xml:space="preserve">
+    <value>SPEED</value>
+  </data>
+  <data name="Dash_ColMode" xml:space="preserve">
+    <value>MODE</value>
+  </data>
+  <data name="Dash_ColGear" xml:space="preserve">
+    <value>GEAR</value>
+  </data>
+  <data name="Dash_Left" xml:space="preserve">
+    <value>left</value>
+  </data>
+  <data name="Dash_Next" xml:space="preserve">
+    <value>next: {0} {1} {2}</value>
+  </data>
+  <data name="Dash_NextDone" xml:space="preserve">
+    <value>next: done</value>
+  </data>
+  <data name="Dash_FreeRide" xml:space="preserve">
+    <value>Free ride</value>
+  </data>
+  <data name="Dash_OnGears" xml:space="preserve">
+    <value>on the virtual gears</value>
+  </data>
+  <data name="Dash_WorkoutProgress" xml:space="preserve">
+    <value>workout {0} / {1}, step {2} of {3}</value>
+  </data>
+  <data name="Dash_Step" xml:space="preserve">
+    <value>Step</value>
+  </data>
+  <data name="Dash_Distance" xml:space="preserve">
+    <value>Distance</value>
+  </data>
+  <data name="Dash_AvgMaxPower" xml:space="preserve">
+    <value>Avg / max power</value>
+  </data>
+  <data name="Dash_NpIf" xml:space="preserve">
+    <value>NP / IF</value>
+  </data>
+  <data name="Dash_Tss" xml:space="preserve">
+    <value>TSS</value>
+  </data>
+  <data name="Dash_Work" xml:space="preserve">
+    <value>Work</value>
+  </data>
+  <data name="Dash_WorkValue" xml:space="preserve">
+    <value>{0:0} kJ / {1:0} kcal</value>
+  </data>
+  <data name="Dash_WBalance" xml:space="preserve">
+    <value>W' balance</value>
+  </data>
+  <data name="Dash_WBalanceValue" xml:space="preserve">
+    <value>{0:0.0} / {1:0.0} kJ</value>
+  </data>
+  <data name="Dash_AvgMaxHr" xml:space="preserve">
+    <value>Avg / max HR</value>
+  </data>
+  <data name="Dash_AvgMaxCadence" xml:space="preserve">
+    <value>Avg / max cadence</value>
+  </data>
+  <data name="Dash_AvgSpeed" xml:space="preserve">
+    <value>Avg speed</value>
+  </data>
+  <data name="Dash_Peaks" xml:space="preserve">
+    <value>Peaks</value>
+  </data>
+  <data name="Dash_RideHeader" xml:space="preserve">
+    <value>Ride (FTP {0} W)</value>
+  </data>
+  <data name="Dash_Time" xml:space="preserve">
+    <value>Time</value>
+  </data>
+  <data name="Dash_AvgHr" xml:space="preserve">
+    <value>Avg HR</value>
+  </data>
+  <data name="Dash_AvgCadence" xml:space="preserve">
+    <value>Avg cadence</value>
+  </data>
+  <data name="Dash_OnTarget" xml:space="preserve">
+    <value>On target</value>
+  </data>
+  <data name="Dash_LapHeader" xml:space="preserve">
+    <value>Lap {0}</value>
+  </data>
+  <data name="Dash_Hr" xml:space="preserve">
+    <value>HR</value>
+  </data>
+  <data name="Dash_PowerZones" xml:space="preserve">
+    <value>Power zones</value>
+  </data>
+  <data name="Dash_Disconnected" xml:space="preserve">
+    <value>disconnected</value>
+  </data>
+  <data name="Dash_PairPower" xml:space="preserve">
+    <value>{0:0} / {1} W</value>
+  </data>
+  <data name="Dash_PairHr" xml:space="preserve">
+    <value>{0:0} / {1} bpm</value>
+  </data>
+  <data name="Dash_PairCadence" xml:space="preserve">
+    <value>{0:0} / {1} rpm</value>
+  </data>
+  <data name="Dash_NpIfValue" xml:space="preserve">
+    <value>{0:0} W / {1:0.00}</value>
+  </data>
+  <data name="Dash_Bpm" xml:space="preserve">
+    <value>{0:0} bpm</value>
+  </data>
+  <data name="Dash_Rpm" xml:space="preserve">
+    <value>{0:0} rpm</value>
+  </data>
+  <data name="Dash_UnitRpm" xml:space="preserve">
+    <value>rpm</value>
+  </data>
+  <data name="Dash_UnitBpm" xml:space="preserve">
+    <value>bpm</value>
+  </data>
+</root>

@@ -1,0 +1,11 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/SimpleBikeTrainer.Core/SimpleBikeTrainer.Core.csproj" />
+    <Project Path="src/SimpleBikeTrainer.Desktop/SimpleBikeTrainer.Desktop.csproj" />
+    <Project Path="src/SimpleBikeTrainer.Cli/SimpleBikeTrainer.Cli.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/SimpleBikeTrainer.Desktop.Tests/SimpleBikeTrainer.Desktop.Tests.csproj" />
+    <Project Path="tests/SimpleBikeTrainer.Tests/SimpleBikeTrainer.Tests.csproj" />
+  </Folder>
+</Solution>

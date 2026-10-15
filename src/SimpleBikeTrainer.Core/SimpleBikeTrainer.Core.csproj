@@ -1,0 +1,36 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <!-- Analyzers flag code that would break in trimmed or native AOT builds of the apps. -->
+    <IsAotCompatible>true</IsAotCompatible>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>SimpleBikeTrainer</RootNamespace>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <NeutralLanguage>en</NeutralLanguage>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="SimpleBikeTrainer.Tests" />
+    <InternalsVisibleTo Include="simple-bike-trainer-cli" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="AsyncAwaitBestPractices" Version="10.0.0" />
+    <PackageReference Include="Garmin.FIT.Sdk" Version="21.218.0" />
+    <PackageReference Include="Linux.Bluetooth" Version="6.0.0-pre3" />
+  </ItemGroup>
+
+  <!-- User-facing text. A Resources/CoreStrings.<culture>.resx next to it adds a translation. -->
+  <ItemGroup>
+    <EmbeddedResource Update="Resources/CoreStrings.resx">
+      <StronglyTypedFileName>$(IntermediateOutputPath)CoreStrings.Designer.cs</StronglyTypedFileName>
+      <StronglyTypedLanguage>CSharp</StronglyTypedLanguage>
+      <StronglyTypedNamespace>SimpleBikeTrainer.Resources</StronglyTypedNamespace>
+      <StronglyTypedClassName>CoreStrings</StronglyTypedClassName>
+      <PublicClass>true</PublicClass>
+    </EmbeddedResource>
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,69 @@
+﻿<shadui:Window x:Class="SimpleBikeTrainer.Desktop.Views.MainWindow"
+               xmlns="https://github.com/avaloniaui"
+               xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+               xmlns:r="using:SimpleBikeTrainer.Desktop.Resources"
+               xmlns:shadui="clr-namespace:ShadUI;assembly=ShadUI"
+               xmlns:v="using:SimpleBikeTrainer.Desktop.Views"
+               xmlns:vm="using:SimpleBikeTrainer.Desktop.ViewModels"
+               Title="{Binding Title}"
+               Width="1440"
+               Height="900"
+               MinWidth="1100"
+               MinHeight="720"
+               x:DataType="vm:MainWindowViewModel"
+               Icon="/Assets/icon.ico"
+               TitleFontWeight="SemiBold">
+    <Grid>
+        <ContentControl Content="{Binding Current}" />
+
+        <!--  Help, over whichever page is showing. Escape, Close, or a click outside closes it.  -->
+        <Border x:Name="HelpBackdrop"
+                Background="{DynamicResource BackdropBrush}"
+                IsVisible="{Binding IsHelpOpen}">
+            <Border MaxWidth="1240"
+                    Margin="32"
+                    Padding="28,24"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    Classes="card">
+                <DockPanel>
+                    <Grid Margin="0,0,0,16"
+                          ColumnDefinitions="*,Auto"
+                          DockPanel.Dock="Top">
+                        <TextBlock Classes="h1"
+                                   Text="{x:Static r:Strings.Help_Title}" />
+                        <Button Grid.Column="1"
+                                Classes="Outline"
+                                Command="{Binding CloseHelpCommand}"
+                                Content="{x:Static r:Strings.Common_Close}" />
+                    </Grid>
+                    <ScrollViewer HorizontalScrollBarVisibility="Disabled">
+                        <v:HelpView />
+                    </ScrollViewer>
+                </DockPanel>
+            </Border>
+        </Border>
+
+        <!--  Closing: the ride stops and the devices disconnect, which can take a few seconds.  -->
+        <Border Background="{DynamicResource BackdropBrush}"
+                IsVisible="{Binding IsShuttingDown}">
+            <Border Padding="28,24"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    Classes="card">
+                <StackPanel Orientation="Horizontal"
+                            Spacing="16">
+                    <shadui:Loading Width="32"
+                                    Height="32" />
+                    <StackPanel VerticalAlignment="Center"
+                                Spacing="4">
+                        <TextBlock Classes="h2"
+                                   Text="{x:Static r:Strings.Shutdown_Title}" />
+                        <TextBlock Classes="muted"
+                                   Text="{x:Static r:Strings.Shutdown_Detail}" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </Border>
+    </Grid>
+</shadui:Window>

@@ -1,0 +1,332 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="Unit_Km" xml:space="preserve">
+    <value>km</value>
+  </data>
+  <data name="Unit_Mi" xml:space="preserve">
+    <value>mi</value>
+  </data>
+  <data name="Unit_Kmh" xml:space="preserve">
+    <value>km/h</value>
+  </data>
+  <data name="Unit_Mph" xml:space="preserve">
+    <value>mph</value>
+  </data>
+  <data name="Unit_Kg" xml:space="preserve">
+    <value>kg</value>
+  </data>
+  <data name="Unit_Lb" xml:space="preserve">
+    <value>lb</value>
+  </data>
+  <data name="Unit_M" xml:space="preserve">
+    <value>m</value>
+  </data>
+  <data name="Unit_Ft" xml:space="preserve">
+    <value>ft</value>
+  </data>
+  <data name="Unit_Quantity" xml:space="preserve">
+    <value>{0} {1}</value>
+    <comment>A number, then its unit: "12.3 km".</comment>
+  </data>
+  <data name="Zone_Named" xml:space="preserve">
+    <value>Z{0} {1}</value>
+    <comment>Zone number and name: "Z3 Tempo".</comment>
+  </data>
+  <data name="Zone_Number" xml:space="preserve">
+    <value>Z{0}</value>
+  </data>
+  <data name="HrZone7_1" xml:space="preserve">
+    <value>Recovery</value>
+  </data>
+  <data name="HrZone7_2" xml:space="preserve">
+    <value>Aerobic</value>
+  </data>
+  <data name="HrZone7_3" xml:space="preserve">
+    <value>Tempo</value>
+  </data>
+  <data name="HrZone7_4" xml:space="preserve">
+    <value>Sub-threshold</value>
+  </data>
+  <data name="HrZone7_5" xml:space="preserve">
+    <value>Super-threshold</value>
+  </data>
+  <data name="HrZone7_6" xml:space="preserve">
+    <value>Aerobic capacity</value>
+  </data>
+  <data name="HrZone7_7" xml:space="preserve">
+    <value>Anaerobic</value>
+  </data>
+  <data name="HrZone5_1" xml:space="preserve">
+    <value>Recovery</value>
+  </data>
+  <data name="HrZone5_2" xml:space="preserve">
+    <value>Endurance</value>
+  </data>
+  <data name="HrZone5_3" xml:space="preserve">
+    <value>Tempo</value>
+  </data>
+  <data name="HrZone5_4" xml:space="preserve">
+    <value>Threshold</value>
+  </data>
+  <data name="HrZone5_5" xml:space="preserve">
+    <value>Maximum</value>
+  </data>
+  <data name="Power_Ramp" xml:space="preserve">
+    <value>ramp {0}</value>
+    <comment>A target that changes steadily across the step: "ramp 65-45%".</comment>
+  </data>
+  <data name="Cadence_One" xml:space="preserve">
+    <value>{0} rpm</value>
+  </data>
+  <data name="Cadence_Range" xml:space="preserve">
+    <value>{0}-{1} rpm</value>
+  </data>
+  <data name="Workout_FreeRide" xml:space="preserve">
+    <value>Free ride</value>
+  </data>
+  <data name="Workout_Route" xml:space="preserve">
+    <value>Route</value>
+  </data>
+  <data name="Workout_DefaultName" xml:space="preserve">
+    <value>Workout</value>
+  </data>
+  <data name="Workout_DefaultStep" xml:space="preserve">
+    <value>Step</value>
+  </data>
+  <data name="Workout_RouteName" xml:space="preserve">
+    <value>Route {0}, {1} climbing</value>
+    <comment>Generated route name: "Route 30 km, 400 m climbing".</comment>
+  </data>
+  <data name="Workout_NoSteps" xml:space="preserve">
+    <value>{0} has no workout steps.</value>
+  </data>
+  <data name="Workout_NoDuration" xml:space="preserve">
+    <value>Line {0}: step "{1}" has no duration, such as 10m or 30s.</value>
+  </data>
+  <data name="Ramp_Name" xml:space="preserve">
+    <value>Ramp FTP test</value>
+  </data>
+  <data name="Ramp_Warmup" xml:space="preserve">
+    <value>Warmup</value>
+  </data>
+  <data name="Ramp_Cooldown" xml:space="preserve">
+    <value>Cooldown</value>
+  </data>
+  <data name="Ramp_Step" xml:space="preserve">
+    <value>Ramp {0} W</value>
+    <comment>One minute of the ramp test at a power.</comment>
+  </data>
+  <data name="Ride_DefaultName" xml:space="preserve">
+    <value>Ride</value>
+  </data>
+  <data name="Session_WorkoutComplete" xml:space="preserve">
+    <value>Workout complete. The ride continues on the virtual gears; press Q twice to finish.</value>
+  </data>
+  <data name="Session_RouteComplete" xml:space="preserve">
+    <value>Route complete. The road is flat from here; press Q twice to finish.</value>
+  </data>
+  <data name="Session_RampTooShort" xml:space="preserve">
+    <value>The ramp test ended before a full minute of riding, so there is no FTP estimate.</value>
+  </data>
+  <data name="Session_RampDone" xml:space="preserve">
+    <value>Ramp test done: best 1-minute power {0:0} W, FTP estimate {1} W. Cool down, then press Q twice to finish.</value>
+  </data>
+  <data name="Upload_Done" xml:space="preserve">
+    <value>uploaded</value>
+  </data>
+  <data name="Upload_DoneAt" xml:space="preserve">
+    <value>uploaded: {0}</value>
+  </data>
+  <data name="Upload_Duplicate" xml:space="preserve">
+    <value>already uploaded</value>
+  </data>
+  <data name="Upload_DuplicateAt" xml:space="preserve">
+    <value>already uploaded: {0}</value>
+  </data>
+  <data name="Upload_Failed" xml:space="preserve">
+    <value>failed: {0}</value>
+  </data>
+  <data name="Connect_Scanning" xml:space="preserve">
+    <value>Scanning for Bluetooth devices…</value>
+  </data>
+  <data name="Connect_Waiting" xml:space="preserve">
+    <value>No trainer found yet. Pedal to wake the KICKR, and close any other app connected to it…</value>
+  </data>
+  <data name="Connect_NoTrainer" xml:space="preserve">
+    <value>No trainer found. Check that the KICKR is on and not connected to another app.</value>
+  </data>
+  <data name="Connect_SavedMissing" xml:space="preserve">
+    <value>Trainer {0} was not found. Scan again to pick another trainer.</value>
+  </data>
+  <data name="Connect_Connecting" xml:space="preserve">
+    <value>Connecting to {0}…</value>
+  </data>
+  <data name="Connect_ConnectingAt" xml:space="preserve">
+    <value>Connecting to {0} ({1})…</value>
+  </data>
+  <data name="Connect_HrFailed" xml:space="preserve">
+    <value>Heart rate monitor {0} did not connect: {1}</value>
+  </data>
+  <data name="Connect_DeviceFailed" xml:space="preserve">
+    <value>{0} ({1}) did not connect: {2}</value>
+  </data>
+  <data name="Ble_NoBlueZ" xml:space="preserve">
+    <value>Could not reach BlueZ over D-Bus ({0}). Check that the bluetooth service is running.</value>
+  </data>
+  <data name="Ble_NoAdapter" xml:space="preserve">
+    <value>No Bluetooth adapter found.</value>
+  </data>
+  <data name="Ble_Connecting" xml:space="preserve">
+    <value>connecting</value>
+  </data>
+  <data name="Ble_Disconnected" xml:space="preserve">
+    <value>disconnected</value>
+  </data>
+  <data name="Ble_Reconnecting" xml:space="preserve">
+    <value>reconnecting: {0}</value>
+  </data>
+  <data name="Ftms_NoSpinDown" xml:space="preserve">
+    <value>{0} does not support spin-down calibration over FTMS.</value>
+  </data>
+  <data name="Device_NoSpinDown" xml:space="preserve">
+    <value>{0} does not support spin-down calibration.</value>
+  </data>
+  <data name="Ftms_WriteFailed" xml:space="preserve">
+    <value>write failed: {0}</value>
+  </data>
+  <data name="Ftms_OpFailed" xml:space="preserve">
+    <value>opcode 0x{0:x2}: {1}</value>
+  </data>
+  <data name="Ftms_Success" xml:space="preserve">
+    <value>success</value>
+  </data>
+  <data name="Ftms_NotSupported" xml:space="preserve">
+    <value>not supported</value>
+  </data>
+  <data name="Ftms_InvalidParameter" xml:space="preserve">
+    <value>invalid parameter</value>
+  </data>
+  <data name="Ftms_OperationFailed" xml:space="preserve">
+    <value>operation failed</value>
+  </data>
+  <data name="Ftms_NotPermitted" xml:space="preserve">
+    <value>control not permitted</value>
+  </data>
+  <data name="Sim_Trainer" xml:space="preserve">
+    <value>Simulated trainer</value>
+  </data>
+  <data name="Sim_HeartRate" xml:space="preserve">
+    <value>Simulated heart rate</value>
+  </data>
+  <data name="Fit_Unreadable" xml:space="preserve">
+    <value>{0} is not a readable FIT file.</value>
+  </data>
+  <data name="Awake_NoBus" xml:space="preserve">
+    <value>no D-Bus session bus</value>
+  </data>
+  <data name="Awake_BusFailed" xml:space="preserve">
+    <value>D-Bus session bus unavailable: {0}</value>
+  </data>
+  <data name="Awake_NoInterface" xml:space="preserve">
+    <value>no inhibit interface: {0}</value>
+  </data>
+  <data name="Intervals_NotRide" xml:space="preserve">
+    <value>Event {0} is not a ride workout.</value>
+  </data>
+  <data name="Intervals_Failed" xml:space="preserve">
+    <value>{0} failed: HTTP {1}{2} {3}</value>
+  </data>
+  <data name="Intervals_KeyHint" xml:space="preserve">
+    <value> (check the API key under Intervals.icu &gt; Settings &gt; Developer Settings)</value>
+  </data>
+  <data name="Garmin_NoPendingCode" xml:space="preserve">
+    <value>No Garmin sign-in is waiting for a code.</value>
+  </data>
+  <data name="Garmin_BadCode" xml:space="preserve">
+    <value>Garmin rejected the code ({0}). Check it and try again.</value>
+  </data>
+  <data name="Garmin_UploadFailed" xml:space="preserve">
+    <value>Garmin upload failed: HTTP {0}{1}</value>
+  </data>
+  <data name="Garmin_Detail" xml:space="preserve">
+    <value> ({0})</value>
+  </data>
+  <data name="Garmin_Refused" xml:space="preserve">
+    <value>Garmin rejected the sign-in (HTTP {0}). Garmin limits sign-in attempts; try again in an hour.</value>
+  </data>
+  <data name="Garmin_NoTicket" xml:space="preserve">
+    <value>The Garmin sign-in reply had no service ticket.</value>
+  </data>
+  <data name="Garmin_BadPassword" xml:space="preserve">
+    <value>Garmin rejected the email or password.</value>
+  </data>
+  <data name="Garmin_SignInFailed" xml:space="preserve">
+    <value>Garmin sign-in failed: HTTP {0}, {1}.</value>
+  </data>
+  <data name="Garmin_NoReply" xml:space="preserve">
+    <value>no reply</value>
+  </data>
+  <data name="Garmin_RateLimited" xml:space="preserve">
+    <value>Garmin limits sign-in attempts. Try again later.</value>
+  </data>
+  <data name="Garmin_NoToken" xml:space="preserve">
+    <value>Garmin accepted the sign-in but did not issue an app token.</value>
+  </data>
+  <data name="Garmin_TokenRejected" xml:space="preserve">
+    <value>Garmin issued a token that its API then rejected. Try again later.</value>
+  </data>
+  <data name="Garmin_NotSignedIn" xml:space="preserve">
+    <value>Not signed in to Garmin. Sign in under Settings.</value>
+  </data>
+  <data name="Garmin_Expired" xml:space="preserve">
+    <value>The Garmin session expired. Sign in again under Settings.</value>
+  </data>
+  <data name="Garmin_ExpiredRefresh" xml:space="preserve">
+    <value>The Garmin session expired (refresh: HTTP {0}). Sign in again under Settings.</value>
+  </data>
+  <data name="Garmin_Http" xml:space="preserve">
+    <value>Garmin returned HTTP {0}{1}</value>
+  </data>
+  <data name="Probe_Unknown" xml:space="preserve">
+    <value>unknown</value>
+  </data>
+  <data name="Probe_NotReported" xml:space="preserve">
+    <value>not reported</value>
+  </data>
+  <data name="Probe_Unreadable" xml:space="preserve">
+    <value>unreadable ({0})</value>
+  </data>
+  <data name="Probe_PowerRange" xml:space="preserve">
+    <value>{0}-{1} W in {2} W steps</value>
+  </data>
+  <data name="Feature_Cadence" xml:space="preserve">
+    <value>cadence</value>
+  </data>
+  <data name="Feature_Power" xml:space="preserve">
+    <value>power</value>
+  </data>
+  <data name="Feature_ErgTarget" xml:space="preserve">
+    <value>ERG target power</value>
+  </data>
+  <data name="Feature_Resistance" xml:space="preserve">
+    <value>resistance</value>
+  </data>
+  <data name="Feature_Simulation" xml:space="preserve">
+    <value>simulation</value>
+  </data>
+  <data name="Feature_SpinDown" xml:space="preserve">
+    <value>spin-down</value>
+  </data>
+</root>

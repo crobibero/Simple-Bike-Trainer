@@ -1,0 +1,162 @@
+﻿<UserControl x:Class="SimpleBikeTrainer.Desktop.Views.HelpView"
+             xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:r="using:SimpleBikeTrainer.Desktop.Resources"
+             xmlns:v="using:SimpleBikeTrainer.Desktop.Views">
+    <!--  Shown in the help panel. Two columns, so it fits a 900-pixel-high window without scrolling.  -->
+    <Grid ColumnDefinitions="*,36,*">
+        <Grid.Styles>
+            <Style Selector="TextBlock">
+                <Setter Property="TextWrapping" Value="Wrap" />
+                <Setter Property="FontSize" Value="13" />
+            </Style>
+            <Style Selector="TextBlock.label">
+                <Setter Property="FontSize" Value="12" />
+                <Setter Property="Margin" Value="0,0,0,6" />
+            </Style>
+            <Style Selector="Grid.term &gt; TextBlock:nth-child(1)">
+                <Setter Property="FontWeight" Value="SemiBold" />
+            </Style>
+            <Style Selector="Grid.term &gt; TextBlock:nth-child(2)">
+                <Setter Property="Foreground" Value="{DynamicResource MutedColor}" />
+            </Style>
+            <Style Selector="Grid.term">
+                <Setter Property="Margin" Value="0,3" />
+            </Style>
+        </Grid.Styles>
+
+        <StackPanel>
+            <TextBlock Classes="label"
+                       Text="{x:Static r:Strings.Help_Numbers}" />
+            <Grid Classes="term"
+                  ColumnDefinitions="165,*">
+                <TextBlock Text="{x:Static r:Strings.Help_PowerTerm}" />
+                <TextBlock Grid.Column="1"
+                           Text="{x:Static r:Strings.Help_Power}" />
+            </Grid>
+            <Grid Classes="term"
+                  ColumnDefinitions="165,*">
+                <TextBlock Text="{x:Static r:Strings.Help_TargetTerm}" />
+                <TextBlock Grid.Column="1"
+                           Text="{x:Static r:Strings.Help_Target}" />
+            </Grid>
+            <Grid Classes="term"
+                  ColumnDefinitions="165,*">
+                <TextBlock Text="{x:Static r:Strings.Common_HeartRate}" />
+                <TextBlock Grid.Column="1"
+                           Text="{x:Static r:Strings.Help_HeartRate}" />
+            </Grid>
+            <Grid Classes="term"
+                  ColumnDefinitions="165,*">
+                <TextBlock Text="{x:Static r:Strings.Common_Grade}" />
+                <TextBlock Grid.Column="1"
+                           Text="{x:Static r:Strings.Help_Grade}" />
+            </Grid>
+            <Grid Classes="term"
+                  ColumnDefinitions="165,*">
+                <TextBlock Text="{x:Static r:Strings.Help_NpTerm}" />
+                <TextBlock Grid.Column="1"
+                           Text="{x:Static r:Strings.Help_Np}" />
+            </Grid>
+            <Grid Classes="term"
+                  ColumnDefinitions="165,*">
+                <TextBlock Text="{x:Static r:Strings.Help_IfTerm}" />
+                <TextBlock Grid.Column="1"
+                           Text="{x:Static r:Strings.Help_If}" />
+            </Grid>
+            <Grid Classes="term"
+                  ColumnDefinitions="165,*">
+                <TextBlock Text="{x:Static r:Strings.Help_TssTerm}" />
+                <TextBlock Grid.Column="1"
+                           Text="{x:Static r:Strings.Help_Tss}" />
+            </Grid>
+            <Grid Classes="term"
+                  ColumnDefinitions="165,*">
+                <TextBlock Text="{x:Static r:Strings.Help_WPrimeTerm}" />
+                <TextBlock Grid.Column="1"
+                           Text="{x:Static r:Strings.Help_WPrime}" />
+            </Grid>
+            <Grid Classes="term"
+                  ColumnDefinitions="165,*">
+                <TextBlock Text="{x:Static r:Strings.Help_WorkTerm}" />
+                <TextBlock Grid.Column="1"
+                           Text="{x:Static r:Strings.Help_Work}" />
+            </Grid>
+            <Grid Classes="term"
+                  ColumnDefinitions="165,*">
+                <TextBlock Text="{x:Static r:Strings.Common_OnTarget}" />
+                <TextBlock Grid.Column="1"
+                           Text="{x:Static r:Strings.Help_OnTarget}" />
+            </Grid>
+            <Grid Classes="term"
+                  ColumnDefinitions="165,*">
+                <TextBlock Text="{x:Static r:Strings.Common_Best}" />
+                <TextBlock Grid.Column="1"
+                           Text="{x:Static r:Strings.Help_Best}" />
+            </Grid>
+            <Grid Classes="term"
+                  ColumnDefinitions="165,*">
+                <TextBlock Text="{x:Static r:Strings.Help_ZonesTerm}" />
+                <TextBlock Grid.Column="1"
+                           Text="{x:Static r:Strings.Help_Zones}" />
+            </Grid>
+        </StackPanel>
+
+        <StackPanel Grid.Column="2"
+                    Spacing="16">
+            <StackPanel Spacing="6">
+                <TextBlock Classes="label"
+                           Text="{x:Static r:Strings.Help_Chart}" />
+                <v:ChartLegend />
+                <TextBlock Classes="muted"
+                           Text="{x:Static r:Strings.Help_ChartText}" />
+            </StackPanel>
+            <StackPanel>
+                <TextBlock Classes="label"
+                           Text="{x:Static r:Strings.Help_Controls}" />
+                <Grid Classes="term"
+                      ColumnDefinitions="130,*">
+                    <TextBlock Text="{x:Static r:Strings.Help_HarderTerm}" />
+                    <TextBlock Grid.Column="1"
+                               Text="{x:Static r:Strings.Help_Harder}" />
+                </Grid>
+                <Grid Classes="term"
+                      ColumnDefinitions="130,*">
+                    <TextBlock Text="{x:Static r:Strings.Common_Grade}" />
+                    <TextBlock Grid.Column="1"
+                               Text="{x:Static r:Strings.Help_GradeKeys}" />
+                </Grid>
+                <Grid Classes="term"
+                      ColumnDefinitions="130,*">
+                    <TextBlock Text="{x:Static r:Strings.Common_Erg}" />
+                    <TextBlock Grid.Column="1"
+                               Text="{x:Static r:Strings.Help_Erg}" />
+                </Grid>
+                <Grid Classes="term"
+                      ColumnDefinitions="130,*">
+                    <TextBlock Text="{x:Static r:Strings.Help_StepsTerm}" />
+                    <TextBlock Grid.Column="1"
+                               Text="{x:Static r:Strings.Help_Steps}" />
+                </Grid>
+                <Grid Classes="term"
+                      ColumnDefinitions="130,*">
+                    <TextBlock Text="{x:Static r:Strings.Help_PauseTerm}" />
+                    <TextBlock Grid.Column="1"
+                               Text="{x:Static r:Strings.Help_Pause}" />
+                </Grid>
+                <Grid Classes="term"
+                      ColumnDefinitions="130,*">
+                    <TextBlock Text="{x:Static r:Strings.Help_RampTerm}" />
+                    <TextBlock Grid.Column="1"
+                               Text="{x:Static r:Strings.Help_Ramp}" />
+                </Grid>
+                <Grid Classes="term"
+                      ColumnDefinitions="130,*">
+                    <TextBlock Text="{x:Static r:Strings.Help_HelpTerm}" />
+                    <TextBlock Grid.Column="1"
+                               Text="{x:Static r:Strings.Help_Help}" />
+                </Grid>
+            </StackPanel>
+        </StackPanel>
+    </Grid>
+</UserControl>

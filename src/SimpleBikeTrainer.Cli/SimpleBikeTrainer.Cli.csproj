@@ -1,0 +1,52 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AssemblyName>simple-bike-trainer-cli</AssemblyName>
+    <RootNamespace>SimpleBikeTrainer</RootNamespace>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <NeutralLanguage>en</NeutralLanguage>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="SimpleBikeTrainer.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Spectre.Console" Version="0.57.2" />
+  </ItemGroup>
+
+  <!--
+    Trimmed and native AOT builds. Tmds.DBus, which Linux.Bluetooth and KeepAwake use, makes its D-Bus proxies with
+    Reflection.Emit: trimming them silently breaks the Bluetooth scan, and native AOT cannot run them at all. Rooting the
+    three assemblies keeps a trimmed Linux build working; their remaining trim and AOT warnings stay warnings.
+  -->
+  <ItemGroup>
+    <TrimmerRootAssembly Include="Tmds.DBus" />
+    <TrimmerRootAssembly Include="Linux.Bluetooth" />
+    <TrimmerRootAssembly Include="SimpleBikeTrainer.Core" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <WarningsNotAsErrors>$(WarningsNotAsErrors);IL2104;IL3053</WarningsNotAsErrors>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../SimpleBikeTrainer.Core/SimpleBikeTrainer.Core.csproj" />
+  </ItemGroup>
+
+  <!-- User-facing text. A Resources/CliStrings.<culture>.resx next to it adds a translation. -->
+  <ItemGroup>
+    <EmbeddedResource Update="Resources/CliStrings.resx">
+      <StronglyTypedFileName>$(IntermediateOutputPath)CliStrings.Designer.cs</StronglyTypedFileName>
+      <StronglyTypedLanguage>CSharp</StronglyTypedLanguage>
+      <StronglyTypedNamespace>SimpleBikeTrainer.Resources</StronglyTypedNamespace>
+      <StronglyTypedClassName>CliStrings</StronglyTypedClassName>
+      <PublicClass>true</PublicClass>
+    </EmbeddedResource>
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Simple Bike Trainer
+Comment=Ride Intervals.icu workouts on a smart trainer
+Exec=simple-bike-trainer
+Icon=simple-bike-trainer
+Terminal=false
+Categories=Sports;Utility;
+StartupWMClass=simple-bike-trainer

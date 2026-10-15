@@ -1,0 +1,23 @@
+{
+  "id": 91234567,
+  "start_date_local": "2026-12-02T00:00:00",
+  "category": "WORKOUT",
+  "type": "VirtualRide",
+  "name": "Sweet spot 3x12",
+  "description": "- Warmup 10m 55-65% 80rpm\n\nSweet spot 3x\n- Sweet spot 12m 88-93%\n- Recover 4m 55-65% 80rpm\n\n- Cooldown 5m ramp 65-40%",
+  "external_id": "trainsync:2026-12-02:ride",
+  "workout_doc": {
+    "ftp": 240,
+    "duration": 3600,
+    "target": "POWER",
+    "steps": [
+      { "text": "Warmup", "duration": 600, "warmup": true, "power": { "start": 55, "end": 65, "units": "%ftp" }, "_power": { "start": 132, "end": 156 }, "cadence": { "value": 80, "units": "rpm" } },
+      { "text": "Sweet spot", "reps": 3, "steps": [
+        { "text": "Sweet spot", "duration": 720, "power": { "start": 88, "end": 93, "units": "%ftp" }, "_power": { "start": 211.2, "end": 223.2 } },
+        { "text": "Recover", "duration": 240, "power": { "start": 55, "end": 65, "units": "%ftp" }, "_power": { "start": 132, "end": 156 }, "cadence": { "value": 80, "units": "rpm" } }
+      ] },
+      { "text": "Cooldown", "duration": 300, "cooldown": true, "ramp": true, "power": { "start": 65, "end": 40, "units": "%ftp" }, "_power": { "start": 156, "end": 96 } },
+      { "duration": 60, "freeride": true }
+    ]
+  }
+}

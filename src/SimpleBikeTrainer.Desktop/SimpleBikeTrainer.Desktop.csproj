@@ -1,0 +1,68 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AssemblyName>simple-bike-trainer</AssemblyName>
+    <RootNamespace>SimpleBikeTrainer.Desktop</RootNamespace>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <NeutralLanguage>en</NeutralLanguage>
+    <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+    <!-- The .exe's icon on Windows. The window sets its own from the same file. -->
+    <!-- Analyzers flag code that would break in trimmed or native AOT builds. -->
+    <EnableTrimAnalyzer>true</EnableTrimAnalyzer>
+    <EnableAotAnalyzer>true</EnableAotAnalyzer>
+    <ApplicationIcon>Assets/icon.ico</ApplicationIcon>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <AvaloniaResource Include="Assets/icon.ico" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="SimpleBikeTrainer.Desktop.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="AsyncAwaitBestPractices" Version="10.0.0" />
+    <PackageReference Include="Avalonia" Version="12.1.3" />
+    <PackageReference Include="Avalonia.Desktop" Version="12.1.3" />
+    <PackageReference Include="Avalonia.Fonts.Inter" Version="12.1.3" />
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
+    <PackageReference Include="Material.Icons.Avalonia" Version="3.0.2" />
+    <PackageReference Include="ShadUI" Version="0.2.4" />
+  </ItemGroup>
+
+  <!--
+    Trimmed and native AOT builds. Tmds.DBus, which Linux.Bluetooth and KeepAwake use, makes its D-Bus proxies with
+    Reflection.Emit: trimming them silently breaks the Bluetooth scan, and native AOT cannot run them at all. Rooting the
+    three assemblies keeps a trimmed Linux build working; their remaining trim and AOT warnings stay warnings.
+  -->
+  <ItemGroup>
+    <TrimmerRootAssembly Include="Tmds.DBus" />
+    <TrimmerRootAssembly Include="Linux.Bluetooth" />
+    <TrimmerRootAssembly Include="SimpleBikeTrainer.Core" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <WarningsNotAsErrors>$(WarningsNotAsErrors);IL2104;IL3053</WarningsNotAsErrors>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../SimpleBikeTrainer.Core/SimpleBikeTrainer.Core.csproj" />
+  </ItemGroup>
+
+  <!-- User-facing text. A Resources/Strings.<culture>.resx next to it adds a translation. -->
+  <ItemGroup>
+    <EmbeddedResource Update="Resources/Strings.resx">
+      <StronglyTypedFileName>$(IntermediateOutputPath)Strings.Designer.cs</StronglyTypedFileName>
+      <StronglyTypedLanguage>CSharp</StronglyTypedLanguage>
+      <StronglyTypedNamespace>SimpleBikeTrainer.Desktop.Resources</StronglyTypedNamespace>
+      <StronglyTypedClassName>Strings</StronglyTypedClassName>
+      <PublicClass>true</PublicClass>
+    </EmbeddedResource>
+  </ItemGroup>
+
+</Project>

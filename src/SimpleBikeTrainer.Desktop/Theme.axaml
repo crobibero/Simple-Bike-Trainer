@@ -1,0 +1,257 @@
+﻿<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:c="using:SimpleBikeTrainer.Desktop.Controls">
+    <!--
+        The app's look on top of ShadUI. Surfaces and text use ShadUI's colors (CardBackgroundColor, ForegroundColor,
+        MutedColor, BorderColor, PrimaryColor...), which follow the light or dark theme. The colors below are the app's
+        own, with a darker variant for the light theme so they stay readable on white.
+    -->
+    <Styles.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.ThemeDictionaries>
+                <ResourceDictionary x:Key="Dark">
+                    <SolidColorBrush x:Key="GoodBrush"
+                                     Color="#4CC38A" />
+                    <SolidColorBrush x:Key="WarnBrush"
+                                     Color="#F2C14E" />
+                    <SolidColorBrush x:Key="BadBrush"
+                                     Color="#F0565A" />
+                    <SolidColorBrush x:Key="HeartBrush"
+                                     Color="#F0565A" />
+                    <SolidColorBrush x:Key="GradeBrush"
+                                     Color="#5ED6D0" />
+                    <SolidColorBrush x:Key="InfoBrush"
+                                     Color="#7FC8F8" />
+                    <SolidColorBrush x:Key="WPrimeBrush"
+                                     Color="#B26BF0" />
+                    <!--  The ridden power line and the FTP line on charts.  -->
+                    <SolidColorBrush x:Key="TraceBrush"
+                                     Color="#FAFAFA" />
+                    <SolidColorBrush x:Key="FtpLineBrush"
+                                     Color="#99FFFFFF" />
+                    <!--  Wells inside cards: chart backgrounds and the device list.  -->
+                    <SolidColorBrush x:Key="InsetBrush"
+                                     Color="#0F0F0F" />
+                    <SolidColorBrush x:Key="MessageBrush"
+                                     Color="#3A2E12" />
+                    <SolidColorBrush x:Key="SelectedCardBrush"
+                                     Color="#232323" />
+                    <SolidColorBrush x:Key="BackdropBrush"
+                                     Color="#B3000000" />
+                    <!--  Text on the green or yellow status pill.  -->
+                    <SolidColorBrush x:Key="OnStatusBrush"
+                                     Color="#121519" />
+                </ResourceDictionary>
+                <ResourceDictionary x:Key="Light">
+                    <SolidColorBrush x:Key="GoodBrush"
+                                     Color="#1E8E5A" />
+                    <SolidColorBrush x:Key="WarnBrush"
+                                     Color="#A86B00" />
+                    <SolidColorBrush x:Key="BadBrush"
+                                     Color="#C62828" />
+                    <SolidColorBrush x:Key="HeartBrush"
+                                     Color="#D32F2F" />
+                    <SolidColorBrush x:Key="GradeBrush"
+                                     Color="#00897B" />
+                    <SolidColorBrush x:Key="InfoBrush"
+                                     Color="#1565C0" />
+                    <SolidColorBrush x:Key="WPrimeBrush"
+                                     Color="#8E44D0" />
+                    <SolidColorBrush x:Key="TraceBrush"
+                                     Color="#18181B" />
+                    <SolidColorBrush x:Key="FtpLineBrush"
+                                     Color="#99000000" />
+                    <SolidColorBrush x:Key="InsetBrush"
+                                     Color="#F4F4F5" />
+                    <SolidColorBrush x:Key="MessageBrush"
+                                     Color="#FFF3D6" />
+                    <SolidColorBrush x:Key="SelectedCardBrush"
+                                     Color="#F4F4F5" />
+                    <SolidColorBrush x:Key="BackdropBrush"
+                                     Color="#80000000" />
+                    <SolidColorBrush x:Key="OnStatusBrush"
+                                     Color="#FFFFFF" />
+                </ResourceDictionary>
+            </ResourceDictionary.ThemeDictionaries>
+
+            <!--  A workout list item is just its card: none of ShadUI's hover and selection layers or check mark.  -->
+            <ControlTheme x:Key="WorkoutItemTheme"
+                          TargetType="ListBoxItem">
+                <Setter Property="Background" Value="Transparent" />
+                <Setter Property="Template">
+                    <ControlTemplate>
+                        <ContentPresenter Name="PART_ContentPresenter"
+                                          Padding="{TemplateBinding Padding}"
+                                          HorizontalContentAlignment="Stretch"
+                                          Background="{TemplateBinding Background}"
+                                          Content="{TemplateBinding Content}"
+                                          ContentTemplate="{TemplateBinding ContentTemplate}" />
+                    </ControlTemplate>
+                </Setter>
+            </ControlTheme>
+
+            <!--
+                A whole clickable row: ShadUI's button lays its content out in a horizontal stack, which would squeeze the
+                row's columns, so rows get a plain border that highlights on hover.
+            -->
+            <ControlTheme x:Key="RowButtonTheme"
+                          TargetType="Button">
+                <Setter Property="Background" Value="Transparent" />
+                <Setter Property="Foreground" Value="{DynamicResource ForegroundColor}" />
+                <Setter Property="Padding" Value="20,10" />
+                <Setter Property="BorderThickness" Value="0,1,0,0" />
+                <Setter Property="BorderBrush" Value="{DynamicResource BorderColor}" />
+                <Setter Property="Cursor" Value="Hand" />
+                <Setter Property="Template">
+                    <ControlTemplate>
+                        <ContentPresenter Name="PART_ContentPresenter"
+                                          Padding="{TemplateBinding Padding}"
+                                          HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                          VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"
+                                          Background="{TemplateBinding Background}"
+                                          BorderBrush="{TemplateBinding BorderBrush}"
+                                          BorderThickness="{TemplateBinding BorderThickness}"
+                                          Content="{TemplateBinding Content}"
+                                          ContentTemplate="{TemplateBinding ContentTemplate}" />
+                    </ControlTemplate>
+                </Setter>
+                <Style Selector="^:pointerover">
+                    <Setter Property="Background" Value="{DynamicResource GhostColor}" />
+                </Style>
+            </ControlTheme>
+        </ResourceDictionary>
+    </Styles.Resources>
+
+    <!--  ":is", so it also reaches ShadUI's window, which styles as its own type.  -->
+    <Style Selector=":is(Window)">
+        <Setter Property="FontFamily" Value="fonts:Inter#Inter" />
+    </Style>
+
+    <!--  A ShadUI card: flat surface, thin border, rounded corners.  -->
+    <Style Selector="Border.card">
+        <Setter Property="Background" Value="{DynamicResource CardBackgroundColor}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderColor}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="{DynamicResource XlCornerRadius}" />
+        <Setter Property="Padding" Value="16" />
+        <Setter Property="BoxShadow" Value="{DynamicResource Shadow}" />
+    </Style>
+
+    <Style Selector="Border.inset">
+        <Setter Property="Background" Value="{DynamicResource InsetBrush}" />
+        <Setter Property="CornerRadius" Value="{DynamicResource MdCornerRadius}" />
+    </Style>
+
+    <Style Selector="TextBlock.label">
+        <Setter Property="Foreground" Value="{DynamicResource MutedColor}" />
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="LetterSpacing" Value="1" />
+    </Style>
+
+    <Style Selector="TextBlock.muted">
+        <Setter Property="Foreground" Value="{DynamicResource MutedColor}" />
+    </Style>
+
+    <Style Selector="TextBlock.big">
+        <Setter Property="FontSize" Value="54" />
+        <Setter Property="FontWeight" Value="Bold" />
+        <Setter Property="FontFeatures" Value="+tnum" />
+    </Style>
+
+    <Style Selector="TextBlock.medium">
+        <Setter Property="FontSize" Value="30" />
+        <Setter Property="FontWeight" Value="Bold" />
+        <Setter Property="FontFeatures" Value="+tnum" />
+    </Style>
+
+    <Style Selector="TextBlock.unit">
+        <Setter Property="Foreground" Value="{DynamicResource MutedColor}" />
+        <Setter Property="FontSize" Value="16" />
+        <Setter Property="VerticalAlignment" Value="Bottom" />
+        <Setter Property="Margin" Value="6,0,0,10" />
+    </Style>
+
+    <!--  The app's own heading sizes, in place of ShadUI's larger h1 and h2.  -->
+    <Style Selector="TextBlock.h1">
+        <Setter Property="FontSize" Value="26" />
+        <Setter Property="FontWeight" Value="Bold" />
+        <Setter Property="LetterSpacing" Value="-0.5" />
+    </Style>
+    <Style Selector="TextBlock.section">
+        <Setter Property="FontSize" Value="18" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Margin" Value="2,0,0,-4" />
+    </Style>
+
+    <Style Selector="TextBlock.h2">
+        <Setter Property="FontSize" Value="17" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="LetterSpacing" Value="0" />
+    </Style>
+
+    <Style Selector="TextBlock.stat">
+        <Setter Property="FontFeatures" Value="+tnum" />
+        <Setter Property="HorizontalAlignment" Value="Right" />
+    </Style>
+
+    <!--
+        Buttons use ShadUI's variants: Primary for the main action on each page, Outline or Ghost for the rest.
+    -->
+    <Style Selector="Button.control">
+        <Setter Property="MinWidth" Value="96" />
+        <Setter Property="Height" Value="56" />
+        <Setter Property="HorizontalContentAlignment" Value="Center" />
+        <Setter Property="FontSize" Value="15" />
+    </Style>
+
+    <!--  The round "?" that opens the help.  -->
+    <Style Selector="Button.help">
+        <Setter Property="Width" Value="40" />
+        <Setter Property="Height" Value="40" />
+        <Setter Property="MinHeight" Value="40" />
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="CornerRadius" Value="20" />
+        <Setter Property="HorizontalContentAlignment" Value="Center" />
+    </Style>
+
+    <!--  A whole clickable row, as on the history page: plain text, no button chrome.  -->
+    <Style Selector="Button.row">
+        <Setter Property="Theme" Value="{StaticResource RowButtonTheme}" />
+    </Style>
+
+    <Style Selector="Path.bike">
+        <Setter Property="Data" Value="{x:Static c:BikeIcon.Geometry}" />
+        <Setter Property="Stroke" Value="{DynamicResource PrimaryColor}" />
+        <Setter Property="StrokeThickness" Value="4" />
+        <Setter Property="StrokeLineCap" Value="Round" />
+        <Setter Property="StrokeJoin" Value="Round" />
+        <Setter Property="Stretch" Value="Uniform" />
+    </Style>
+
+    <Style Selector="Border.pill">
+        <Setter Property="CornerRadius" Value="{DynamicResource FullCornerRadius}" />
+        <Setter Property="Padding" Value="10,3" />
+    </Style>
+
+    <!--  Workout cards: the list item is just the card, and the selected card gets a primary-colored outline.  -->
+    <Style Selector="ListBox.workouts">
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="ItemContainerTheme" Value="{StaticResource WorkoutItemTheme}" />
+    </Style>
+    <Style Selector="ListBox.workouts ListBoxItem">
+        <Setter Property="Margin" Value="0,0,6,8" />
+    </Style>
+    <Style Selector="ListBox.workouts ListBoxItem Border.card">
+        <Setter Property="BorderThickness" Value="2" />
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderColor60}" />
+    </Style>
+    <Style Selector="ListBox.workouts ListBoxItem:pointerover Border.card">
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderColor}" />
+    </Style>
+    <Style Selector="ListBox.workouts ListBoxItem:selected Border.card">
+        <Setter Property="BorderBrush" Value="{DynamicResource PrimaryColor}" />
+        <Setter Property="Background" Value="{DynamicResource SelectedCardBrush}" />
+    </Style>
+</Styles>

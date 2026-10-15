@@ -1,0 +1,517 @@
+﻿<UserControl x:Class="SimpleBikeTrainer.Desktop.Views.HomeView"
+             xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:c="using:SimpleBikeTrainer.Desktop.Controls"
+             xmlns:icons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+             xmlns:r="using:SimpleBikeTrainer.Desktop.Resources"
+             xmlns:s="using:SimpleBikeTrainer.Desktop.Services"
+             xmlns:shadui="clr-namespace:ShadUI;assembly=ShadUI"
+             xmlns:v="using:SimpleBikeTrainer.Desktop.Views"
+             xmlns:vm="using:SimpleBikeTrainer.Desktop.ViewModels"
+             x:DataType="vm:HomeViewModel">
+    <Grid Margin="24"
+          ColumnDefinitions="400,*">
+
+        <!--  Workout list  -->
+        <DockPanel Grid.Column="0"
+                   Margin="0,0,24,0">
+            <Grid Margin="0,0,0,16"
+                  ColumnDefinitions="Auto,*,Auto"
+                  DockPanel.Dock="Top">
+                <Path Width="44"
+                      Height="44"
+                      Margin="0,0,12,0"
+                      Classes="bike" />
+                <StackPanel Grid.Column="1"
+                            VerticalAlignment="Center"
+                            Spacing="2">
+                    <TextBlock Classes="h1"
+                               FontSize="22"
+                               Text="{Binding AppName}" />
+                    <TextBlock Classes="muted"
+                               Text="{Binding AthleteText}" />
+                </StackPanel>
+                <Button Grid.Column="2"
+                        VerticalAlignment="Center"
+                        Classes="help Ghost"
+                        Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ShowHelpCommand}"
+                        Content="{icons:MaterialIconExt Kind=HelpCircleOutline,
+                                                        IconSize=24}"
+                        ToolTip.Tip="{x:Static r:Strings.Common_HelpTip}" />
+            </Grid>
+            <StackPanel Margin="0,12,0,0"
+                        DockPanel.Dock="Bottom"
+                        Orientation="Horizontal"
+                        Spacing="8">
+                <Button Classes="Outline"
+                        Command="{Binding OpenFileCommand}"
+                        ToolTip.Tip="{x:Static r:Strings.Home_OpenTip}">
+                    <icons:MaterialIconText Kind="FolderOpenOutline"
+                                            Text="{x:Static r:Strings.Home_Open}" />
+                </Button>
+                <Button Classes="Outline"
+                        Command="{Binding HistoryCommand}"
+                        ToolTip.Tip="{x:Static r:Strings.Home_HistoryTip}">
+                    <icons:MaterialIconText Kind="History"
+                                            Text="{x:Static r:Strings.Home_History}" />
+                </Button>
+                <Button Classes="Outline"
+                        Command="{Binding SettingsCommand}">
+                    <icons:MaterialIconText Kind="CogOutline"
+                                            Text="{x:Static r:Strings.Home_Settings}" />
+                </Button>
+            </StackPanel>
+            <!--  Planned rides above the divider, everything else below.  -->
+            <ScrollViewer HorizontalScrollBarVisibility="Disabled">
+                <StackPanel>
+                    <!--  Rides cut off by a crash or power loss.  -->
+                    <ItemsControl ItemsSource="{Binding Interrupted}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="vm:InterruptedRow">
+                                <Border Margin="0,0,6,12"
+                                        BorderBrush="{DynamicResource WarnBrush}"
+                                        Classes="card">
+                                    <StackPanel Spacing="8">
+                                        <StackPanel Orientation="Horizontal"
+                                                    Spacing="8">
+                                            <icons:MaterialIcon Width="20"
+                                                                Height="20"
+                                                                Foreground="{DynamicResource WarnBrush}"
+                                                                Kind="BackupRestore" />
+                                            <TextBlock VerticalAlignment="Center"
+                                                       FontWeight="SemiBold"
+                                                       Text="{x:Static r:Strings.Home_Unfinished}" />
+                                        </StackPanel>
+                                        <TextBlock Classes="muted"
+                                                   Text="{Binding Text}"
+                                                   TextWrapping="Wrap" />
+                                        <StackPanel Orientation="Horizontal"
+                                                    Spacing="8">
+                                            <Button Classes="Primary"
+                                                    Command="{Binding $parent[UserControl].((vm:HomeViewModel)DataContext).RecoverCommand}"
+                                                    CommandParameter="{Binding}">
+                                                <icons:MaterialIconText Kind="ContentSaveOutline"
+                                                                        Text="{x:Static r:Strings.Home_SaveAndReview}" />
+                                            </Button>
+                                            <Button Classes="Outline"
+                                                    Command="{Binding $parent[UserControl].((vm:HomeViewModel)DataContext).DiscardCommand}"
+                                                    CommandParameter="{Binding}"
+                                                    Content="{Binding DiscardLabel}" />
+                                        </StackPanel>
+                                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+
+                    <Grid Margin="2,0,6,4"
+                          ColumnDefinitions="*,Auto">
+                        <TextBlock VerticalAlignment="Center"
+                                   Classes="label"
+                                   Text="{x:Static r:Strings.Home_Planned}" />
+                        <Button Grid.Column="1"
+                                Width="32"
+                                Height="32"
+                                MinHeight="32"
+                                Classes="help Ghost"
+                                Command="{Binding RefreshCommand}"
+                                Content="{icons:MaterialIconExt Kind=Refresh,
+                                                                IconSize=20}"
+                                CornerRadius="16"
+                                ToolTip.Tip="{x:Static r:Strings.Home_RefreshTip}" />
+                    </Grid>
+                    <StackPanel Margin="4,4,0,16"
+                                IsVisible="{Binding IsLoading}"
+                                Orientation="Horizontal"
+                                Spacing="12">
+                        <shadui:Loading Width="24"
+                                        Height="24" />
+                        <TextBlock VerticalAlignment="Center"
+                                   Classes="muted"
+                                   Text="{x:Static r:Strings.Home_Loading}" />
+                    </StackPanel>
+                    <TextBlock Margin="2,0,0,12"
+                               Classes="muted"
+                               IsVisible="{Binding Status, Converter={x:Static ObjectConverters.IsNotNull}}"
+                               Text="{Binding Status}"
+                               TextWrapping="Wrap" />
+
+                    <!--  Why planned rides did not load, and what to do about it. Hover for the raw error.  -->
+                    <Border Margin="0,0,6,12"
+                            BorderBrush="{DynamicResource BadBrush}"
+                            Classes="card"
+                            IsVisible="{Binding HasLoadError}"
+                            ToolTip.Tip="{Binding LoadErrorDetail}">
+                        <StackPanel Spacing="8">
+                            <StackPanel Orientation="Horizontal"
+                                        Spacing="8">
+                                <icons:MaterialIcon Width="20"
+                                                    Height="20"
+                                                    Foreground="{DynamicResource BadBrush}"
+                                                    Kind="AlertCircleOutline" />
+                                <TextBlock VerticalAlignment="Center"
+                                           FontWeight="SemiBold"
+                                           Text="{x:Static r:Strings.Home_LoadFailed}" />
+                            </StackPanel>
+                            <TextBlock Classes="muted"
+                                       Text="{Binding LoadError}"
+                                       TextWrapping="Wrap" />
+                            <StackPanel Orientation="Horizontal"
+                                        Spacing="8">
+                                <Button Classes="Outline"
+                                        Command="{Binding RefreshCommand}">
+                                    <icons:MaterialIconText Kind="Refresh"
+                                                            Text="{x:Static r:Strings.Home_TryAgain}" />
+                                </Button>
+                                <Button Classes="Outline"
+                                        Command="{Binding SettingsCommand}"
+                                        IsVisible="{Binding LoadErrorNeedsSettings}">
+                                    <icons:MaterialIconText Kind="CogOutline"
+                                                            Text="{x:Static r:Strings.Home_OpenSettings}" />
+                                </Button>
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+                    <ListBox Background="Transparent"
+                             Classes="workouts"
+                             ItemsSource="{Binding PlannedCards}"
+                             ScrollViewer.VerticalScrollBarVisibility="Disabled"
+                             SelectedItem="{Binding SelectedPlanned}">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate x:DataType="vm:WorkoutCard">
+                                <Border Padding="14"
+                                        Classes="card">
+                                    <StackPanel Spacing="6">
+                                        <Grid ColumnDefinitions="*,Auto">
+                                            <TextBlock Classes="h2"
+                                                       Text="{Binding Title}"
+                                                       TextTrimming="CharacterEllipsis" />
+                                            <Border Grid.Column="1"
+                                                    Background="{DynamicResource PrimaryColor}"
+                                                    Classes="pill"
+                                                    IsVisible="{Binding IsToday}">
+                                                <TextBlock FontSize="11"
+                                                           FontWeight="Bold"
+                                                           Foreground="{DynamicResource PrimaryForegroundColor}"
+                                                           Text="{x:Static r:Strings.Common_TodayBadge}" />
+                                            </Border>
+                                        </Grid>
+                                        <TextBlock Classes="muted"
+                                                   FontSize="13"
+                                                   Text="{Binding Subtitle}" />
+                                        <c:WorkoutChart Height="40"
+                                                        Compact="True"
+                                                        Ftp="{Binding $parent[UserControl].((vm:HomeViewModel)DataContext).Ftp}"
+                                                        IsVisible="{Binding HasProfile}"
+                                                        Workout="{Binding Workout}" />
+                                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                    <Border Height="1"
+                            Margin="0,8,0,16"
+                            Background="{DynamicResource BorderColor}" />
+                    <TextBlock Margin="2,0,0,8"
+                               Classes="label"
+                               Text="{x:Static r:Strings.Home_OtherRides}" />
+                    <ListBox Background="Transparent"
+                             Classes="workouts"
+                             ItemsSource="{Binding OtherCards}"
+                             ScrollViewer.VerticalScrollBarVisibility="Disabled"
+                             SelectedItem="{Binding SelectedOther}">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate x:DataType="vm:WorkoutCard">
+                                <Border Padding="14"
+                                        Classes="card">
+                                    <StackPanel Spacing="6">
+                                        <Grid ColumnDefinitions="*,Auto">
+                                            <TextBlock Classes="h2"
+                                                       Text="{Binding Title}"
+                                                       TextTrimming="CharacterEllipsis" />
+                                            <Border Grid.Column="1"
+                                                    Background="{DynamicResource PrimaryColor}"
+                                                    Classes="pill"
+                                                    IsVisible="{Binding IsToday}">
+                                                <TextBlock FontSize="11"
+                                                           FontWeight="Bold"
+                                                           Foreground="{DynamicResource PrimaryForegroundColor}"
+                                                           Text="{x:Static r:Strings.Common_TodayBadge}" />
+                                            </Border>
+                                        </Grid>
+                                        <TextBlock Classes="muted"
+                                                   FontSize="13"
+                                                   Text="{Binding Subtitle}" />
+                                        <c:WorkoutChart Height="40"
+                                                        Compact="True"
+                                                        Ftp="{Binding $parent[UserControl].((vm:HomeViewModel)DataContext).Ftp}"
+                                                        IsVisible="{Binding HasProfile}"
+                                                        Workout="{Binding Workout}" />
+                                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </StackPanel>
+            </ScrollViewer>
+        </DockPanel>
+
+        <!--  Selected workout and devices  -->
+        <Grid Grid.Column="1"
+              RowDefinitions="*,Auto">
+            <Border Padding="24"
+                    Classes="card"
+                    IsVisible="{Binding Selected, Converter={x:Static ObjectConverters.IsNotNull}}">
+                <DockPanel>
+                    <StackPanel DockPanel.Dock="Top"
+                                Spacing="6">
+                        <TextBlock Classes="h1"
+                                   Text="{Binding Selected.Title}" />
+                        <TextBlock Classes="muted"
+                                   Text="{Binding Selected.Subtitle}" />
+                        <c:WorkoutChart Height="200"
+                                        Margin="0,16,0,8"
+                                        Ftp="{Binding Ftp}"
+                                        Workout="{Binding Selected.Workout}" />
+                        <v:ChartLegend Margin="0,0,0,8"
+                                       IsRoute="{Binding Selected.IsRoute}" />
+                    </StackPanel>
+
+                    <!--  The route generator, in place of the step list.  -->
+                    <StackPanel Margin="0,8,0,0"
+                                DockPanel.Dock="Top"
+                                IsVisible="{Binding Selected.IsRoute}"
+                                Spacing="12">
+                        <StackPanel Orientation="Horizontal"
+                                    Spacing="16">
+                            <StackPanel Spacing="4">
+                                <TextBlock Classes="muted"
+                                           FontSize="12"
+                                           Text="{Binding DistanceLabel}" />
+                                <NumericUpDown Width="150"
+                                               FormatString="0.#"
+                                               Increment="5"
+                                               Maximum="200"
+                                               Minimum="2"
+                                               Value="{Binding RouteDistance}" />
+                            </StackPanel>
+                            <StackPanel Spacing="4">
+                                <TextBlock Classes="muted"
+                                           FontSize="12"
+                                           Text="{Binding ClimbLabel}" />
+                                <NumericUpDown Width="150"
+                                               FormatString="0"
+                                               Increment="100"
+                                               Maximum="10000"
+                                               Minimum="0"
+                                               Value="{Binding RouteClimb}" />
+                            </StackPanel>
+                            <Button VerticalAlignment="Bottom"
+                                    Classes="Outline"
+                                    Command="{Binding NewRouteCommand}"
+                                    Content="{x:Static r:Strings.Home_NewRoute}"
+                                    ToolTip.Tip="{x:Static r:Strings.Home_NewRouteTip}" />
+                        </StackPanel>
+                        <TextBlock Classes="muted"
+                                   Text="{Binding RouteStats}"
+                                   TextWrapping="Wrap" />
+                        <TextBlock Classes="muted"
+                                   FontSize="12"
+                                   Text="{x:Static r:Strings.Home_RouteNote}"
+                                   TextWrapping="Wrap" />
+                    </StackPanel>
+
+                    <ScrollViewer IsVisible="{Binding !Selected.IsRoute}">
+                        <StackPanel Spacing="12">
+                            <ItemsControl ItemsSource="{Binding Selected.Steps}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:DataType="vm:StepRow">
+                                        <Grid Margin="0,3"
+                                              ColumnDefinitions="6,*,90,2*">
+                                            <Border Background="{Binding Swatch}"
+                                                    CornerRadius="3" />
+                                            <TextBlock Grid.Column="1"
+                                                       Margin="12,0,0,0"
+                                                       Text="{Binding Label}" />
+                                            <TextBlock Grid.Column="2"
+                                                       Classes="muted"
+                                                       Text="{Binding Duration}" />
+                                            <TextBlock Grid.Column="3"
+                                                       Classes="muted"
+                                                       Text="{Binding Target}" />
+                                        </Grid>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                            <TextBlock Classes="muted"
+                                       FontSize="12"
+                                       IsVisible="{Binding Selected.Description, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                                       Text="{Binding Selected.Description}"
+                                       TextWrapping="Wrap" />
+                        </StackPanel>
+                    </ScrollViewer>
+                </DockPanel>
+            </Border>
+
+            <Border Grid.Row="1"
+                    Margin="0,16,0,0"
+                    Classes="card">
+                <Grid ColumnDefinitions="*,Auto">
+                    <StackPanel Spacing="8">
+                        <TextBlock Classes="label"
+                                   Text="{x:Static r:Strings.Common_Devices}" />
+                        <TextBlock Text="{Binding Devices.Status}"
+                                   TextWrapping="Wrap" />
+                        <ItemsControl ItemsSource="{Binding Devices.Rows}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate x:DataType="s:DeviceRow">
+                                    <StackPanel Margin="0,2"
+                                                Orientation="Horizontal"
+                                                Spacing="10">
+                                        <Ellipse Width="10"
+                                                 Height="10"
+                                                 Fill="{DynamicResource GoodBrush}"
+                                                 IsVisible="{Binding Connected}" />
+                                        <Ellipse Width="10"
+                                                 Height="10"
+                                                 Fill="{DynamicResource BadBrush}"
+                                                 IsVisible="{Binding !Connected}" />
+                                        <TextBlock Width="90"
+                                                   Classes="muted"
+                                                   Text="{Binding Kind}" />
+                                        <TextBlock FontWeight="SemiBold"
+                                                   Text="{Binding Name}" />
+                                        <TextBlock Classes="muted"
+                                                   Text="{Binding Detail}" />
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+
+                        <!--  Saved devices that are not connected: what Connect looks for. The picker lists them while it is open.  -->
+                        <ItemsControl IsVisible="{Binding !Devices.IsScanning}"
+                                      ItemsSource="{Binding Devices.Saved}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate x:DataType="s:SavedDeviceRow">
+                                    <StackPanel Orientation="Horizontal"
+                                                Spacing="10">
+                                        <Ellipse Width="10"
+                                                 Height="10"
+                                                 Stroke="{DynamicResource MutedColor}"
+                                                 StrokeThickness="1.5" />
+                                        <TextBlock Width="90"
+                                                   VerticalAlignment="Center"
+                                                   Classes="muted"
+                                                   Text="{Binding Kind}" />
+                                        <TextBlock VerticalAlignment="Center"
+                                                   FontWeight="SemiBold"
+                                                   Text="{Binding Name}" />
+                                        <TextBlock VerticalAlignment="Center"
+                                                   Classes="muted"
+                                                   Text="{x:Static r:Strings.Device_Saved}" />
+                                        <TextBlock VerticalAlignment="Center"
+                                                   Classes="muted"
+                                                   FontSize="12"
+                                                   Text="{Binding Address}" />
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+
+                        <!--  The picker: what the scan found, to tick.  -->
+                        <StackPanel IsVisible="{Binding Devices.IsScanning}"
+                                    Spacing="6">
+                            <Border Padding="8,4"
+                                    Classes="inset">
+                                <ScrollViewer MaxHeight="190">
+                                    <ItemsControl ItemsSource="{Binding Devices.Candidates}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate x:DataType="s:CandidateRow">
+                                                <CheckBox Margin="0,1"
+                                                          IsChecked="{Binding Selected}">
+                                                    <Grid ColumnDefinitions="100,250,150,100">
+                                                        <TextBlock Classes="muted"
+                                                                   Text="{Binding KindLabel}" />
+                                                        <TextBlock Grid.Column="1"
+                                                                   FontWeight="SemiBold"
+                                                                   Text="{Binding Name}"
+                                                                   TextTrimming="CharacterEllipsis" />
+                                                        <TextBlock Grid.Column="2"
+                                                                   VerticalAlignment="Center"
+                                                                   Classes="muted"
+                                                                   FontSize="12"
+                                                                   Text="{Binding Address}" />
+                                                        <TextBlock Grid.Column="3"
+                                                                   VerticalAlignment="Center"
+                                                                   Classes="muted"
+                                                                   FontSize="12"
+                                                                   Text="{Binding Signal}" />
+                                                    </Grid>
+                                                </CheckBox>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </ScrollViewer>
+                            </Border>
+                            <TextBlock Classes="muted"
+                                       FontSize="12"
+                                       Text="{x:Static r:Strings.Home_PickerHint}"
+                                       TextWrapping="Wrap" />
+                        </StackPanel>
+
+                        <StackPanel Orientation="Horizontal"
+                                    Spacing="12">
+                            <Button Classes="Outline"
+                                    Command="{Binding ConnectCommand}"
+                                    Content="{Binding Devices.ConnectLabel}"
+                                    IsVisible="{Binding Devices.CanConnect}" />
+                            <Button Classes="Outline"
+                                    Command="{Binding ScanCommand}"
+                                    Content="{Binding Devices.ScanLabel}"
+                                    IsVisible="{Binding Devices.CanScan}"
+                                    ToolTip.Tip="{Binding Devices.ScanTip}" />
+                            <Button Classes="Primary"
+                                    Command="{Binding ConnectChosenCommand}"
+                                    Content="{x:Static r:Strings.Home_ConnectSelected}"
+                                    IsEnabled="{Binding Devices.CanConnectPicked}"
+                                    IsVisible="{Binding Devices.IsScanning}" />
+                            <Button Classes="Outline"
+                                    Command="{Binding CancelDevicesCommand}"
+                                    Content="{x:Static r:Strings.Common_Cancel}"
+                                    IsVisible="{Binding Devices.IsBusy}" />
+                            <Button Classes="Outline"
+                                    Command="{Binding DisconnectCommand}"
+                                    Content="{x:Static r:Strings.Home_Disconnect}"
+                                    IsVisible="{Binding Devices.IsConnected}" />
+                            <Button Classes="Outline"
+                                    Command="{Binding CalibrateCommand}"
+                                    IsVisible="{Binding Devices.IsConnected}"
+                                    ToolTip.Tip="{x:Static r:Strings.Home_CalibrateTip}">
+                                <icons:MaterialIconText Kind="Tune"
+                                                        Text="{x:Static r:Strings.Home_Calibrate}" />
+                            </Button>
+                            <CheckBox Content="{x:Static r:Strings.Home_Simulate}"
+                                      IsChecked="{Binding Devices.Simulate}"
+                                      IsVisible="{Binding Devices.CanConnect}" />
+                            <shadui:Loading Width="24"
+                                            Height="24"
+                                            VerticalAlignment="Center"
+                                            IsVisible="{Binding Devices.IsBusy}" />
+                        </StackPanel>
+                    </StackPanel>
+                    <!--  Pinned to the card's bottom edge, so the picker growing above it does not move it.  -->
+                    <Button Grid.Column="1"
+                            Height="62"
+                            Padding="36,18"
+                            VerticalAlignment="Bottom"
+                            Classes="Primary"
+                            Command="{Binding StartCommand}"
+                            Content="{icons:MaterialIconTextExt Kind=Play,
+                                                                Text={x:Static r:Strings.Home_StartRide},
+                                                                IconSize=26}"
+                            FontSize="20" />
+                </Grid>
+            </Border>
+        </Grid>
+    </Grid>
+</UserControl>

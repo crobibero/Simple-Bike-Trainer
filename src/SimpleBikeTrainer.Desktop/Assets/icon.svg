@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 128 128">
+  <!-- The app icon: BikeIcon.Geometry in near-white on ShadUI's near-black, the light theme's Primary button colors.
+       The thin lighter edge keeps it visible on a black taskbar. After changing it, regenerate the others:
+       rsvg-convert -w 512 -h 512 icon.svg -o icon.png
+       magick -background none icon.svg -define icon:auto-resize=256,128,64,48,32,16 icon.ico -->
+  <rect x="1" y="1" width="126" height="126" rx="28" fill="#18181B" stroke="#3F3F46" stroke-width="2" />
+  <g transform="translate(8,4) scale(1.75)" fill="none" stroke="#FAFAFA" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M4,42 a10,10 0 1,0 20,0 a10,10 0 1,0 -20,0 Z M40,42 a10,10 0 1,0 20,0 a10,10 0 1,0 -20,0 Z M14,42 L30,42 L25,24 Z M30,42 L46,26 L50,42 M25,24 L46,26 M25,24 L24,19 M19,19 L29,19 M46,26 L44,17 L50,16" />
+  </g>
+</svg>

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!-- The publish workflow replaces VERSION. -->
+<plist version="1.0">
+<dict>
+    <key>CFBundleName</key>
+    <string>Simple Bike Trainer</string>
+    <key>CFBundleDisplayName</key>
+    <string>Simple Bike Trainer</string>
+    <key>CFBundleIdentifier</key>
+    <string>io.github.crobibero.SimpleBikeTrainer</string>
+    <key>CFBundleExecutable</key>
+    <string>simple-bike-trainer</string>
+    <key>CFBundleIconFile</key>
+    <string>icon.icns</string>
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+    <key>CFBundleVersion</key>
+    <string>VERSION</string>
+    <key>CFBundleShortVersionString</key>
+    <string>VERSION</string>
+    <key>LSMinimumSystemVersion</key>
+    <string>12.0</string>
+    <key>NSHighResolutionCapable</key>
+    <true/>
+</dict>
+</plist>

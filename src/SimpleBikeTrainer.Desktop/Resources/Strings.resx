@@ -1,0 +1,1236 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="Common_HelpTip" xml:space="preserve">
+    <value>What the numbers and chart mean</value>
+  </data>
+  <data name="Shutdown_Title" xml:space="preserve">
+    <value>Shutting down…</value>
+  </data>
+  <data name="Shutdown_Detail" xml:space="preserve">
+    <value>Stopping the ride and disconnecting devices</value>
+  </data>
+  <data name="Common_Back" xml:space="preserve">
+    <value>Back</value>
+  </data>
+  <data name="Common_Cancel" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
+  <data name="Common_TodayBadge" xml:space="preserve">
+    <value>TODAY</value>
+  </data>
+  <data name="Unit_Watts" xml:space="preserve">
+    <value>W</value>
+  </data>
+  <data name="Unit_Rpm" xml:space="preserve">
+    <value>rpm</value>
+  </data>
+  <data name="Unit_Bpm" xml:space="preserve">
+    <value>bpm</value>
+  </data>
+  <data name="Home_OpenTip" xml:space="preserve">
+    <value>Open a workout file</value>
+  </data>
+  <data name="Home_Open" xml:space="preserve">
+    <value>Open…</value>
+  </data>
+  <data name="Home_HistoryTip" xml:space="preserve">
+    <value>Past rides</value>
+  </data>
+  <data name="Home_History" xml:space="preserve">
+    <value>History</value>
+  </data>
+  <data name="Home_Settings" xml:space="preserve">
+    <value>Settings</value>
+  </data>
+  <data name="Home_Unfinished" xml:space="preserve">
+    <value>Unfinished ride</value>
+  </data>
+  <data name="Home_SaveAndReview" xml:space="preserve">
+    <value>Save and review</value>
+  </data>
+  <data name="Home_Planned" xml:space="preserve">
+    <value>PLANNED · NEXT 7 DAYS</value>
+  </data>
+  <data name="Home_RefreshTip" xml:space="preserve">
+    <value>Reload planned rides</value>
+  </data>
+  <data name="Home_Loading" xml:space="preserve">
+    <value>Loading planned rides from Intervals.icu…</value>
+  </data>
+  <data name="Home_LoadFailed" xml:space="preserve">
+    <value>Could not load planned rides</value>
+  </data>
+  <data name="Home_TryAgain" xml:space="preserve">
+    <value>Try again</value>
+  </data>
+  <data name="Home_OpenSettings" xml:space="preserve">
+    <value>Open Settings</value>
+  </data>
+  <data name="Home_OtherRides" xml:space="preserve">
+    <value>OTHER RIDES</value>
+  </data>
+  <data name="Home_NewRoute" xml:space="preserve">
+    <value>New route</value>
+  </data>
+  <data name="Home_NewRouteTip" xml:space="preserve">
+    <value>Make another route with the same distance and climbing</value>
+  </data>
+  <data name="Home_RouteNote" xml:space="preserve">
+    <value>Routes ride on the virtual gears. The road's grade sets the resistance; shift down for climbs. The ride file records the climbing, so Intervals.icu and Garmin Connect show the elevation gain.</value>
+  </data>
+  <data name="Common_Devices" xml:space="preserve">
+    <value>DEVICES</value>
+  </data>
+  <data name="Home_PickerHint" xml:space="preserve">
+    <value>Select one trainer, plus a heart rate monitor and Zwift Click controllers if you use them. If a device is missing, close other apps connected to it, such as Zwift or the Wahoo app, and pedal to wake the KICKR.</value>
+  </data>
+  <data name="Devices_Add" xml:space="preserve">
+    <value>Add device…</value>
+  </data>
+  <data name="Devices_AddTip" xml:space="preserve">
+    <value>Scan for another device; the connected ones stay connected</value>
+  </data>
+  <data name="Devices_ScanningToAdd" xml:space="preserve">
+    <value>Scanning. Select the devices to add; the connected ones stay connected. A new trainer or heart rate monitor replaces the current one.</value>
+  </data>
+  <data name="Device_Saved" xml:space="preserve">
+    <value>saved, not connected</value>
+  </data>
+  <data name="Home_ChooseDevices" xml:space="preserve">
+    <value>Choose devices…</value>
+  </data>
+  <data name="Home_ChooseDevicesTip" xml:space="preserve">
+    <value>Scan for devices and pick different ones</value>
+  </data>
+  <data name="Home_ConnectSelected" xml:space="preserve">
+    <value>Connect selected</value>
+  </data>
+  <data name="Home_Disconnect" xml:space="preserve">
+    <value>Disconnect</value>
+  </data>
+  <data name="Home_CalibrateTip" xml:space="preserve">
+    <value>Spin-down calibration</value>
+  </data>
+  <data name="Home_Calibrate" xml:space="preserve">
+    <value>Calibrate</value>
+  </data>
+  <data name="Home_Simulate" xml:space="preserve">
+    <value>Simulate (no hardware)</value>
+  </data>
+  <data name="Home_StartRide" xml:space="preserve">
+    <value>Start ride</value>
+  </data>
+  <data name="Cal_Title" xml:space="preserve">
+    <value>Calibrate the trainer</value>
+  </data>
+  <data name="Cal_SpinDown" xml:space="preserve">
+    <value>SPIN-DOWN</value>
+  </data>
+  <data name="Cal_Speed" xml:space="preserve">
+    <value>SPEED</value>
+  </data>
+  <data name="Cal_Start" xml:space="preserve">
+    <value>Start spin-down</value>
+  </data>
+  <data name="Legend_RouteTip" xml:space="preserve">
+    <value>The route's hills, colored by grade</value>
+  </data>
+  <data name="Legend_Downhill" xml:space="preserve">
+    <value>Downhill</value>
+  </data>
+  <data name="Legend_Flat" xml:space="preserve">
+    <value>Flat, under 2%</value>
+  </data>
+  <data name="Legend_Grade2" xml:space="preserve">
+    <value>2-4%</value>
+  </data>
+  <data name="Legend_Grade4" xml:space="preserve">
+    <value>4-6%</value>
+  </data>
+  <data name="Legend_Grade6" xml:space="preserve">
+    <value>6-9%</value>
+  </data>
+  <data name="Legend_Grade9" xml:space="preserve">
+    <value>9% and steeper</value>
+  </data>
+  <data name="Legend_Elevation" xml:space="preserve">
+    <value>Elevation, colored by grade</value>
+  </data>
+  <data name="Legend_StepsTip" xml:space="preserve">
+    <value>Each block is a workout step. Height is the target power, and color is its power zone.</value>
+  </data>
+  <data name="Legend_Z1" xml:space="preserve">
+    <value>Z1 Recovery, up to 55% of FTP</value>
+  </data>
+  <data name="Legend_Z2" xml:space="preserve">
+    <value>Z2 Endurance, 56-75% of FTP</value>
+  </data>
+  <data name="Legend_Z3" xml:space="preserve">
+    <value>Z3 Tempo, 76-90% of FTP</value>
+  </data>
+  <data name="Legend_Z4" xml:space="preserve">
+    <value>Z4 Threshold, 91-105% of FTP</value>
+  </data>
+  <data name="Legend_Z5" xml:space="preserve">
+    <value>Z5 VO2max, 106-120% of FTP</value>
+  </data>
+  <data name="Legend_Z6" xml:space="preserve">
+    <value>Z6 Anaerobic, 121-150% of FTP</value>
+  </data>
+  <data name="Legend_Z7" xml:space="preserve">
+    <value>Z7 Sprint, over 150% of FTP</value>
+  </data>
+  <data name="Legend_Target" xml:space="preserve">
+    <value>Target power, by zone Z1-Z7</value>
+  </data>
+  <data name="Legend_Power" xml:space="preserve">
+    <value>Your power</value>
+  </data>
+  <data name="Legend_HeartRateTip" xml:space="preserve">
+    <value>Drawn on its own scale, 60-200 bpm</value>
+  </data>
+  <data name="Common_HeartRate" xml:space="preserve">
+    <value>Heart rate</value>
+  </data>
+  <data name="Legend_GradeTip" xml:space="preserve">
+    <value>Drawn on its own scale, -10% to +20%, with a faint line at 0%. The line appears after the grade first changes.</value>
+  </data>
+  <data name="Common_Grade" xml:space="preserve">
+    <value>Grade</value>
+  </data>
+  <data name="Legend_FtpTip" xml:space="preserve">
+    <value>Functional threshold power: about the highest power you can hold for an hour</value>
+  </data>
+  <data name="Common_Ftp" xml:space="preserve">
+    <value>FTP</value>
+  </data>
+  <data name="Legend_Now" xml:space="preserve">
+    <value>Now</value>
+  </data>
+  <data name="Help_Numbers" xml:space="preserve">
+    <value>THE NUMBERS</value>
+  </data>
+  <data name="Help_PowerTerm" xml:space="preserve">
+    <value>Power · 3s</value>
+  </data>
+  <data name="Help_Power" xml:space="preserve">
+    <value>Your power averaged over the last 3 seconds. In ERG, green, yellow, or red shows how close it is to the target.</value>
+  </data>
+  <data name="Help_TargetTerm" xml:space="preserve">
+    <value>Target</value>
+  </data>
+  <data name="Help_Target" xml:space="preserve">
+    <value>The power the workout asks for. In ERG the trainer holds it at any gear or cadence.</value>
+  </data>
+  <data name="Help_HeartRate" xml:space="preserve">
+    <value>Colored by heart rate zone. The zones come from Intervals.icu, or from the max heart rate in Settings.</value>
+  </data>
+  <data name="Help_Grade" xml:space="preserve">
+    <value>The virtual slope. With ERG off, it sets the resistance of each gear; ERG does not use it. On a route, the road sets it.</value>
+  </data>
+  <data name="Help_NpTerm" xml:space="preserve">
+    <value>NP (normalized power)</value>
+  </data>
+  <data name="Help_Np" xml:space="preserve">
+    <value>The steady power that would have cost the same effort as the ride. Surges weigh more than in the plain average, so NP is higher than average power on an uneven ride.</value>
+  </data>
+  <data name="Help_IfTerm" xml:space="preserve">
+    <value>IF (intensity factor)</value>
+  </data>
+  <data name="Help_If" xml:space="preserve">
+    <value>NP divided by FTP. About 0.65 is an easy ride, 0.85-0.95 is a hard tempo ride, and 1.0 is an all-out hour.</value>
+  </data>
+  <data name="Help_TssTerm" xml:space="preserve">
+    <value>TSS (training load)</value>
+  </data>
+  <data name="Help_Tss" xml:space="preserve">
+    <value>Training Stress Score combines time and intensity. One hour at FTP is 100. Most riders recover from a day under about 150 by the next day.</value>
+  </data>
+  <data name="Help_WPrimeTerm" xml:space="preserve">
+    <value>W′ (anaerobic reserve)</value>
+  </data>
+  <data name="Help_WPrime" xml:space="preserve">
+    <value>W′ ("W prime") is the work you can do above FTP, about 20 kJ for most riders. It drains while you ride above FTP and refills below it. The bar shows what is left now. The summary shows the lowest it got; near 0 means you rode to your limit.</value>
+  </data>
+  <data name="Help_WorkTerm" xml:space="preserve">
+    <value>Work</value>
+  </data>
+  <data name="Help_Work" xml:space="preserve">
+    <value>Energy put into the pedals, in kJ. You burn about the same number of kcal.</value>
+  </data>
+  <data name="Common_OnTarget" xml:space="preserve">
+    <value>On target</value>
+  </data>
+  <data name="Help_OnTarget" xml:space="preserve">
+    <value>The share of the lap's seconds within 5% (at least 10 W) of the target.</value>
+  </data>
+  <data name="Common_Best" xml:space="preserve">
+    <value>Best 5s / 1m / 5m / 20m</value>
+  </data>
+  <data name="Help_Best" xml:space="preserve">
+    <value>Your highest average power over each duration in this ride.</value>
+  </data>
+  <data name="Help_ZonesTerm" xml:space="preserve">
+    <value>Power zones</value>
+  </data>
+  <data name="Help_Zones" xml:space="preserve">
+    <value>Percent of FTP: Z1 up to 55, Z2 56-75, Z3 76-90, Z4 91-105, Z5 106-120, Z6 121-150, and Z7 above 150. Zones set in Intervals.icu replace these.</value>
+  </data>
+  <data name="Help_Chart" xml:space="preserve">
+    <value>THE CHART</value>
+  </data>
+  <data name="Help_ChartText" xml:space="preserve">
+    <value>A workout shows its steps as blocks: height is the target power, and color is the power zone. A route shows its hills by distance, colored blue downhill, gray on the flat, then green, yellow, orange, and red as the grade rises. The lines show what you rode; heart rate and grade use their own scales. The dashed line is your FTP, and the vertical line marks where you are now.</value>
+  </data>
+  <data name="Help_Controls" xml:space="preserve">
+    <value>CONTROLS</value>
+  </data>
+  <data name="Help_HarderTerm" xml:space="preserve">
+    <value>Harder / easier</value>
+  </data>
+  <data name="Help_Harder" xml:space="preserve">
+    <value>Click + and − (Y and B on the Click V2), or press ↑ and ↓. With ERG off they shift the virtual gears; in ERG they move the target by 5 W.</value>
+  </data>
+  <data name="Help_GradeKeys" xml:space="preserve">
+    <value>← and → change it by 0.5%. On a route the road sets it.</value>
+  </data>
+  <data name="Common_Erg" xml:space="preserve">
+    <value>ERG</value>
+  </data>
+  <data name="Help_Erg" xml:space="preserve">
+    <value>E switches between ERG, where the trainer holds the target, and virtual gears, where you choose the effort.</value>
+  </data>
+  <data name="Help_StepsTerm" xml:space="preserve">
+    <value>Steps and laps</value>
+  </data>
+  <data name="Help_Steps" xml:space="preserve">
+    <value>S skips to the next step. L starts a new lap.</value>
+  </data>
+  <data name="Help_PauseTerm" xml:space="preserve">
+    <value>Pause and finish</value>
+  </data>
+  <data name="Help_Pause" xml:space="preserve">
+    <value>P or space pauses. The ride also pauses when you stop pedaling. Press Q or Finish twice to end and save the ride.</value>
+  </data>
+  <data name="Help_RampTerm" xml:space="preserve">
+    <value>Ramp test</value>
+  </data>
+  <data name="Help_Ramp" xml:space="preserve">
+    <value>The target rises 20 W a minute until you cannot hold it. X ends the test early. The FTP estimate is 75% of your best minute.</value>
+  </data>
+  <data name="Help_HelpTerm" xml:space="preserve">
+    <value>Help</value>
+  </data>
+  <data name="Help_Help" xml:space="preserve">
+    <value>F1 or ? opens this panel; Esc closes it.</value>
+  </data>
+  <data name="History_Title" xml:space="preserve">
+    <value>Ride history</value>
+  </data>
+  <data name="History_Folder" xml:space="preserve">
+    <value>Rides folder</value>
+  </data>
+  <data name="History_ThisWeek" xml:space="preserve">
+    <value>THIS WEEK</value>
+  </data>
+  <data name="History_Ride" xml:space="preserve">
+    <value>RIDE</value>
+  </data>
+  <data name="History_Time" xml:space="preserve">
+    <value>TIME</value>
+  </data>
+  <data name="Common_DistanceCaps" xml:space="preserve">
+    <value>DISTANCE</value>
+  </data>
+  <data name="Common_AvgPowerCaps" xml:space="preserve">
+    <value>AVG POWER</value>
+  </data>
+  <data name="Common_Tss" xml:space="preserve">
+    <value>TSS</value>
+  </data>
+  <data name="Common_ClimbingCaps" xml:space="preserve">
+    <value>CLIMBING</value>
+  </data>
+  <data name="History_UploadedTo" xml:space="preserve">
+    <value>UPLOADED TO</value>
+  </data>
+  <data name="History_Loading" xml:space="preserve">
+    <value>Reading saved rides…</value>
+  </data>
+  <data name="History_Empty" xml:space="preserve">
+    <value>No saved rides. Each finished ride is saved here as a FIT file.</value>
+  </data>
+  <data name="History_OpenTip" xml:space="preserve">
+    <value>Open this ride's summary</value>
+  </data>
+  <data name="Help_Title" xml:space="preserve">
+    <value>How to read the screen</value>
+  </data>
+  <data name="Common_Close" xml:space="preserve">
+    <value>Close</value>
+  </data>
+  <data name="Ride_Elapsed" xml:space="preserve">
+    <value>ELAPSED</value>
+  </data>
+  <data name="Ride_Power" xml:space="preserve">
+    <value>POWER · 3S</value>
+  </data>
+  <data name="Ride_Target" xml:space="preserve">
+    <value>TARGET</value>
+  </data>
+  <data name="Ride_Cadence" xml:space="preserve">
+    <value>CADENCE</value>
+  </data>
+  <data name="Ride_HeartRate" xml:space="preserve">
+    <value>HEART RATE</value>
+  </data>
+  <data name="Ride_Speed" xml:space="preserve">
+    <value>SPEED</value>
+  </data>
+  <data name="Ride_Grade" xml:space="preserve">
+    <value>GRADE</value>
+  </data>
+  <data name="Ride_Step" xml:space="preserve">
+    <value>STEP</value>
+  </data>
+  <data name="Ride_Ride" xml:space="preserve">
+    <value>RIDE</value>
+  </data>
+  <data name="Ride_WPrimeTip" xml:space="preserve">
+    <value>W′ left: the work you can still do above FTP</value>
+  </data>
+  <data name="Ride_CurrentLap" xml:space="preserve">
+    <value>CURRENT LAP</value>
+  </data>
+  <data name="Ride_TimeInZones" xml:space="preserve">
+    <value>TIME IN POWER ZONES</value>
+  </data>
+  <data name="Ride_Easier" xml:space="preserve">
+    <value>− Easier</value>
+  </data>
+  <data name="Ride_EasierTip" xml:space="preserve">
+    <value>Click − or B; keyboard ↓ or −</value>
+  </data>
+  <data name="Ride_Harder" xml:space="preserve">
+    <value>+ Harder</value>
+  </data>
+  <data name="Ride_HarderTip" xml:space="preserve">
+    <value>Click + or Y; keyboard ↑ or +</value>
+  </data>
+  <data name="Ride_GradeDown" xml:space="preserve">
+    <value>Grade −</value>
+  </data>
+  <data name="Ride_GradeDownTip" xml:space="preserve">
+    <value>Keyboard ←</value>
+  </data>
+  <data name="Ride_GradeUp" xml:space="preserve">
+    <value>Grade +</value>
+  </data>
+  <data name="Ride_GradeUpTip" xml:space="preserve">
+    <value>Keyboard →</value>
+  </data>
+  <data name="Ride_ErgTip" xml:space="preserve">
+    <value>Keyboard E</value>
+  </data>
+  <data name="Ride_Skip" xml:space="preserve">
+    <value>Skip step</value>
+  </data>
+  <data name="Ride_SkipTip" xml:space="preserve">
+    <value>Keyboard S</value>
+  </data>
+  <data name="Common_Lap" xml:space="preserve">
+    <value>Lap</value>
+  </data>
+  <data name="Ride_LapTip" xml:space="preserve">
+    <value>Keyboard L</value>
+  </data>
+  <data name="Ride_PauseTip" xml:space="preserve">
+    <value>Keyboard P or space</value>
+  </data>
+  <data name="Ride_EndRamp" xml:space="preserve">
+    <value>End ramp</value>
+  </data>
+  <data name="Ride_EndRampTip" xml:space="preserve">
+    <value>Keyboard X</value>
+  </data>
+  <data name="Ride_FinishTip" xml:space="preserve">
+    <value>Keyboard Q twice</value>
+  </data>
+  <data name="Ride_GetReady" xml:space="preserve">
+    <value>GET READY</value>
+  </data>
+  <data name="Ride_CancelStartTip" xml:space="preserve">
+    <value>Return to the home page; keyboard Esc</value>
+  </data>
+  <data name="Settings_Title" xml:space="preserve">
+    <value>Settings</value>
+  </data>
+  <data name="Common_Save" xml:space="preserve">
+    <value>Save</value>
+  </data>
+  <data name="Settings_Accounts" xml:space="preserve">
+    <value>Accounts and uploads</value>
+  </data>
+  <data name="Settings_Intervals" xml:space="preserve">
+    <value>INTERVALS.ICU</value>
+  </data>
+  <data name="Settings_IntervalsNote" xml:space="preserve">
+    <value>Planned rides, FTP, and zones come from Intervals.icu. The API key is in Intervals.icu under Settings &gt; Developer Settings.</value>
+  </data>
+  <data name="Settings_ApiKey" xml:space="preserve">
+    <value>API key</value>
+  </data>
+  <data name="Settings_AthleteId" xml:space="preserve">
+    <value>Athlete ID (0 = the key's owner)</value>
+  </data>
+  <data name="Settings_Garmin" xml:space="preserve">
+    <value>GARMIN CONNECT</value>
+  </data>
+  <data name="Settings_GarminNote" xml:space="preserve">
+    <value>Rides upload to your Garmin Connect account. Your password goes only to Garmin; the app saves the sign-in token.</value>
+  </data>
+  <data name="Settings_GarminEmail" xml:space="preserve">
+    <value>Garmin email</value>
+  </data>
+  <data name="Settings_GarminPassword" xml:space="preserve">
+    <value>Garmin password</value>
+  </data>
+  <data name="Settings_SignIn" xml:space="preserve">
+    <value>Sign in</value>
+  </data>
+  <data name="Settings_MfaCode" xml:space="preserve">
+    <value>MFA code</value>
+  </data>
+  <data name="Settings_SubmitCode" xml:space="preserve">
+    <value>Submit code</value>
+  </data>
+  <data name="Settings_SignOut" xml:space="preserve">
+    <value>Sign out</value>
+  </data>
+  <data name="Settings_UploadTo" xml:space="preserve">
+    <value>AFTER EACH RIDE, UPLOAD TO</value>
+  </data>
+  <data name="Service_Intervals" xml:space="preserve">
+    <value>Intervals.icu</value>
+  </data>
+  <data name="Service_Garmin" xml:space="preserve">
+    <value>Garmin Connect</value>
+  </data>
+  <data name="Settings_Automatic" xml:space="preserve">
+    <value>Upload automatically, without asking</value>
+  </data>
+  <data name="Settings_DuplicateNote" xml:space="preserve">
+    <value>If Intervals.icu also imports from Garmin Connect, uploading to both can create a duplicate in Intervals.icu.</value>
+  </data>
+  <data name="Settings_RiderAndApp" xml:space="preserve">
+    <value>Rider and app</value>
+  </data>
+  <data name="Settings_Rider" xml:space="preserve">
+    <value>RIDER</value>
+  </data>
+  <data name="Settings_RiderNote" xml:space="preserve">
+    <value>These apply when Intervals.icu has no value. Weight sets the displayed speed and the resistance of the virtual gears. Max heart rate sets the heart rate zones.</value>
+  </data>
+  <data name="Settings_Units" xml:space="preserve">
+    <value>Units</value>
+  </data>
+  <data name="Settings_Metric" xml:space="preserve">
+    <value>Metric (km, kg)</value>
+  </data>
+  <data name="Settings_Imperial" xml:space="preserve">
+    <value>Imperial (mi, lb)</value>
+  </data>
+  <data name="Settings_Ftp" xml:space="preserve">
+    <value>FTP (W)</value>
+  </data>
+  <data name="Settings_MaxHr" xml:space="preserve">
+    <value>Max HR (bpm)</value>
+  </data>
+  <data name="Settings_Optional" xml:space="preserve">
+    <value>optional</value>
+  </data>
+  <data name="Settings_Appearance" xml:space="preserve">
+    <value>APPEARANCE AND CUES</value>
+  </data>
+  <data name="Settings_Theme" xml:space="preserve">
+    <value>Theme</value>
+  </data>
+  <data name="Settings_ThemeSystem" xml:space="preserve">
+    <value>System</value>
+  </data>
+  <data name="Settings_ThemeSystemTip" xml:space="preserve">
+    <value>Use the desktop's light or dark setting</value>
+  </data>
+  <data name="Settings_ThemeLight" xml:space="preserve">
+    <value>Light</value>
+  </data>
+  <data name="Settings_ThemeDark" xml:space="preserve">
+    <value>Dark</value>
+  </data>
+  <data name="Settings_StartCountdown" xml:space="preserve">
+    <value>Count down 3, 2, 1 before a ride starts</value>
+  </data>
+  <data name="Settings_SoundCues" xml:space="preserve">
+    <value>Beep during the countdowns and before each workout step</value>
+  </data>
+  <data name="Settings_Forget" xml:space="preserve">
+    <value>Forget</value>
+  </data>
+  <data name="Settings_ConfirmForget" xml:space="preserve">
+    <value>Click again to forget</value>
+  </data>
+  <data name="Settings_ConfirmForgetAll" xml:space="preserve">
+    <value>Click again to forget all</value>
+  </data>
+  <data name="Settings_DevicesHint" xml:space="preserve">
+    <value>Rename a device to tell it apart; an empty name goes back to the one it advertises. Forget one so Connect stops looking for it.</value>
+  </data>
+  <data name="Settings_ForgetDevices" xml:space="preserve">
+    <value>Forget all</value>
+  </data>
+  <data name="Summary_ShowFit" xml:space="preserve">
+    <value>Show FIT file</value>
+  </data>
+  <data name="Summary_Done" xml:space="preserve">
+    <value>Done</value>
+  </data>
+  <data name="Summary_Upload" xml:space="preserve">
+    <value>UPLOAD</value>
+  </data>
+  <data name="Summary_Open" xml:space="preserve">
+    <value>Open</value>
+  </data>
+  <data name="Summary_UploadSelected" xml:space="preserve">
+    <value>Upload selected</value>
+  </data>
+  <data name="Summary_SetFtp" xml:space="preserve">
+    <value>Set this FTP in Intervals.icu</value>
+  </data>
+  <data name="Summary_Laps" xml:space="preserve">
+    <value>LAPS</value>
+  </data>
+  <data name="Summary_LapNumber" xml:space="preserve">
+    <value>#</value>
+  </data>
+  <data name="Common_Time" xml:space="preserve">
+    <value>Time</value>
+  </data>
+  <data name="Summary_AvgW" xml:space="preserve">
+    <value>Avg W</value>
+  </data>
+  <data name="Summary_MaxW" xml:space="preserve">
+    <value>Max W</value>
+  </data>
+  <data name="Common_AvgHr" xml:space="preserve">
+    <value>Avg HR</value>
+  </data>
+  <data name="Common_Cadence" xml:space="preserve">
+    <value>Cadence</value>
+  </data>
+  <data name="Summary_Details" xml:space="preserve">
+    <value>DETAILS</value>
+  </data>
+  <data name="Format_ShortDate" xml:space="preserve">
+    <value>ddd MMM d</value>
+    <comment>.NET date format for a planned ride: "Wed Oct 15".</comment>
+  </data>
+  <data name="Format_DateTime" xml:space="preserve">
+    <value>ddd MMM d, h:mm tt</value>
+    <comment>.NET date format: "Wed Oct 15, 6:30 AM".</comment>
+  </data>
+  <data name="Format_LongDateTime" xml:space="preserve">
+    <value>dddd MMM d, h:mm tt</value>
+    <comment>.NET date format: "Wednesday Oct 15, 6:30 AM".</comment>
+  </data>
+  <data name="Common_Minutes" xml:space="preserve">
+    <value>{0} min</value>
+  </data>
+  <data name="Common_SecondsShort" xml:space="preserve">
+    <value>{0} s</value>
+  </data>
+  <data name="Common_FreeRide" xml:space="preserve">
+    <value>free ride</value>
+  </data>
+  <data name="Common_CouldNotRead" xml:space="preserve">
+    <value>Could not read {0}: {1}</value>
+  </data>
+  <data name="Fmt_Watts" xml:space="preserve">
+    <value>{0:0} W</value>
+  </data>
+  <data name="Fmt_Bpm" xml:space="preserve">
+    <value>{0:0} bpm</value>
+  </data>
+  <data name="Fmt_Rpm" xml:space="preserve">
+    <value>{0:0} rpm</value>
+  </data>
+  <data name="Fmt_Kj" xml:space="preserve">
+    <value>{0:0} kJ</value>
+  </data>
+  <data name="Fmt_Tss" xml:space="preserve">
+    <value>{0:0} TSS</value>
+  </data>
+  <data name="Home_ConfirmDiscard" xml:space="preserve">
+    <value>Click again to delete</value>
+  </data>
+  <data name="Home_Discard" xml:space="preserve">
+    <value>Discard</value>
+  </data>
+  <data name="Home_DistanceLabel" xml:space="preserve">
+    <value>Distance ({0})</value>
+  </data>
+  <data name="Home_ClimbLabel" xml:space="preserve">
+    <value>Climbing ({0})</value>
+  </data>
+  <data name="Home_NoApiKey" xml:space="preserve">
+    <value>Add your Intervals.icu API key in Settings to see planned rides.</value>
+  </data>
+  <data name="Home_NothingPlanned" xml:space="preserve">
+    <value>No rides planned for the next 7 days.</value>
+  </data>
+  <data name="LoadError_Key" xml:space="preserve">
+    <value>Intervals.icu rejected the API key. Copy it again from Intervals.icu &gt; Settings &gt; Developer Settings and paste it in Settings.</value>
+  </data>
+  <data name="LoadError_Athlete" xml:space="preserve">
+    <value>Intervals.icu has no athlete "{0}" for this API key. Use 0 for the key's owner, or correct the athlete ID in Settings.</value>
+  </data>
+  <data name="LoadError_RateLimit" xml:space="preserve">
+    <value>Intervals.icu is limiting requests. Try again in a minute.</value>
+  </data>
+  <data name="LoadError_Server" xml:space="preserve">
+    <value>Intervals.icu returned a server error (HTTP {0}). Try again in a few minutes.</value>
+  </data>
+  <data name="LoadError_Timeout" xml:space="preserve">
+    <value>Intervals.icu did not respond within 30 seconds. Check the connection and try again.</value>
+  </data>
+  <data name="LoadError_Offline" xml:space="preserve">
+    <value>Could not reach Intervals.icu. Check that this computer is online, then try again.</value>
+  </data>
+  <data name="LoadError_Unreadable" xml:space="preserve">
+    <value>Intervals.icu sent planned rides in a format this app cannot read. The other rides still work.</value>
+  </data>
+  <data name="Home_Today" xml:space="preserve">
+    <value>Today</value>
+  </data>
+  <data name="Home_FreeRideSubtitle" xml:space="preserve">
+    <value>Ride on the virtual gears</value>
+  </data>
+  <data name="Home_RampSubtitle" xml:space="preserve">
+    <value>FTP = 75% of best minute</value>
+  </data>
+  <data name="Home_Athlete" xml:space="preserve">
+    <value>FTP {0} W  ·  W′ {1:0.0} kJ  ·  {2}</value>
+  </data>
+  <data name="Home_Interrupted" xml:space="preserve">
+    <value>{0} on {1} stopped before it finished. The last checkpoint saved {2} of riding.</value>
+  </data>
+  <data name="Home_RecoverFailed" xml:space="preserve">
+    <value>Could not recover the ride: {0}</value>
+  </data>
+  <data name="Home_GenerateRoute" xml:space="preserve">
+    <value>Generate a route</value>
+  </data>
+  <data name="Home_RouteSubtitle" xml:space="preserve">
+    <value>{0}  ·  {1} climbing</value>
+  </data>
+  <data name="Home_RouteStats" xml:space="preserve">
+    <value>A loop of rolling hills. Steepest climb {0:0.0}%. About {1} at {2:0} W (70% of FTP).</value>
+  </data>
+  <data name="Home_RouteCapped" xml:space="preserve">
+    <value> More climbing would need grades over {0:0}%, so this route has {1}.</value>
+  </data>
+  <data name="Home_RampLength" xml:space="preserve">
+    <value>20-30 min</value>
+  </data>
+  <data name="Home_OpenEnded" xml:space="preserve">
+    <value>open-ended</value>
+  </data>
+  <data name="Home_RampMore" xml:space="preserve">
+    <value>… +20 W every minute until you stop</value>
+  </data>
+  <data name="Settings_SignedIn" xml:space="preserve">
+    <value>Signed in</value>
+  </data>
+  <data name="Settings_NotSignedIn" xml:space="preserve">
+    <value>Not signed in</value>
+  </data>
+  <data name="Settings_NoDevices" xml:space="preserve">
+    <value>None saved. The next Connect scans for devices and lets you pick.</value>
+  </data>
+  <data name="Settings_RiderWeight" xml:space="preserve">
+    <value>Rider ({0})</value>
+  </data>
+  <data name="Settings_BikeWeight" xml:space="preserve">
+    <value>Bike ({0})</value>
+  </data>
+  <data name="Settings_RangeError" xml:space="preserve">
+    <value>FTP must be 50-600 W, rider weight {0}-{1}, and bike weight 0-{2}.</value>
+  </data>
+  <data name="Settings_MaxHrError" xml:space="preserve">
+    <value>Max heart rate must be 100-250 bpm, or empty.</value>
+  </data>
+  <data name="Settings_SigningIn" xml:space="preserve">
+    <value>Signing in to Garmin…</value>
+  </data>
+  <data name="Settings_CodeSent" xml:space="preserve">
+    <value>Garmin sent a code by email or text message. Enter it below.</value>
+  </data>
+  <data name="Settings_SignedInAs" xml:space="preserve">
+    <value>Signed in as {0}</value>
+  </data>
+  <data name="Settings_NameFailed" xml:space="preserve">
+    <value>Signed in. Garmin did not return the account name: {0}</value>
+  </data>
+  <data name="Summary_Subtitle" xml:space="preserve">
+    <value>{0}  ·  {1} moving</value>
+  </data>
+  <data name="Summary_AvgHrCaps" xml:space="preserve">
+    <value>AVG HR</value>
+  </data>
+  <data name="Summary_NpCaps" xml:space="preserve">
+    <value>NORMALIZED POWER</value>
+  </data>
+  <data name="Summary_TssCaps" xml:space="preserve">
+    <value>TRAINING LOAD (TSS)</value>
+  </data>
+  <data name="Summary_WorkCaps" xml:space="preserve">
+    <value>WORK</value>
+  </data>
+  <data name="Tip_Climbing" xml:space="preserve">
+    <value>Elevation gained on the virtual road, from a route's hills or the grade you set.</value>
+  </data>
+  <data name="Stat_ElapsedMoving" xml:space="preserve">
+    <value>Elapsed / moving</value>
+  </data>
+  <data name="Stat_MaxPower" xml:space="preserve">
+    <value>Max power</value>
+  </data>
+  <data name="Stat_Work" xml:space="preserve">
+    <value>Work</value>
+  </data>
+  <data name="Stat_Climbing" xml:space="preserve">
+    <value>Climbing</value>
+  </data>
+  <data name="Stat_IntensityFactor" xml:space="preserve">
+    <value>Intensity factor</value>
+  </data>
+  <data name="Summary_IfValue" xml:space="preserve">
+    <value>{0:0.00} (FTP {1} W)</value>
+  </data>
+  <data name="Stat_Energy" xml:space="preserve">
+    <value>Energy</value>
+  </data>
+  <data name="Summary_Energy" xml:space="preserve">
+    <value>about {0:0} kcal</value>
+  </data>
+  <data name="Summary_WPrimeLow" xml:space="preserve">
+    <value>Anaerobic reserve (W′) low point</value>
+  </data>
+  <data name="Summary_WPrimeValue" xml:space="preserve">
+    <value>{0:0.0} of {1:0.0} kJ</value>
+  </data>
+  <data name="Stat_MaxHr" xml:space="preserve">
+    <value>Max heart rate</value>
+  </data>
+  <data name="Summary_CadenceValue" xml:space="preserve">
+    <value>avg {0:0}, max {1} rpm</value>
+  </data>
+  <data name="Stat_Speed" xml:space="preserve">
+    <value>Speed</value>
+  </data>
+  <data name="Summary_SpeedValue" xml:space="preserve">
+    <value>avg {0:0.0}, max {1}</value>
+  </data>
+  <data name="Summary_Best" xml:space="preserve">
+    <value>Best {0}</value>
+  </data>
+  <data name="Summary_RampFtp" xml:space="preserve">
+    <value>Ramp test FTP estimate: {0} W, 75% of your best minute ({1:0} W).</value>
+  </data>
+  <data name="Summary_NeedsKey" xml:space="preserve">
+    <value>add an API key in Settings</value>
+  </data>
+  <data name="Summary_NeedsGarmin" xml:space="preserve">
+    <value>sign in to Garmin in Settings</value>
+  </data>
+  <data name="Summary_NothingRecorded" xml:space="preserve">
+    <value>nothing recorded</value>
+  </data>
+  <data name="Summary_Uploading" xml:space="preserve">
+    <value>uploading…</value>
+  </data>
+  <data name="Summary_Uploaded" xml:space="preserve">
+    <value>uploaded</value>
+  </data>
+  <data name="Summary_Duplicate" xml:space="preserve">
+    <value>already uploaded</value>
+  </data>
+  <data name="Summary_Failed" xml:space="preserve">
+    <value>failed</value>
+  </data>
+  <data name="Summary_FtpSet" xml:space="preserve">
+    <value>FTP set to {0} W in Intervals.icu. Set it in Zwift too if you ride there.</value>
+  </data>
+  <data name="Device_Disconnected" xml:space="preserve">
+    <value>disconnected</value>
+  </data>
+  <data name="Device_Battery" xml:space="preserve">
+    <value>battery {0}%</value>
+  </data>
+  <data name="Device_Connected" xml:space="preserve">
+    <value>connected</value>
+  </data>
+  <data name="Device_Trainer" xml:space="preserve">
+    <value>Trainer</value>
+  </data>
+  <data name="Device_HeartRate" xml:space="preserve">
+    <value>Heart rate</value>
+  </data>
+  <data name="Device_Controller" xml:space="preserve">
+    <value>Controller</value>
+  </data>
+  <data name="Device_Other" xml:space="preserve">
+    <value>Other</value>
+  </data>
+  <data name="Device_Rssi" xml:space="preserve">
+    <value>{0} dBm</value>
+  </data>
+  <data name="Device_OutOfRange" xml:space="preserve">
+    <value>not in range</value>
+  </data>
+  <data name="Devices_NotConnected" xml:space="preserve">
+    <value>Not connected</value>
+  </data>
+  <data name="Devices_Connect" xml:space="preserve">
+    <value>Connect</value>
+  </data>
+  <data name="Devices_Find" xml:space="preserve">
+    <value>Find devices…</value>
+  </data>
+  <data name="Devices_Simulated" xml:space="preserve">
+    <value>Connected (simulated)</value>
+  </data>
+  <data name="Devices_Scanning" xml:space="preserve">
+    <value>Scanning. Pedal to wake the KICKR, then select the devices to use.</value>
+  </data>
+  <data name="Devices_PickTrainer" xml:space="preserve">
+    <value>Select a trainer first.</value>
+  </data>
+  <data name="Devices_Canceled" xml:space="preserve">
+    <value>Canceled</value>
+  </data>
+  <data name="Devices_NoClick" xml:space="preserve">
+    <value>Connected. No Zwift Click found; shift with the keyboard.</value>
+  </data>
+  <data name="Devices_ConnectedStatus" xml:space="preserve">
+    <value>Connected</value>
+  </data>
+  <data name="Open_Title" xml:space="preserve">
+    <value>Open a workout</value>
+  </data>
+  <data name="Open_Workouts" xml:space="preserve">
+    <value>Workouts</value>
+  </data>
+  <data name="Tip_Np" xml:space="preserve">
+    <value>Normalized power: the steady power that would have cost the same effort. Surges weigh more than in the plain average.</value>
+  </data>
+  <data name="Tip_If" xml:space="preserve">
+    <value>Intensity factor: NP ÷ FTP. About 0.65 is easy, 0.85-0.95 is hard tempo, and 1.0 is an all-out hour.</value>
+  </data>
+  <data name="Tip_Tss" xml:space="preserve">
+    <value>Training Stress Score: time × intensity. One hour at FTP is 100.</value>
+  </data>
+  <data name="Tip_WPrime" xml:space="preserve">
+    <value>W′ ("W prime"): the work you can do above FTP. It drains above FTP and refills below it.</value>
+  </data>
+  <data name="Tip_WPrimeLow" xml:space="preserve">
+    <value>The least W′ left during the ride. Near 0 means you rode to your limit; near full means you stayed near or below FTP.</value>
+  </data>
+  <data name="Tip_Work" xml:space="preserve">
+    <value>Energy put into the pedals. You burn about as many kcal as kJ.</value>
+  </data>
+  <data name="Tip_OnTarget" xml:space="preserve">
+    <value>Share of the lap's seconds within 5% (at least 10 W) of the target.</value>
+  </data>
+  <data name="Tip_Peaks" xml:space="preserve">
+    <value>Your best average power over 5 seconds, 1 minute, 5 minutes, and 20 minutes.</value>
+  </data>
+  <data name="Zone_1" xml:space="preserve">
+    <value>Z1 Recovery</value>
+  </data>
+  <data name="Zone_2" xml:space="preserve">
+    <value>Z2 Endurance</value>
+  </data>
+  <data name="Zone_3" xml:space="preserve">
+    <value>Z3 Tempo</value>
+  </data>
+  <data name="Zone_4" xml:space="preserve">
+    <value>Z4 Threshold</value>
+  </data>
+  <data name="Zone_5" xml:space="preserve">
+    <value>Z5 VO2max</value>
+  </data>
+  <data name="Zone_6" xml:space="preserve">
+    <value>Z6 Anaerobic</value>
+  </data>
+  <data name="Zone_7" xml:space="preserve">
+    <value>Z7 Sprint</value>
+  </data>
+  <data name="Ride_GearCaps" xml:space="preserve">
+    <value>GEAR</value>
+  </data>
+  <data name="Ride_ModeCaps" xml:space="preserve">
+    <value>MODE</value>
+  </data>
+  <data name="Ride_ErgOff" xml:space="preserve">
+    <value>ERG off</value>
+  </data>
+  <data name="Ride_ErgOn" xml:space="preserve">
+    <value>ERG on</value>
+  </data>
+  <data name="Ride_Pause" xml:space="preserve">
+    <value>Pause</value>
+  </data>
+  <data name="Ride_Resume" xml:space="preserve">
+    <value>Resume</value>
+  </data>
+  <data name="Ride_Finish" xml:space="preserve">
+    <value>Finish</value>
+  </data>
+  <data name="Ride_Saving" xml:space="preserve">
+    <value>Saving…</value>
+  </data>
+  <data name="Ride_PressAgain" xml:space="preserve">
+    <value>Press again to finish</value>
+  </data>
+  <data name="Ride_KeepingAwake" xml:space="preserve">
+    <value>Keeping the screen on…</value>
+  </data>
+  <data name="Ride_Awake" xml:space="preserve">
+    <value>The screen stays on during the ride</value>
+  </data>
+  <data name="Ride_AwakeFailed" xml:space="preserve">
+    <value>Could not keep the screen on ({0})</value>
+  </data>
+  <data name="Ride_AwakeReason" xml:space="preserve">
+    <value>Riding {0}</value>
+  </data>
+  <data name="Ride_CountdownRoute" xml:space="preserve">
+    <value>{0} route, {1} climbing</value>
+  </data>
+  <data name="Ride_CountdownFirst" xml:space="preserve">
+    <value>First: {0} · {1}</value>
+  </data>
+  <data name="Ride_CountdownFree" xml:space="preserve">
+    <value>Free ride on the virtual gears</value>
+  </data>
+  <data name="Ride_Go" xml:space="preserve">
+    <value>GO</value>
+  </data>
+  <data name="Ride_SaveFailed" xml:space="preserve">
+    <value>Could not save the ride: {0}</value>
+  </data>
+  <data name="Ride_Failed" xml:space="preserve">
+    <value>The ride stopped: {0}</value>
+  </data>
+  <data name="Ride_PedalToStart" xml:space="preserve">
+    <value>PEDAL TO START</value>
+  </data>
+  <data name="Ride_Paused" xml:space="preserve">
+    <value>PAUSED</value>
+  </data>
+  <data name="Ride_AutoPaused" xml:space="preserve">
+    <value>AUTO-PAUSED</value>
+  </data>
+  <data name="Ride_WorkoutDone" xml:space="preserve">
+    <value>WORKOUT DONE</value>
+  </data>
+  <data name="Ride_Riding" xml:space="preserve">
+    <value>RIDING</value>
+  </data>
+  <data name="Ride_PowerNow" xml:space="preserve">
+    <value>now {0} W</value>
+  </data>
+  <data name="Ride_ErgOffset" xml:space="preserve">
+    <value>ERG {0:+0;-0} W</value>
+  </data>
+  <data name="Ride_VirtualGears" xml:space="preserve">
+    <value>virtual gears</value>
+  </data>
+  <data name="Ride_CadenceTarget" xml:space="preserve">
+    <value>target {0}</value>
+  </data>
+  <data name="Ride_SetMaxHr" xml:space="preserve">
+    <value>set max HR in Settings for zones</value>
+  </data>
+  <data name="Ride_GradeErg" xml:space="preserve">
+    <value>ERG ignores grade</value>
+  </data>
+  <data name="Ride_GradeRoute" xml:space="preserve">
+    <value>set by the route</value>
+  </data>
+  <data name="Ride_GradeKeys" xml:space="preserve">
+    <value>← / → to change</value>
+  </data>
+  <data name="Ride_ErgNudge" xml:space="preserve">
+    <value>+/− moves it 5 W</value>
+  </data>
+  <data name="Ride_GearOf" xml:space="preserve">
+    <value>of {0}</value>
+  </data>
+  <data name="Ride_Next" xml:space="preserve">
+    <value>Next: {0}  ·  {1}  ·  {2}</value>
+  </data>
+  <data name="Ride_LastStep" xml:space="preserve">
+    <value>Last step</value>
+  </data>
+  <data name="Ride_StepN" xml:space="preserve">
+    <value>Step {0}</value>
+  </data>
+  <data name="Ride_StepOf" xml:space="preserve">
+    <value>Step {0} of {1}  ·  {2} / {3}</value>
+  </data>
+  <data name="Ride_WorkoutComplete" xml:space="preserve">
+    <value>Workout complete</value>
+  </data>
+  <data name="Ride_FreeRide" xml:space="preserve">
+    <value>Free ride</value>
+  </data>
+  <data name="Ride_ShiftHint" xml:space="preserve">
+    <value>Shift with the Click or +/−</value>
+  </data>
+  <data name="Ride_RouteComplete" xml:space="preserve">
+    <value>Route complete</value>
+  </data>
+  <data name="Ride_RouteDone" xml:space="preserve">
+    <value>The road is flat from here. Finish when you are ready.</value>
+  </data>
+  <data name="Ride_Climbing" xml:space="preserve">
+    <value>Climbing {0:0.0}%</value>
+  </data>
+  <data name="Ride_Descending" xml:space="preserve">
+    <value>Descending {0:0.0}%</value>
+  </data>
+  <data name="Ride_Flat" xml:space="preserve">
+    <value>Flat</value>
+  </data>
+  <data name="Ride_ShiftCadence" xml:space="preserve">
+    <value>Shift to keep your cadence</value>
+  </data>
+  <data name="Ride_NextDistance" xml:space="preserve">
+    <value>Next {0}: {1:+0.0;-0.0;0.0}% average, {2} of climbing</value>
+  </data>
+  <data name="Ride_RouteProgress" xml:space="preserve">
+    <value>{0} of {1}  ·  {2} of {3} climbed</value>
+  </data>
+  <data name="Ride_CueNext" xml:space="preserve">
+    <value>Next: {0}</value>
+  </data>
+  <data name="Ride_CueLast" xml:space="preserve">
+    <value>Last step ending</value>
+  </data>
+  <data name="Ride_CueContinue" xml:space="preserve">
+    <value>The ride continues on the virtual gears</value>
+  </data>
+  <data name="Stat_Distance" xml:space="preserve">
+    <value>Distance</value>
+  </data>
+  <data name="Stat_AvgMaxPower" xml:space="preserve">
+    <value>Avg / max power</value>
+  </data>
+  <data name="Stat_Np" xml:space="preserve">
+    <value>Normalized power</value>
+  </data>
+  <data name="Stat_Tss" xml:space="preserve">
+    <value>Training load (TSS)</value>
+  </data>
+  <data name="Stat_AvgMaxHr" xml:space="preserve">
+    <value>Avg / max HR</value>
+  </data>
+  <data name="Stat_AvgCadence" xml:space="preserve">
+    <value>Avg cadence</value>
+  </data>
+  <data name="Stat_AvgSpeed" xml:space="preserve">
+    <value>Avg speed</value>
+  </data>
+  <data name="Stat_WPrime" xml:space="preserve">
+    <value>Anaerobic reserve (W′)</value>
+  </data>
+  <data name="Ride_WorkValue" xml:space="preserve">
+    <value>{0:0} kJ  ·  {1:0} kcal</value>
+  </data>
+  <data name="Ride_PowerPair" xml:space="preserve">
+    <value>{0:0} / {1} W</value>
+  </data>
+  <data name="Ride_HrPair" xml:space="preserve">
+    <value>{0:0} / {1} bpm</value>
+  </data>
+  <data name="Ride_WPrimeLeft" xml:space="preserve">
+    <value>{0:0.0} of {1:0.0} kJ left</value>
+  </data>
+  <data name="Cal_NoTrainer" xml:space="preserve">
+    <value>No trainer connected</value>
+  </data>
+  <data name="Cal_ConnectFirst" xml:space="preserve">
+    <value>Connect the trainer on the home page first.</value>
+  </data>
+  <data name="Cal_Instructions" xml:space="preserve">
+    <value>Calibrate after 10 minutes of riding, when the trainer is warm. Press Start spin-down, pedal up to the speed shown, then stop pedaling and let the flywheel coast to a stop.</value>
+  </data>
+  <data name="Cal_Unsupported" xml:space="preserve">
+    <value>{0} does not offer spin-down calibration over the standard Bluetooth fitness protocol (FTMS). Wahoo trainers calibrate themselves during rides. For a manual spin-down, close this app and use the Wahoo app.</value>
+  </data>
+  <data name="Cal_Asking" xml:space="preserve">
+    <value>Asking the trainer to start…</value>
+  </data>
+  <data name="Cal_SpeedUp" xml:space="preserve">
+    <value>Pedal hard to get above the target speed.</value>
+  </data>
+  <data name="Cal_TargetAbove" xml:space="preserve">
+    <value>Target: above {0}</value>
+  </data>
+  <data name="Cal_AtLeast" xml:space="preserve">
+    <value> (at least {0})</value>
+  </data>
+  <data name="Cal_TargetUnknown" xml:space="preserve">
+    <value>Target: speed up until the trainer says to stop</value>
+  </data>
+  <data name="Cal_Stop" xml:space="preserve">
+    <value>Stop pedaling now and let the flywheel coast to a stop.</value>
+  </data>
+  <data name="Cal_Done" xml:space="preserve">
+    <value>Calibration done. The trainer has updated its power readings.</value>
+  </data>
+  <data name="Cal_Failed" xml:space="preserve">
+    <value>The trainer reported a failed spin-down. Ride for a few minutes to warm it up, then try again.</value>
+  </data>
+  <data name="History_NotUploaded" xml:space="preserve">
+    <value>Not uploaded</value>
+  </data>
+  <data name="History_AllTime" xml:space="preserve">
+    <value>All time: {0}</value>
+  </data>
+  <data name="History_NoRides" xml:space="preserve">
+    <value>No rides yet</value>
+  </data>
+  <data name="History_OneRide" xml:space="preserve">
+    <value>1 ride</value>
+  </data>
+  <data name="History_Rides" xml:space="preserve">
+    <value>{0} rides</value>
+  </data>
+  <data name="History_Climbing" xml:space="preserve">
+    <value>{0} climbing</value>
+  </data>
+</root>

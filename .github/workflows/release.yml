@@ -1,0 +1,40 @@
+# Publishes a GitHub release for a v* tag: git tag v1.2.0 && git push origin v1.2.0
+# It runs the tests and builds through desktop.yml, then attaches one download per platform and their SHA-256 sums.
+# A tag with a hyphen, such as v1.2.0-beta.1, makes a prerelease.
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    uses: ./.github/workflows/desktop.yml
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: simple-bike-trainer-*
+          path: downloads
+          merge-multiple: true
+
+      - name: Checksums
+        working-directory: downloads
+        run: sha256sum simple-bike-trainer-* > SHA256SUMS
+
+      - name: Create release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          prerelease=()
+          [[ "$GITHUB_REF_NAME" == *-* ]] && prerelease=(--prerelease)
+          gh release create "$GITHUB_REF_NAME" downloads/* --repo "$GITHUB_REPOSITORY" --title "$GITHUB_REF_NAME" \
+            --generate-notes --verify-tag "${prerelease[@]}"
