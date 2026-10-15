@@ -20,7 +20,7 @@ public sealed class RideLibraryTests : IDisposable
         var workout = Workout.Route("Hill loop", course) with { EventId = 77 };
         await using var trainer = new FakeTrainer();
         var path = Path.Combine(_dir, "2026-10-14-1200-hill-loop.fit");
-        var session = new RideSession(workout, new RideOptions(200, 20000, new RiderModel(), path, SpeedFactor: 500), trainer, null, []);
+        var session = new RideSession(workout, new RideOptions(200, 20000, new RiderModel(), path), trainer, null, [], TestClock.Fast);
         session.Updated += s =>
         {
             if (s.WorkoutComplete)

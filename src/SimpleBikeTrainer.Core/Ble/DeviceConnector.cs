@@ -22,10 +22,6 @@ public sealed class ConnectedDevices(ITrainer trainer, IHeartRateMonitor? heartR
     }
 }
 
-/// <summary>
-/// Connects the trainer, a heart rate monitor and Zwift Click pucks: either ones the rider picked from a scan, or the
-/// saved ones (any in range when none are saved).
-/// </summary>
 public static class DeviceConnector
 {
     private static readonly TimeSpan ScanTime = TimeSpan.FromSeconds(10);
@@ -38,9 +34,14 @@ public static class DeviceConnector
         Action<string, bool> progress,
         CancellationToken ct)
     {
-        await using var scanner = await BleScanner.CreateAsync(config.Devices.Adapter);
+        await using var scanner = await DeviceScanner.CreateAsync(config.Devices, ct);
+        foreach (var warning in scanner.Warnings)
+        {
+            progress(warning, true);
+        }
+
         progress(CoreStrings.Connect_Scanning, false);
-        await scanner.StartAsync();
+        await scanner.StartAsync(ct);
 
         var saved = config.Devices;
         bool Wanted(DiscoveredDevice d) => IsWanted(saved, d, wantHeartRate, wantShifters);
@@ -59,34 +60,32 @@ public static class DeviceConnector
 
         var trainerDevice = Best(found, DeviceKind.Trainer)
             ?? throw new InvalidOperationException(
-                string.IsNullOrEmpty(saved.Trainer)
+                saved.Trainer is null
                     ? CoreStrings.Connect_NoTrainer
-                    : Loc.Format(CoreStrings.Connect_SavedMissing, saved.Trainer));
+                    : Loc.Format(CoreStrings.Connect_SavedMissing, saved.Describe(saved.Trainer)));
 
         var hrDevice = Best(found, DeviceKind.HeartRate);
         var devices = await ConnectDevicesAsync(trainerDevice, hrDevice, [.. found.Where(d => d.Kind == DeviceKind.Shifter)], progress, ct);
         var heartRate = devices.HeartRate;
 
-        // Remember the trainer and HR monitor so the next ride connects to the same ones, and the names of all of them.
         var changed = false;
         foreach (var device in devices.All)
         {
-            if (device.Address is { } address && found.FirstOrDefault(d => d.Address == address) is { } d && saved.AdvertisedName(address) != d.Name)
+            if (device.Id is { } id && found.FirstOrDefault(d => d.Id == id) is { } d)
             {
-                saved.Names[address] = d.Name;
-                changed = true;
+                changed |= saved.RememberName(id, d.Name);
             }
         }
 
-        if (string.IsNullOrEmpty(saved.Trainer))
+        if (saved.Trainer is null)
         {
-            saved.Trainer = trainerDevice.Address;
+            saved.Pick(DeviceKind.Trainer, trainerDevice.Id, trainerDevice.Name);
             changed = true;
         }
 
-        if (string.IsNullOrEmpty(saved.HeartRate) && heartRate is not null)
+        if (saved.HeartRate is null && heartRate is not null)
         {
-            saved.HeartRate = hrDevice!.Address;
+            saved.Pick(DeviceKind.HeartRate, hrDevice!.Id, hrDevice.Name);
             changed = true;
         }
 
@@ -108,14 +107,15 @@ public static class DeviceConnector
         CancellationToken ct)
     {
         var devices = await ConnectDevicesAsync(trainer, heartRate, shifters, progress, ct);
-        config.Devices.Trainer = trainer.Address;
-        config.Devices.HeartRate = heartRate?.Address ?? string.Empty;
-        config.Devices.Shifters = [.. shifters.Select(d => d.Address)];
-        config.Devices.Picked = true;
-        foreach (var d in new[] { trainer, heartRate }.OfType<DiscoveredDevice>().Concat(shifters))
+        // The picks replace the saved devices; one picked again keeps the name the rider gave it.
+        var chosen = new[] { trainer, heartRate }.OfType<DiscoveredDevice>().Concat(shifters).ToList();
+        config.Devices.Saved.RemoveAll(s => !chosen.Any(d => d.Id == s.Id));
+        foreach (var d in chosen)
         {
-            config.Devices.Names[d.Address] = d.Name;
+            config.Devices.Pick(d.Kind, d.Id, d.Name);
         }
+
+        config.Devices.Picked = true;
 
         config.Save();
         return devices;
@@ -157,13 +157,12 @@ public static class DeviceConnector
                 }
 
                 added.Add(device);
-                config.Devices.Names[found.Address] = found.Name;
+                config.Devices.Pick(found.Kind, found.Id, found.Name);
                 switch (device)
                 {
                     case ITrainer t:
                         replaced.Add(trainer);
                         trainer = t;
-                        config.Devices.Trainer = found.Address;
                         break;
                     case IHeartRateMonitor hr:
                         if (heartRate is not null)
@@ -171,16 +170,10 @@ public static class DeviceConnector
                             replaced.Add(heartRate);
                         }
 
-                        heartRate = hr;
-                        config.Devices.HeartRate = found.Address;
+                        heartRate = (IHeartRateMonitor)hr;
                         break;
                     case IShifter shifter:
                         shifters.Add(shifter);
-                        if (!config.Devices.Shifters.Contains(found.Address, StringComparer.OrdinalIgnoreCase))
-                        {
-                            config.Devices.Shifters.Add(found.Address);
-                        }
-
                         break;
                 }
             }
@@ -209,23 +202,16 @@ public static class DeviceConnector
     /// <summary>Connects one device of any kind. Null, with the reason reported, when it would not connect.</summary>
     private static async Task<ISensorDevice?> TryConnectAsync(DiscoveredDevice found, Action<string, bool> progress, CancellationToken ct)
     {
-        progress(Loc.Format(CoreStrings.Connect_ConnectingAt, found.Name, found.Address), false);
-        BleConnection connection = found.Kind switch
-        {
-            DeviceKind.Trainer => new FtmsTrainer(found.Device, found.Name, found.Address),
-            DeviceKind.HeartRate => new BleHeartRateMonitor(found.Device, found.Name, found.Address),
-            DeviceKind.Shifter => new ZwiftClick(found.Device, found.Name, found.Address),
-            _ => throw new ArgumentOutOfRangeException(nameof(found)),
-        };
-
+        progress(Loc.Format(CoreStrings.Connect_ConnectingAt, found.Name, found.Id), false);
+        var connection = found.Link.Open(found);
         try
         {
             await connection.ConnectAsync(ct);
-            return (ISensorDevice)connection;
+            return connection;
         }
         catch (Exception e) when (e is not OperationCanceledException)
         {
-            progress(Loc.Format(CoreStrings.Connect_DeviceFailed, found.Name, found.Address, e.Message), true);
+            progress(Loc.Format(CoreStrings.Connect_DeviceFailed, found.Name, found.Id, e.Message), true);
             await connection.DisposeAsync();
             return null;
         }
@@ -240,8 +226,8 @@ public static class DeviceConnector
     {
         DeviceKind.Trainer => Matches(saved.Trainer, d),
         // Once devices were picked, an empty slot means no device of that kind.
-        DeviceKind.HeartRate => wantHeartRate && (saved.Picked ? string.Equals(saved.HeartRate, d.Address, StringComparison.OrdinalIgnoreCase) : Matches(saved.HeartRate, d)),
-        DeviceKind.Shifter => wantShifters && (saved.Shifters.Count == 0 ? !saved.Picked : saved.Shifters.Contains(d.Address, StringComparer.OrdinalIgnoreCase)),
+        DeviceKind.HeartRate => wantHeartRate && (saved.Picked ? saved.HeartRate == d.Id : Matches(saved.HeartRate, d)),
+        DeviceKind.Shifter => wantShifters && (saved.Shifters.Count == 0 ? !saved.Picked : saved.Shifters.Contains(d.Id)),
         _ => false,
     };
 
@@ -249,7 +235,7 @@ public static class DeviceConnector
     internal static bool AllInView(DevicesConfig saved, IReadOnlyList<DiscoveredDevice> found, bool wantHeartRate, bool wantShifters)
     {
         // Once devices were picked, an empty heart rate or controller slot means none is coming.
-        var hrExpected = wantHeartRate && !(saved.Picked && string.IsNullOrEmpty(saved.HeartRate));
+        var hrExpected = wantHeartRate && !(saved.Picked && saved.HeartRate is null);
         var shiftersExpected = wantShifters && !(saved.Picked && saved.Shifters.Count == 0);
         return found.Any(d => d.Kind == DeviceKind.Trainer && IsWanted(saved, d, wantHeartRate, wantShifters))
             && (!hrExpected || found.Any(d => d.Kind == DeviceKind.HeartRate && IsWanted(saved, d, wantHeartRate, wantShifters)))
@@ -268,7 +254,7 @@ public static class DeviceConnector
         try
         {
             progress(Loc.Format(CoreStrings.Connect_Connecting, trainerDevice.Name), false);
-            var trainer = new FtmsTrainer(trainerDevice.Device, trainerDevice.Name, trainerDevice.Address);
+            var trainer = trainerDevice.Link.Open(trainerDevice);
             connected.Add(trainer);
             await trainer.ConnectAsync(ct);
 
@@ -276,12 +262,12 @@ public static class DeviceConnector
             if (hrDevice is not null)
             {
                 progress(Loc.Format(CoreStrings.Connect_Connecting, hrDevice.Name), false);
-                var hr = new BleHeartRateMonitor(hrDevice.Device, hrDevice.Name, hrDevice.Address);
+                var hr = hrDevice.Link.Open(hrDevice);
                 try
                 {
                     connected.Add(hr);
                     await hr.ConnectAsync(ct);
-                    heartRate = hr;
+                    heartRate = (IHeartRateMonitor)hr;
                 }
                 catch (Exception e) when (e is not OperationCanceledException)
                 {
@@ -294,24 +280,24 @@ public static class DeviceConnector
             var shifters = new List<IShifter>();
             foreach (var device in shifterDevices)
             {
-                progress(Loc.Format(CoreStrings.Connect_ConnectingAt, device.Name, device.Address), false);
-                var click = new ZwiftClick(device.Device, device.Name, device.Address);
+                progress(Loc.Format(CoreStrings.Connect_ConnectingAt, device.Name, device.Id), false);
+                var click = device.Link.Open(device);
                 try
                 {
                     connected.Add(click);
                     await click.ConnectAsync(ct);
-                    shifters.Add(click);
+                    shifters.Add((IShifter)click);
                 }
                 catch (Exception e) when (e is not OperationCanceledException)
                 {
                     // A locked Click V2 left puck hides its Zwift service until the Zwift app unlocks it.
-                    progress(Loc.Format(CoreStrings.Connect_DeviceFailed, device.Name, device.Address, e.Message), true);
+                    progress(Loc.Format(CoreStrings.Connect_DeviceFailed, device.Name, device.Id, e.Message), true);
                     connected.Remove(click);
                     await click.DisposeAsync();
                 }
             }
 
-            return new ConnectedDevices(trainer, heartRate, shifters);
+            return new ConnectedDevices((ITrainer)trainer, heartRate, shifters);
         }
         catch
         {
@@ -324,10 +310,9 @@ public static class DeviceConnector
         }
     }
 
-    private static bool Matches(string savedAddress, DiscoveredDevice d) =>
-        string.IsNullOrEmpty(savedAddress) || string.Equals(savedAddress, d.Address, StringComparison.OrdinalIgnoreCase);
+    private static bool Matches(DeviceId? saved, DiscoveredDevice d) => saved is null || saved == d.Id;
 
-    /// <summary>The strongest advertising device of a kind; one BlueZ only remembers comes last.</summary>
+    /// <summary>A null Rssi, from a device BlueZ only remembers or an ANT+ stick without a reading, comes last.</summary>
     private static DiscoveredDevice? Best(IEnumerable<DiscoveredDevice> found, DeviceKind kind) =>
         found.Where(d => d.Kind == kind).OrderByDescending(d => d.Rssi ?? short.MinValue).FirstOrDefault();
 }

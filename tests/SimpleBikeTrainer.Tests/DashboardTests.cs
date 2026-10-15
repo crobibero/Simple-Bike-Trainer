@@ -21,7 +21,7 @@ public class DashboardTests
         foreach (var workout in workouts)
         {
             await using var trainer = new FakeTrainer();
-            var session = new RideSession(workout, new RideOptions(200, 20000, new RiderModel(), Path.GetTempFileName(), SpeedFactor: 500), trainer, null, []);
+            var session = new RideSession(workout, new RideOptions(200, 20000, new RiderModel(), Path.GetTempFileName()), trainer, null, [], TestClock.Fast);
             var rendered = new List<string>();
             session.Updated += s =>
             {

@@ -6,12 +6,17 @@ public sealed record RiderModel(
     double Crr = 0.004,
     double CdA = 0.32,
     double AirDensity = 1.225,
-    double DrivetrainEfficiency = 0.97);
+    double DrivetrainEfficiency = 0.97,
+    double BikeMassKg = 9)
+{
+    /// <summary>In kg/m: what FTMS and FE-C call the wind resistance coefficient.</summary>
+    public double WindResistance => 0.5 * AirDensity * CdA;
+}
 
 /// <summary>Steady-state road cycling: rolling resistance, gravity and air drag, no wind and no acceleration.</summary>
 public static class Physics
 {
-    private const double G = 9.80665;
+    public const double G = 9.80665;
     private const double MaxSpeedMs = 40;
 
     /// <summary>Power at the pedals to hold <paramref name="speedMs"/> on a grade.</summary>

@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using SimpleBikeTrainer.Ble;
 using System.Text.Json;
 
 namespace SimpleBikeTrainer;
@@ -25,73 +26,127 @@ public sealed class RiderConfig
 
     public double BikeWeightKg { get; set; } = 9;
 
+    public double RollingResistance { get; set; } = 0.004;
+
     /// <summary>Sets heart rate zones (50/60/70/80/90% of it) when Intervals.icu has none. 0 leaves heart rate uncolored.</summary>
     public int MaxHeartRate { get; set; }
 }
 
+public sealed class SavedDevice
+{
+    public DeviceKind Kind { get; set; }
+
+    public DeviceTransport Transport { get; set; }
+
+    /// <summary>The Bluetooth address, ANT+ device number, or Wi-Fi trainer's MAC or "host:port".</summary>
+    public string Address { get; set; } = string.Empty;
+
+    /// <summary>The name the device advertises, to show it while it is not connected.</summary>
+    public string Name { get; set; } = string.Empty;
+
+    /// <summary>The name the rider gave it, which wins over <see cref="Name"/>. Empty for none.</summary>
+    public string Alias { get; set; } = string.Empty;
+
+    [JsonIgnore]
+    public DeviceId Id => new(Transport, Address);
+}
+
 public sealed class DevicesConfig
 {
-    /// <summary>Bluetooth addresses picked on the first connect; later connects go straight to them. Empty finds any.</summary>
-    public string Trainer { get; set; } = string.Empty;
-
-    public string HeartRate { get; set; } = string.Empty;
-
-    public List<string> Shifters { get; set; } = [];
+    /// <summary>At most one trainer and one heart rate monitor; with none saved, Connect takes any in range.</summary>
+    public List<SavedDevice> Saved { get; set; } = [];
 
     /// <summary>True once the rider picked devices from a scan; an empty heart rate or shifter slot then means none.</summary>
     public bool Picked { get; set; }
 
-    /// <summary>The BlueZ adapter, e.g. "hci0". Empty uses the first one.</summary>
+    /// <summary>The BlueZ adapter, e.g. "hci0", on Linux. Empty uses the first one; other systems have only one.</summary>
     public string Adapter { get; set; } = string.Empty;
 
-    /// <summary>The names the saved devices advertise, by address, to show them while they are not connected.</summary>
-    public Dictionary<string, string> Names { get; set; } = [];
+    /// <summary>Wi-Fi trainers at a fixed address, "host" or "host:port", for networks where the scan cannot find them by mDNS.</summary>
+    public List<string> WifiTrainers { get; set; } = [];
 
-    /// <summary>Names the rider gave devices, by address. They win over the advertised ones.</summary>
-    public Dictionary<string, string> Aliases { get; set; } = [];
+    [JsonIgnore]
+    public DeviceId? Trainer => Saved.FirstOrDefault(d => d.Kind == DeviceKind.Trainer)?.Id;
 
-    /// <summary>A saved device's name: the rider's, else the advertised one, else its address.</summary>
-    public string NameOf(string address) =>
-        Aliases.TryGetValue(address, out var alias) && alias.Length > 0 ? alias
-        : AdvertisedName(address);
+    [JsonIgnore]
+    public DeviceId? HeartRate => Saved.FirstOrDefault(d => d.Kind == DeviceKind.HeartRate)?.Id;
 
-    /// <summary>The name the device advertises, or its address when it is not known.</summary>
-    public string AdvertisedName(string address) => Names.TryGetValue(address, out var name) && name.Length > 0 ? name : address;
+    [JsonIgnore]
+    public IReadOnlyList<DeviceId> Shifters => [.. Saved.Where(d => d.Kind == DeviceKind.Shifter).Select(d => d.Id)];
 
-    /// <summary>Gives a device the rider's own name. A blank one, or the advertised one, goes back to the advertised name.</summary>
-    public void Rename(string address, string name)
+    public SavedDevice? Find(DeviceId id) => Saved.FirstOrDefault(d => d.Id == id);
+
+    /// <summary>A trainer or heart rate monitor replaces the saved one; controllers add up. A device saved already keeps its alias.</summary>
+    public void Pick(DeviceKind kind, DeviceId id, string name)
     {
-        name = name.Trim();
-        if (name.Length == 0 || name == AdvertisedName(address))
+        var existing = Find(id);
+        Saved.RemoveAll(d => d != existing && (d.Id == id || (kind != DeviceKind.Shifter && d.Kind == kind)));
+        if (existing is null)
         {
-            Aliases.Remove(address);
+            Saved.Add(new SavedDevice { Kind = kind, Transport = id.Transport, Address = id.Address, Name = name });
         }
         else
         {
-            Aliases[address] = name;
+            existing.Kind = kind;
+            existing.Name = name;
         }
     }
 
-    /// <summary>A saved device as "name (address)", or just the address when the name is not known.</summary>
-    public string Describe(string address) => NameOf(address) is var name && name != address ? $"{name} ({address})" : address;
+    public void Unpick(DeviceKind kind) => Saved.RemoveAll(d => d.Kind == kind);
 
-    /// <summary>Drops one saved device, whatever its kind.</summary>
-    public void Forget(string address)
+    /// <summary>False when the device is not saved, or the name is the same.</summary>
+    public bool RememberName(DeviceId id, string name)
     {
-        if (string.Equals(Trainer, address, StringComparison.OrdinalIgnoreCase))
+        if (Find(id) is not { } saved || saved.Name == name)
         {
-            Trainer = string.Empty;
+            return false;
         }
 
-        if (string.Equals(HeartRate, address, StringComparison.OrdinalIgnoreCase))
-        {
-            HeartRate = string.Empty;
-        }
-
-        Shifters.RemoveAll(s => string.Equals(s, address, StringComparison.OrdinalIgnoreCase));
-        Names.Remove(address);
-        Aliases.Remove(address);
+        saved.Name = name;
+        return true;
     }
+
+    /// <summary>A saved device's name: the rider's, else the advertised one, else its address.</summary>
+    public string NameOf(DeviceId id) => Find(id) is { Alias.Length: > 0 } saved ? saved.Alias : AdvertisedName(id);
+
+    public string AdvertisedName(DeviceId id) => Find(id) is { Name.Length: > 0 } saved ? saved.Name : id.Address;
+
+    /// <summary>A blank name, or the advertised one, clears the alias.</summary>
+    public void Rename(DeviceId id, string name)
+    {
+        if (Find(id) is { } saved)
+        {
+            name = name.Trim();
+            saved.Alias = name == AdvertisedName(id) ? string.Empty : name;
+        }
+    }
+
+    public string Describe(DeviceId id) => NameOf(id) is var name && name != id.Address ? $"{name} ({id})" : id.ToString();
+
+    public void Forget(DeviceId id) => Saved.RemoveAll(d => d.Id == id);
+}
+
+/// <summary>How the trainer is held off ERG steps: in free rides, on routes, and with ERG switched off.</summary>
+public enum ResistanceMode
+{
+    /// <summary>The app works out the power the virtual gear, cadence and grade cost, and holds the trainer at it.</summary>
+    Power,
+
+    /// <summary>The trainer simulates the road itself; the app scales it by the virtual gear, for a single-speed setup.</summary>
+    SimulationVirtualGears,
+
+    /// <summary>The trainer simulates the road itself, and the rider shifts the bike's own gears.</summary>
+    SimulationRealGears,
+}
+
+public sealed class TrainerConfig
+{
+    public ResistanceMode Resistance { get; set; } = ResistanceMode.Power;
+
+    /// <summary>The chain's one real gear on a single-speed setup such as the Zwift Cog, for simulation with virtual gears.</summary>
+    public int ChainringTeeth { get; set; } = 34;
+
+    public int CogTeeth { get; set; } = 17;
 }
 
 public enum ThemeChoice
@@ -119,6 +174,8 @@ public sealed class AppConfig
     public RiderConfig Rider { get; set; } = new();
 
     public DevicesConfig Devices { get; set; } = new();
+
+    public TrainerConfig Trainer { get; set; } = new();
 
     /// <summary>Where finished rides are saved as FIT files.</summary>
     public string RidesDirectory { get; set; } = DefaultRidesDirectory;

@@ -75,7 +75,7 @@ public sealed class SessionTests : IDisposable
         ]);
         await using var trainer = new FakeTrainer();
         var path = Path.Combine(_dir, "ride.fit");
-        var session = new RideSession(workout, Options(path), trainer, null, []);
+        var session = new RideSession(workout, Options(path), trainer, null, [], TestClock.Fast);
         session.Updated += s =>
         {
             if (s.WorkoutComplete)
@@ -109,7 +109,7 @@ public sealed class SessionTests : IDisposable
     {
         // The rider tops out at 300 W, so the test fails once a step asks for more than 300 / 0.7 = 428 W.
         await using var trainer = new FakeTrainer(maxWatts: 300);
-        var session = new RideSession(RampTest.Create(startWatts: 200, stepWatts: 50), Options(Path.Combine(_dir, "ramp.fit")), trainer, null, []);
+        var session = new RideSession(RampTest.Create(startWatts: 200, stepWatts: 50), Options(Path.Combine(_dir, "ramp.fit")), trainer, null, [], TestClock.Fast);
         session.Updated += s =>
         {
             if (s.Step?.Label == "Cooldown" && s.StepElapsed >= 5)
@@ -128,7 +128,7 @@ public sealed class SessionTests : IDisposable
     public async Task FreeRideHoldsThePowerTheGearCosts()
     {
         await using var trainer = new FakeTrainer();
-        var session = new RideSession(Workout.FreeRide(), Options(Path.Combine(_dir, "free.fit")), trainer, null, []);
+        var session = new RideSession(Workout.FreeRide(), Options(Path.Combine(_dir, "free.fit")), trainer, null, [], TestClock.Fast);
         var shifted = false;
         var low = 0;
         var high = 0;
@@ -160,7 +160,7 @@ public sealed class SessionTests : IDisposable
         var course = CourseGenerator.Generate(2000, 40, seed: 7);
         await using var trainer = new FakeTrainer();
         var path = Path.Combine(_dir, "route.fit");
-        var session = new RideSession(Workout.Route("Route", course), Options(path), trainer, null, []);
+        var session = new RideSession(Workout.Route("Route", course), Options(path), trainer, null, [], TestClock.Fast);
         var steepest = 0.0;
         session.Updated += s =>
         {
@@ -193,7 +193,7 @@ public sealed class SessionTests : IDisposable
 
         // A folder where the checkpoint's temporary file goes makes every checkpoint fail with access denied.
         Directory.CreateDirectory(path + ".partial.tmp");
-        var session = new RideSession(Workout.FreeRide(), Options(path), trainer, null, []);
+        var session = new RideSession(Workout.FreeRide(), Options(path), trainer, null, [], TestClock.Fast);
         using var cts = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
         cts.CancelAfter(TimeSpan.FromSeconds(3));
 
@@ -208,7 +208,7 @@ public sealed class SessionTests : IDisposable
     {
         var course = CourseGenerator.Generate(2000, 40, seed: 7);
         await using var trainer = new FakeTrainer();
-        var session = new RideSession(Workout.Route("Route", course), Options(Path.Combine(_dir, "summit.fit")), trainer, null, []);
+        var session = new RideSession(Workout.Route("Route", course), Options(Path.Combine(_dir, "summit.fit")), trainer, null, [], TestClock.Fast);
         session.Updated += s =>
         {
             if (s.Moving.TotalSeconds >= 20)
@@ -242,7 +242,7 @@ public sealed class SessionTests : IDisposable
         Assert.Equal(3, new[] { first, second, third }.Distinct().Count());
     }
 
-    private static RideOptions Options(string path) => new(200, 20000, new RiderModel(), path, SpeedFactor: 500);
+    private static RideOptions Options(string path) => new(200, 20000, new RiderModel(), path);
 }
 
 internal sealed class FitContents

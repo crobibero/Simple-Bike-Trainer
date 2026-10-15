@@ -1,5 +1,6 @@
 using System.Text.Json.Serialization;
 using System.Text.Json;
+using SimpleBikeTrainer.Ble;
 using SimpleBikeTrainer.Recording;
 using SimpleBikeTrainer.Workouts;
 
@@ -13,7 +14,14 @@ namespace SimpleBikeTrainer;
     WriteIndented = true,
     PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase,
     DefaultIgnoreCondition = JsonIgnoreCondition.Never,
-    Converters = [typeof(CamelCaseEnumConverter<ThemeChoice>), typeof(CamelCaseEnumConverter<UnitSystem>)])]
+    Converters =
+    [
+        typeof(CamelCaseEnumConverter<ThemeChoice>),
+        typeof(CamelCaseEnumConverter<UnitSystem>),
+        typeof(CamelCaseEnumConverter<ResistanceMode>),
+        typeof(CamelCaseEnumConverter<DeviceKind>),
+        typeof(CamelCaseEnumConverter<DeviceTransport>),
+    ])]
 [JsonSerializable(typeof(AppConfig))]
 internal sealed partial class ConfigJsonContext : JsonSerializerContext;
 

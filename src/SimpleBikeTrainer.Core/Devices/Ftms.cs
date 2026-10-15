@@ -136,6 +136,10 @@ public static class Ftms
     public static bool SupportsSpinDown(ReadOnlySpan<byte> features) =>
         features.Length >= 8 && (BinaryPrimitives.ReadUInt32LittleEndian(features[4..]) & (1u << 15)) != 0;
 
+    /// <summary>Target Setting Features bit 13: Indoor Bike Simulation Parameters.</summary>
+    public static bool SupportsSimulation(ReadOnlySpan<byte> features) =>
+        features.Length >= 8 && (BinaryPrimitives.ReadUInt32LittleEndian(features[4..]) & (1u << 13)) != 0;
+
     public static byte[] StartSpinDown() => [OpSpinDownControl, 0x01];
 
     /// <summary>

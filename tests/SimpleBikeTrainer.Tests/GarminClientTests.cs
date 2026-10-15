@@ -1,6 +1,7 @@
 using System.Net;
 using System.Text.Json.Nodes;
 using System.Text;
+using Microsoft.Extensions.DependencyInjection;
 using SimpleBikeTrainer.Session;
 using SimpleBikeTrainer.Uploads;
 
@@ -133,7 +134,7 @@ public sealed class GarminClientTests : IDisposable
         await File.WriteAllBytesAsync(fit, [1, 2, 3, 4], TestContext.Current.CancellationToken);
         using var client = new GarminClient(TokenDir, new FakeGarmin());
 
-        var outcome = await new UploadService(new AppConfig(), client).UploadAsync(UploadTarget.Garmin, fit, "Ride", null, null, TestContext.Current.CancellationToken);
+        var outcome = await new UploadService(new AppConfig(), new ServiceCollection().AddTrainerHttpClients().BuildServiceProvider().GetRequiredService<IHttpClientFactory>(), client).UploadAsync(UploadTarget.Garmin, fit, "Ride", null, null, TestContext.Current.CancellationToken);
 
         Assert.Equal(UploadState.Failed, outcome.State);
     }
@@ -163,6 +164,19 @@ public sealed class GarminClientTests : IDisposable
         Assert.False(client.HasTokens);
         await Assert.ThrowsAsync<GarminException>(() => client.GetNameAsync(TestContext.Current.CancellationToken));
     }
+
+    [Theory]
+    [InlineData("""{"client_id":"x","note":"~~~???>>>"}""")]
+    [InlineData("""{"client_id":"x","n":1}""")]
+    public void ReadsAnUnpaddedBase64UrlJwtPayload(string json)
+    {
+        var part = Convert.ToBase64String(Encoding.UTF8.GetBytes(json)).TrimEnd('=').Replace('+', '-').Replace('/', '_');
+
+        Assert.Equal("x", GarminClient.JwtPayload($"header.{part}.signature")?["client_id"]?.ToString());
+    }
+
+    [Fact]
+    public void AMalformedJwtHasNoPayload() => Assert.Null(GarminClient.JwtPayload("header.!!!.signature"));
 
     private sealed record Captured(string Path, string Query, string? Authorization, string? ContentType, string Body);
 

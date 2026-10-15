@@ -1,18 +1,18 @@
-using Linux.Bluetooth;
 using SimpleBikeTrainer.Devices;
 using SimpleBikeTrainer.Resources;
 
 namespace SimpleBikeTrainer.Ble;
 
 /// <summary>A KICKR CORE 2, or any FTMS trainer, driven in ERG mode through the Fitness Machine Control Point.</summary>
-public sealed class FtmsTrainer(Device device, string name, string address) : BleConnection(device, name, address), ITrainer
+public sealed class FtmsTrainer(BlePeripheral peripheral, string name, DeviceId id) : BleConnection(peripheral, name, id), ITrainer
 {
     private static readonly TimeSpan WriteTimeout = TimeSpan.FromSeconds(5);
 
     // BlueZ fails a GATT write that overlaps another one, so control point writes go one at a time.
     private readonly SemaphoreSlim _writeLock = new(1, 1);
-    private GattCharacteristic? _controlPoint;
-    private int? _lastTarget;
+    private BleCharacteristic? _controlPoint;
+    // The last target power or simulation sent, to restore after a reconnect.
+    private byte[]? _lastControl;
 
     public event Action<IndoorBikeData>? DataReceived;
 
@@ -22,6 +22,8 @@ public sealed class FtmsTrainer(Device device, string name, string address) : Bl
     public string? LastError { get; private set; }
 
     public bool SupportsSpinDown { get; private set; }
+
+    public bool SupportsSimulation { get; private set; }
 
     public event Action<SpinDownUpdate>? SpinDownUpdated;
 
@@ -42,8 +44,18 @@ public sealed class FtmsTrainer(Device device, string name, string address) : Bl
             return;
         }
 
-        await SendAsync(Ftms.SetTargetPower(watts), cancellationToken);
-        _lastTarget = watts;
+        await SendControlAsync(Ftms.SetTargetPower(watts), cancellationToken);
+    }
+
+    /// <summary>FTMS has no weight field: the trainer uses its own, often the one set in its maker's app.</summary>
+    public async Task SetSimulationAsync(RoadSimulation road, CancellationToken cancellationToken = default)
+    {
+        if (!IsConnected)
+        {
+            return;
+        }
+
+        await SendControlAsync(Ftms.SetSimulation(road.GradePercent, road.Crr, road.WindResistance), cancellationToken);
     }
 
     protected override async Task SetupAsync(CancellationToken cancellationToken)
@@ -52,7 +64,9 @@ public sealed class FtmsTrainer(Device device, string name, string address) : Bl
         _controlPoint = await GetCharacteristicAsync(GattUuids.FitnessMachine, GattUuids.FitnessMachineControlPoint);
 
         var feature = await GetCharacteristicAsync(GattUuids.FitnessMachine, GattUuids.FitnessMachineFeature);
-        SupportsSpinDown = Ftms.SupportsSpinDown(await feature.ReadValueAsync(new Dictionary<string, object>()));
+        var features = await feature.ReadAsync();
+        SupportsSpinDown = Ftms.SupportsSpinDown(features);
+        SupportsSimulation = Ftms.SupportsSimulation(features);
         if (SupportsSpinDown)
         {
             var status = await GetCharacteristicAsync(GattUuids.FitnessMachine, GattUuids.FitnessMachineStatus);
@@ -72,10 +86,9 @@ public sealed class FtmsTrainer(Device device, string name, string address) : Bl
         await SendAsync(Ftms.RequestControl(), cancellationToken);
         await SendAsync(Ftms.Start(), cancellationToken);
 
-        // After a reconnect, restore the target the ride was holding.
-        if (_lastTarget is { } target)
+        if (_lastControl is { } control)
         {
-            await SendAsync(Ftms.SetTargetPower(target), cancellationToken);
+            await SendAsync(control, cancellationToken);
         }
     }
 
@@ -86,6 +99,12 @@ public sealed class FtmsTrainer(Device device, string name, string address) : Bl
             // Reset hands control back so another app can take the trainer.
             await SendAsync(Ftms.Reset(), CancellationToken.None);
         }
+    }
+
+    private async Task SendControlAsync(byte[] command, CancellationToken cancellationToken)
+    {
+        await SendAsync(command, cancellationToken);
+        _lastControl = command;
     }
 
     private async Task SendAsync(byte[] command, CancellationToken cancellationToken)

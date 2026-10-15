@@ -36,8 +36,13 @@ public sealed record RideOptions(
     string OutputPath,
     int[]? PowerZones = null,
     int[]? HrZones = null,
-    double SpeedFactor = 1,
-    int StartGear = 12);
+    int StartGear = 12)
+{
+    public ResistanceMode Resistance { get; init; } = ResistanceMode.Power;
+
+    /// <summary>Chainring over cog of the chain's real gear, for simulation with virtual gears.</summary>
+    public double ChainRatio { get; init; } = 2;
+}
 
 public sealed record RideResult(
     Workout Workout,
@@ -67,6 +72,8 @@ public sealed record RideSnapshot(
     bool ErgActive,
     bool ErgEnabled,
     int ErgOffset,
+    bool Simulating,
+    bool VirtualGears,
     int Gear,
     int GearCount,
     double Grade,
@@ -82,10 +89,6 @@ public sealed record RideSnapshot(
     LapMetrics Lap,
     string? Message);
 
-/// <summary>
-/// Runs one ride. Once a second it reads the sensors, records a sample, moves the workout on and sets the trainer's
-/// target: the step's power in ERG, or in free ride the power that the virtual gear, cadence and grade cost.
-/// </summary>
 public sealed class RideSession
 {
     private const int AutoPauseSeconds = 3;
@@ -95,6 +98,7 @@ public sealed class RideSession
 
     private readonly Workout _workout;
     private readonly RideOptions _options;
+    private readonly TimeProvider _time;
     private readonly ITrainer _trainer;
     private readonly IHeartRateMonitor? _heartRate;
     private readonly IReadOnlyList<IShifter> _shifters;
@@ -110,6 +114,7 @@ public sealed class RideSession
     private double? _cadence;
     private int? _hr;
     private int? _trainerHr;
+    private double _speedKmh;
     private long _trainerSeen;
     private long _hrSeen;
 
@@ -135,18 +140,21 @@ public sealed class RideSession
     private string? _message;
     private bool _finished;
     private DateTime _lastCheckpoint;
-    private int _sendTarget = -1;
+    private TrainerCommand? _send;
+    private bool _toldNoSimulation;
 
-    public RideSession(Workout workout, RideOptions options, ITrainer trainer, IHeartRateMonitor? heartRate, IEnumerable<IShifter> shifters)
+    /// <param name="timeProvider">The ride's tick and recorded times. Sensor timeouts and trainer re-sends stay on real time.</param>
+    public RideSession(Workout workout, RideOptions options, ITrainer trainer, IHeartRateMonitor? heartRate, IEnumerable<IShifter> shifters, TimeProvider? timeProvider = null)
     {
         _workout = workout;
         _options = options;
+        _time = timeProvider ?? TimeProvider.System;
         _trainer = trainer;
         _heartRate = heartRate;
         _player = new WorkoutPlayer(workout);
         _gearbox = new Gearbox(options.StartGear);
         _metrics = new RideMetrics(options.Ftp, options.WPrime, options.PowerZones, options.HrZones);
-        _lap = new LapMetrics(DateTime.UtcNow, 0);
+        _lap = new LapMetrics(_time.GetUtcNow().UtcDateTime, 0);
         if (workout.Course is { } course)
         {
             _altitude = course.ElevationAt(0);
@@ -178,12 +186,12 @@ public sealed class RideSession
 
     public async Task<RideResult> RunAsync(CancellationToken cancellationToken)
     {
-        _clockStart = DateTime.UtcNow;
+        _clockStart = _time.GetUtcNow().UtcDateTime;
         _lastCheckpoint = _clockStart;
         using var sender = new CancellationTokenSource();
         var sending = Task.Run(() => SendTargetsAsync(sender.Token), CancellationToken.None);
 
-        using var timer = new PeriodicTimer(TimeSpan.FromSeconds(1 / Math.Max(_options.SpeedFactor, 0.01)));
+        using var timer = new PeriodicTimer(TimeSpan.FromSeconds(1), _time);
         var tick = timer.WaitForNextTickAsync(cancellationToken).AsTask();
         var command = _commands.Reader.WaitToReadAsync(cancellationToken).AsTask();
         UpdateTarget();
@@ -435,7 +443,7 @@ public sealed class RideSession
                         _ergOffset = Math.Clamp(_ergOffset + (up ? 5 : -5), -100, 100);
                     }
                 }
-                else
+                else if (VirtualGears)
                 {
                     _gearbox.Shift(up ? 1 : -1);
                 }
@@ -480,48 +488,93 @@ public sealed class RideSession
 
     private bool ErgActive => _ergEnabled && _player.Current is { IsFreeRide: false };
 
+    private bool Simulating => !ErgActive && _options.Resistance != ResistanceMode.Power && _trainer.SupportsSimulation;
+
+    private bool VirtualGears => !Simulating || _options.Resistance == ResistanceMode.SimulationVirtualGears;
+
     private void UpdateTarget()
     {
-        int target;
+        TrainerCommand command;
         if (ErgActive)
         {
             var step = _player.Current!;
             var offset = _workout.IsRampTest ? 0 : _ergOffset;
-            target = Math.Max(0, step.Power!.WattsAt(_player.StepFraction, _workout.Ftp ?? _options.Ftp) + offset);
+            _target = Math.Max(0, step.Power!.WattsAt(_player.StepFraction, _workout.Ftp ?? _options.Ftp) + offset);
+            command = new TrainerCommand(_target, null);
+        }
+        else if (Simulating)
+        {
+            _target = null;
+            command = new TrainerCommand(null, Road());
         }
         else
         {
+            if (_options.Resistance != ResistanceMode.Power && !_toldNoSimulation)
+            {
+                _toldNoSimulation = true;
+                _message = Loc.Format(CoreStrings.Session_NoSimulation, _trainer.Name);
+            }
+
             var cadence = ReadSensors().Cadence ?? 0;
             var speed = _gearbox.SpeedMs(cadence);
-            target = (int)Math.Round(Math.Clamp(Physics.PowerForSpeed(speed, _grade, _options.Rider), 0, 1500));
+            _target = (int)Math.Round(Math.Clamp(Physics.PowerForSpeed(speed, _grade, _options.Rider), 0, 1500));
+            command = new TrainerCommand(_target, null);
         }
 
-        _target = target;
-        if (Interlocked.Exchange(ref _sendTarget, target) != target)
+        if (Interlocked.Exchange(ref _send, command) != command)
         {
             _targetChanged.Release();
         }
     }
 
-    /// <summary>Sends the latest target. A write in flight is never queued behind: only the newest value goes out.</summary>
+    private RoadSimulation Road()
+    {
+        if (_options.Resistance == ResistanceMode.SimulationRealGears)
+        {
+            return TrainerSimulation.Road(_grade, _options.Rider, 1, TrainerSpeedMs());
+        }
+
+        // The flywheel turns at the chain's real gear, whatever the virtual gear.
+        var cadence = ReadSensors().Cadence ?? 0;
+        var flywheel = Math.Max(0, cadence) / 60 * _options.ChainRatio * Gearbox.WheelCircumference;
+        return TrainerSimulation.Road(_grade, _options.Rider, _gearbox.Ratio / _options.ChainRatio, flywheel);
+    }
+
+    private double TrainerSpeedMs()
+    {
+        lock (_sensorLock)
+        {
+            return _speedKmh / 3.6;
+        }
+    }
+
+    /// <summary>Only the newest command goes out; one superseded while a write is in flight is never sent.</summary>
     private async Task SendTargetsAsync(CancellationToken ct)
     {
-        var sent = -1;
+        TrainerCommand? sent = null;
         var lastSend = Stopwatch.GetTimestamp();
         while (!ct.IsCancellationRequested)
         {
             // Re-send every 10 s too, so a trainer that dropped a write still converges.
             await _targetChanged.WaitAsync(TimeSpan.FromSeconds(10), ct);
-            var target = Volatile.Read(ref _sendTarget);
-            if (target < 0 || (target == sent && Stopwatch.GetElapsedTime(lastSend) < TimeSpan.FromSeconds(10)))
+            var command = Volatile.Read(ref _send);
+            if (command is null || (command == sent && Stopwatch.GetElapsedTime(lastSend) < TimeSpan.FromSeconds(10)))
             {
                 continue;
             }
 
             try
             {
-                await _trainer.SetTargetPowerAsync(target, ct);
-                sent = target;
+                if (command.Road is { } road)
+                {
+                    await _trainer.SetSimulationAsync(road, ct);
+                }
+                else
+                {
+                    await _trainer.SetTargetPowerAsync(command.Watts ?? 0, ct);
+                }
+
+                sent = command;
                 lastSend = Stopwatch.GetTimestamp();
             }
             catch (Exception e) when (e is not OperationCanceledException)
@@ -611,6 +664,11 @@ public sealed class RideSession
             {
                 _trainerHr = data.HeartRate;
             }
+
+            if (data.SpeedKmh is { } speed)
+            {
+                _speedKmh = speed;
+            }
         }
     }
 
@@ -664,6 +722,8 @@ public sealed class RideSession
             ErgActive,
             _ergEnabled,
             _ergOffset,
+            Simulating,
+            VirtualGears,
             _gearbox.Gear,
             _gearbox.GearCount,
             _grade,
@@ -679,4 +739,6 @@ public sealed class RideSession
             _lap,
             _message);
     }
+
+    private sealed record TrainerCommand(int? Watts, RoadSimulation? Road);
 }

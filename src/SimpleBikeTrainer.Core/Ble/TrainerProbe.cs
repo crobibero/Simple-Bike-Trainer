@@ -1,5 +1,4 @@
 using System.Buffers.Binary;
-using Linux.Bluetooth;
 using SimpleBikeTrainer.Devices;
 using SimpleBikeTrainer.Resources;
 
@@ -9,7 +8,7 @@ namespace SimpleBikeTrainer.Ble;
 /// A read-only trainer connection for <c>simple-bike-trainer-cli probe</c>: reads what the trainer supports and listens to its data,
 /// without taking control, so it is safe while someone is riding.
 /// </summary>
-public sealed class TrainerProbe(Device device, string name, string address) : BleConnection(device, name, address)
+public sealed class TrainerProbe(BlePeripheral peripheral, string name, DeviceId id) : BleConnection(peripheral, name, id)
 {
     public event Action<IndoorBikeData>? DataReceived;
 
@@ -20,12 +19,12 @@ public sealed class TrainerProbe(Device device, string name, string address) : B
     protected override async Task SetupAsync(CancellationToken cancellationToken)
     {
         var feature = await GetCharacteristicAsync(GattUuids.FitnessMachine, GattUuids.FitnessMachineFeature);
-        Features = DescribeFeatures(await feature.ReadValueAsync(new Dictionary<string, object>()));
+        Features = DescribeFeatures(await feature.ReadAsync());
 
         try
         {
             var range = await GetCharacteristicAsync(GattUuids.FitnessMachine, GattUuids.SupportedPowerRange);
-            var r = await range.ReadValueAsync(new Dictionary<string, object>());
+            var r = await range.ReadAsync();
             if (r.Length >= 6)
             {
                 PowerRange = Loc.Format(CoreStrings.Probe_PowerRange, BinaryPrimitives.ReadInt16LittleEndian(r), BinaryPrimitives.ReadInt16LittleEndian(r.AsSpan(2)), BinaryPrimitives.ReadUInt16LittleEndian(r.AsSpan(4)));

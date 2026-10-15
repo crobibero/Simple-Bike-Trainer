@@ -27,4 +27,12 @@ public static class GattUuids
     public const ushort ZwiftManufacturerId = 0x094A;
 
     public static string Short(ushort id) => $"0000{id:x4}-0000-1000-8000-00805f9b34fb";
+
+    /// <summary>A UUID spelled as BlueZ spells it. CoreBluetooth shortens the standard ones to "180D", in capitals.</summary>
+    public static string Normalize(string uuid) => uuid.Length switch
+    {
+        4 => Short(Convert.ToUInt16(uuid, 16)),
+        8 => $"{uuid.ToLowerInvariant()}-0000-1000-8000-00805f9b34fb",
+        _ => uuid.ToLowerInvariant(),
+    };
 }

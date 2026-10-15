@@ -1,3 +1,4 @@
+using SimpleBikeTrainer.Ble;
 using SimpleBikeTrainer.Resources;
 
 namespace SimpleBikeTrainer.Devices;
@@ -14,11 +15,19 @@ public interface ISensorDevice : IAsyncDisposable
     /// <summary>Charge in percent, for a device that reports it. Null when it does not, or has not yet.</summary>
     int? Battery => null;
 
-    /// <summary>The Bluetooth address, for a real device. Null for a simulated one.</summary>
-    string? Address => null;
+    /// <summary>Null for a simulated device.</summary>
+    DeviceId? Id => null;
 }
 
-/// <summary>A smart trainer that reports power and cadence and holds a target power (ERG).</summary>
+/// <summary>A real device: it connects on request, then keeps itself connected until disposed.</summary>
+public interface IConnectableDevice : ISensorDevice
+{
+    Task ConnectAsync(CancellationToken cancellationToken);
+}
+
+/// <summary><paramref name="WindResistance"/> is 0.5 × air density × CdA, in kg/m.</summary>
+public readonly record struct RoadSimulation(double GradePercent, double Crr, double WindResistance, double RiderKg, double BikeKg);
+
 public interface ITrainer : ISensorDevice
 {
     event Action<IndoorBikeData>? DataReceived;
@@ -27,6 +36,13 @@ public interface ITrainer : ISensorDevice
     string? LastError { get; }
 
     Task SetTargetPowerAsync(int watts, CancellationToken cancellationToken = default);
+
+    /// <summary>Whether the trainer can simulate a road (FTMS Indoor Bike Simulation, or ANT+ FE-C simulation mode).</summary>
+    bool SupportsSimulation => false;
+
+    /// <summary>Leaves ERG and simulates <paramref name="road"/>. A later target power goes back to ERG.</summary>
+    Task SetSimulationAsync(RoadSimulation road, CancellationToken cancellationToken = default) =>
+        throw new NotSupportedException(Loc.Format(CoreStrings.Device_NoSimulation, Name));
 
     /// <summary>Whether the trainer offers FTMS spin-down calibration (Target Setting Features bit 15).</summary>
     bool SupportsSpinDown => false;

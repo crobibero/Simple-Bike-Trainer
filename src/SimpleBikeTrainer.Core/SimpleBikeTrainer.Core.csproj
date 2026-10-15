@@ -1,9 +1,11 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
+    <TargetFramework>$(AppTargetFramework)</TargetFramework>
     <!-- Analyzers flag code that would break in trimmed or native AOT builds of the apps. -->
     <IsAotCompatible>true</IsAotCompatible>
+    <!-- CoreBluetooth and libusb are called through function pointers. -->
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <RootNamespace>SimpleBikeTrainer</RootNamespace>
@@ -14,12 +16,17 @@
   <ItemGroup>
     <InternalsVisibleTo Include="SimpleBikeTrainer.Tests" />
     <InternalsVisibleTo Include="simple-bike-trainer-cli" />
+    <!-- The Android app plugs its own Bluetooth and USB code into BleAdapter.PlatformOpen and AntStick.OpenTransport. -->
+    <InternalsVisibleTo Include="simple-bike-trainer" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="AsyncAwaitBestPractices" Version="10.0.0" />
     <PackageReference Include="Garmin.FIT.Sdk" Version="21.218.0" />
     <PackageReference Include="Linux.Bluetooth" Version="6.0.0-pre3" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.13" />
+    <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.13" />
+    <PackageReference Include="Microsoft.Extensions.Http.Resilience" Version="10.11.0" />
   </ItemGroup>
 
   <!-- User-facing text. A Resources/CoreStrings.<culture>.resx next to it adds a translation. -->

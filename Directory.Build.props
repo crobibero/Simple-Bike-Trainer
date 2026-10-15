@@ -1,0 +1,20 @@
+<Project>
+
+  <!-- WinRT Bluetooth needs the Windows target framework, so every project takes it on Windows; -p:WindowsBuild=true makes that build elsewhere. -->
+  <PropertyGroup>
+    <WindowsBuild Condition="'$(WindowsBuild)' == ''">$([MSBuild]::IsOSPlatform('Windows'))</WindowsBuild>
+    <AppTargetFramework>net10.0</AppTargetFramework>
+    <AppTargetFramework Condition="'$(WindowsBuild)' == 'true'">net10.0-windows10.0.19041.0</AppTargetFramework>
+    <EnableWindowsTargeting Condition="'$(WindowsBuild)' == 'true'">true</EnableWindowsTargeting>
+  </PropertyGroup>
+
+  <!--
+    -p:AndroidBuild=true adds the Android tablet app to the desktop app's project as a second target framework. It
+    needs the android workload, so other builds leave it out.
+  -->
+  <PropertyGroup>
+    <AndroidBuild Condition="'$(AndroidBuild)' == ''">false</AndroidBuild>
+    <AndroidTargetFramework>net10.0-android</AndroidTargetFramework>
+  </PropertyGroup>
+
+</Project>

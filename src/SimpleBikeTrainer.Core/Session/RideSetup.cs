@@ -32,18 +32,24 @@ public sealed record Athlete(int Ftp, int WPrime, double WeightKg, double BikeWe
             settings);
     }
 
-    public RideOptions Options(AppConfig config, Workout workout, double speedFactor = 1, int? ftpOverride = null)
+    public RideOptions Options(AppConfig config, Workout workout, int? ftpOverride = null)
     {
         var stamp = DateTime.Now.ToString("yyyy-MM-dd-HHmm", CultureInfo.InvariantCulture);
         return new RideOptions(
             ftpOverride ?? Ftp,
             WPrime,
-            new RiderModel(TotalMassKg: WeightKg + BikeWeightKg),
+            Rider(config),
             UnusedPath(config.RidesDirectory, $"{stamp}-{RideSetup.Slug(workout.Name)}"),
             PowerZones,
-            HrZones,
-            speedFactor);
+            HrZones)
+        {
+            Resistance = config.Trainer.Resistance,
+            ChainRatio = (double)config.Trainer.ChainringTeeth / Math.Max(1, config.Trainer.CogTeeth),
+        };
     }
+
+    public RiderModel Rider(AppConfig config) =>
+        new(TotalMassKg: WeightKg + BikeWeightKg, Crr: config.Rider.RollingResistance, BikeMassKg: BikeWeightKg);
 
     /// <summary>A FIT path no earlier ride has used, so a second ride of the same workout in the same minute does not overwrite the first.</summary>
     private static string UnusedPath(string directory, string name)

@@ -9,15 +9,18 @@ namespace SimpleBikeTrainer.Devices;
 /// </summary>
 public sealed class SimulatedTrainer : ITrainer
 {
-    private readonly Timer _timer;
+    private readonly ITimer _timer;
+    private readonly TimeProvider _time;
     private readonly Random _random = new(42);
     private volatile int _target = 100;
     private double _power;
 
-    public SimulatedTrainer(double speedFactor = 1)
+    /// <param name="timeProvider">Paces its readings, four a second.</param>
+    public SimulatedTrainer(TimeProvider? timeProvider = null)
     {
-        var period = TimeSpan.FromMilliseconds(250 / Math.Max(speedFactor, 0.01));
-        _timer = new Timer(_ => Emit(), null, period, period);
+        _time = timeProvider ?? TimeProvider.System;
+        var period = TimeSpan.FromMilliseconds(250);
+        _timer = _time.CreateTimer(_ => Emit(), null, period, period);
     }
 
     public event Action<IndoorBikeData>? DataReceived;
@@ -36,6 +39,22 @@ public sealed class SimulatedTrainer : ITrainer
     public Task SetTargetPowerAsync(int watts, CancellationToken cancellationToken = default)
     {
         _target = watts;
+        Road = null;
+        return Task.CompletedTask;
+    }
+
+    public bool SupportsSimulation => true;
+
+    /// <summary>The road being simulated; null in ERG.</summary>
+    public RoadSimulation? Road { get; private set; }
+
+    /// <summary>Holds the power the road costs at the flywheel speed of 85-90 rpm in a 34x17 gear, about 22 km/h.</summary>
+    public Task SetSimulationAsync(RoadSimulation road, CancellationToken cancellationToken = default)
+    {
+        Road = road;
+        const double speed = 87.5 / 60 * 2 * 2.136;
+        var force = ((road.RiderKg + road.BikeKg) * 9.80665 * (road.Crr + (road.GradePercent / 100))) + (road.WindResistance * speed * speed);
+        _target = (int)Math.Round(Math.Max(0, force * speed));
         return Task.CompletedTask;
     }
 
@@ -56,9 +75,9 @@ public sealed class SimulatedTrainer : ITrainer
     private async Task PlaySpinDownAsync(CancellationToken cancellationToken)
     {
         SpinDownUpdated?.Invoke(new SpinDownUpdate(SpinDownState.SpeedUp, 30, 33));
-        await Task.Delay(SpinDownStepTime, cancellationToken);
+        await Task.Delay(SpinDownStepTime, _time, cancellationToken);
         SpinDownUpdated?.Invoke(new SpinDownUpdate(SpinDownState.StopPedaling));
-        await Task.Delay(SpinDownStepTime, cancellationToken);
+        await Task.Delay(SpinDownStepTime, _time, cancellationToken);
         SpinDownUpdated?.Invoke(new SpinDownUpdate(SpinDownState.Success));
     }
 
@@ -87,15 +106,16 @@ public sealed class SimulatedTrainer : ITrainer
 /// <summary>A heart rate that drifts toward a level set by the simulated trainer's power.</summary>
 public sealed class SimulatedHeartRate : IHeartRateMonitor
 {
-    private readonly Timer _timer;
+    private readonly ITimer _timer;
     private double _hr = 70;
     private int _power;
 
-    public SimulatedHeartRate(SimulatedTrainer trainer, double speedFactor = 1)
+    /// <param name="timeProvider">Paces its readings, one a second.</param>
+    public SimulatedHeartRate(SimulatedTrainer trainer, TimeProvider? timeProvider = null)
     {
         trainer.DataReceived += d => _power = d.PowerWatts ?? 0;
-        var period = TimeSpan.FromMilliseconds(1000 / Math.Max(speedFactor, 0.01));
-        _timer = new Timer(_ => Emit(), null, period, period);
+        var period = TimeSpan.FromSeconds(1);
+        _timer = (timeProvider ?? TimeProvider.System).CreateTimer(_ => Emit(), null, period, period);
     }
 
     public event Action<int>? HeartRateReceived;

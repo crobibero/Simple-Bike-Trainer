@@ -1,5 +1,6 @@
 using System.Net;
 using System.Text;
+using Microsoft.Extensions.DependencyInjection;
 using SimpleBikeTrainer.Intervals;
 using SimpleBikeTrainer.Session;
 
@@ -84,6 +85,41 @@ public class IntervalsClientTests
         var e = await Assert.ThrowsAsync<IntervalsException>(() => client.GetRideSettingsAsync(TestContext.Current.CancellationToken));
 
         Assert.Contains("API key", e.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task RetriesAReadThatHitAServerError()
+    {
+        var calls = 0;
+        var handler = new FakeHandler(_ => ++calls == 1 ? new HttpResponseMessage(HttpStatusCode.ServiceUnavailable) : Json("""{"ftp": 250}"""));
+        using var client = new IntervalsClient(Factory(handler), "k");
+
+        var settings = await client.GetRideSettingsAsync(TestContext.Current.CancellationToken);
+
+        Assert.Equal(2, handler.Requests.Count);
+        Assert.Equal(250, settings.Ftp);
+    }
+
+    [Fact]
+    public async Task DoesNotRetryAnUpload()
+    {
+        var handler = new FakeHandler(_ => new HttpResponseMessage(HttpStatusCode.ServiceUnavailable) { Content = new StringContent("busy") });
+        using var client = new IntervalsClient(Factory(handler), "k");
+        var path = Path.GetTempFileName();
+        await File.WriteAllBytesAsync(path, [1, 2, 3], TestContext.Current.CancellationToken);
+
+        await Assert.ThrowsAsync<IntervalsException>(() => client.UploadActivityAsync(path, "Ride", null, null, TestContext.Current.CancellationToken));
+
+        Assert.Single(handler.Requests);
+        File.Delete(path);
+    }
+
+    /// <summary>The app's registration, with only the network swapped for <paramref name="handler"/>.</summary>
+    private static IHttpClientFactory Factory(HttpMessageHandler handler)
+    {
+        var services = new ServiceCollection().AddTrainerHttpClients();
+        services.AddHttpClient(HttpClientNames.Intervals).ConfigurePrimaryHttpMessageHandler(() => handler);
+        return services.BuildServiceProvider().GetRequiredService<IHttpClientFactory>();
     }
 
     private static HttpResponseMessage Json(string body) =>

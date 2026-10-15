@@ -1,3 +1,4 @@
+using System.Buffers.Text;
 using System.Net.Http.Headers;
 using System.Net;
 using System.Text.Json.Nodes;
@@ -7,7 +8,7 @@ using SimpleBikeTrainer.Resources;
 
 namespace SimpleBikeTrainer.Uploads;
 
-public sealed class GarminException(string message) : Exception(message);
+public sealed class GarminException(string message) : ServiceException(message);
 
 /// <summary>
 /// Garmin Connect sign-in and upload. Garmin has no public upload API, so this signs in as the Garmin Connect iOS app
@@ -36,6 +37,8 @@ public sealed class GarminClient : IDisposable
         "GARMIN_CONNECT_MOBILE_IOS_DI",
     ];
 
+    private static readonly TimeSpan RequestTimeout = TimeSpan.FromSeconds(60);
+
     private readonly string _tokenDirectory;
     private readonly HttpClient _sso;
     private readonly HttpClient _api;
@@ -43,28 +46,39 @@ public sealed class GarminClient : IDisposable
     private Tokens? _tokens;
     private PendingMfa? _pending;
 
-    public GarminClient(AppConfig config)
-        : this(config.GarminTokenDirectory)
+    public GarminClient(AppConfig config, IHttpClientFactory httpClientFactory)
+        : this(
+            config.GarminTokenDirectory,
+            httpClientFactory.CreateClient(HttpClientNames.GarminApi),
+
+            // Sign-in keeps cookies: the MFA step needs the SSO session from the login. The factory shares its pooled
+            // handlers, and their cookies, with every client, so sign-in gets a handler of its own.
+            new HttpClient(new SocketsHttpHandler { CookieContainer = new CookieContainer(), AllowAutoRedirect = true }) { Timeout = RequestTimeout },
+            portalDelay: null)
     {
     }
 
     /// <param name="handler">For tests; it then carries both the sign-in and the API traffic.</param>
     /// <param name="portalDelay">The pause before the fallback login; Cloudflare flags a GET followed at once by a POST.</param>
-    public GarminClient(string tokenDirectory, HttpMessageHandler? handler = null, TimeSpan? portalDelay = null)
+    internal GarminClient(string tokenDirectory, HttpMessageHandler handler, TimeSpan? portalDelay = null)
+        : this(
+            tokenDirectory,
+            new HttpClient(handler, disposeHandler: false) { Timeout = RequestTimeout },
+            new HttpClient(handler, disposeHandler: false) { Timeout = RequestTimeout },
+            portalDelay)
+    {
+    }
+
+    private GarminClient(string tokenDirectory, HttpClient api, HttpClient sso, TimeSpan? portalDelay)
     {
         _tokenDirectory = tokenDirectory;
+        _api = api;
+        _sso = sso;
         _portalDelay = portalDelay ?? TimeSpan.FromSeconds(12);
-
-        // Sign-in keeps cookies: the MFA step needs the SSO session from the login. API calls carry their auth in a
-        // header and keep no cookies.
-        _sso = handler is null
-            ? new HttpClient(new SocketsHttpHandler { CookieContainer = new CookieContainer(), AllowAutoRedirect = true })
-            : new HttpClient(handler, disposeHandler: false);
-        _api = handler is null
-            ? new HttpClient(new SocketsHttpHandler { UseCookies = false })
-            : new HttpClient(handler, disposeHandler: false);
-        _sso.Timeout = _api.Timeout = TimeSpan.FromSeconds(60);
     }
+
+    /// <summary>API calls carry their auth in a header, so need no cookies.</summary>
+    public static void ConfigureApi(HttpClient client) => client.Timeout = RequestTimeout;
 
     public string TokenFile => Path.Combine(_tokenDirectory, TokenFileName);
 
@@ -397,9 +411,7 @@ public sealed class GarminClient : IDisposable
 
         try
         {
-            var payload = parts[1].Replace('-', '+').Replace('_', '/');
-            payload = payload.PadRight(payload.Length + ((4 - (payload.Length % 4)) % 4), '=');
-            return JsonNode.Parse(Convert.FromBase64String(payload)) as JsonObject;
+            return JsonNode.Parse(Base64Url.DecodeFromChars(parts[1])) as JsonObject;
         }
         catch (Exception e) when (e is FormatException or JsonException)
         {

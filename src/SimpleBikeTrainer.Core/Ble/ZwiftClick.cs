@@ -1,4 +1,3 @@
-using Linux.Bluetooth;
 using SimpleBikeTrainer.Devices;
 
 namespace SimpleBikeTrainer.Ble;
@@ -7,7 +6,7 @@ namespace SimpleBikeTrainer.Ble;
 /// A Zwift Click (v1 or V2 puck). After the "RideOn" handshake it sends unencrypted button notifications.
 /// A Click V2's left puck stays locked to the Zwift app, so only its right puck may work here.
 /// </summary>
-public sealed class ZwiftClick(Device device, string name, string address) : BleConnection(device, name, address), IShifter
+public sealed class ZwiftClick(BlePeripheral peripheral, string name, DeviceId id) : BleConnection(peripheral, name, id), IShifter
 {
     private readonly ZwiftClickDecoder _decoder = new();
 
@@ -26,9 +25,7 @@ public sealed class ZwiftClick(Device device, string name, string address) : Ble
         await SubscribeAsync(async, OnMessage);
         await SubscribeAsync(syncTx, OnMessage);
 
-        var flags = await syncRx.GetAllAsync();
-        var withResponse = !flags.Flags.Contains("write-without-response");
-        await WriteAsync(syncRx, ZwiftClickDecoder.RideOn, withResponse);
+        await WriteAsync(syncRx, ZwiftClickDecoder.RideOn, withResponse: !syncRx.CanWriteWithoutResponse);
     }
 
     private void OnMessage(byte[] bytes)

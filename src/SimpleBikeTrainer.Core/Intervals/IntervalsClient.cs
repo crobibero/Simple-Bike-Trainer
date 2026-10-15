@@ -23,7 +23,7 @@ public sealed record PlannedRide(long Id, DateOnly Date, string Type, Workout Wo
 
 public sealed record UploadResult(string? ActivityId);
 
-public sealed class IntervalsException(string message, HttpStatusCode? status = null) : Exception(message)
+public sealed class IntervalsException(string message, HttpStatusCode? status = null) : ServiceException(message)
 {
     /// <summary>The HTTP status Intervals.icu answered with, when the request got that far.</summary>
     public HttpStatusCode? Status { get; } = status;
@@ -39,16 +39,34 @@ public sealed class IntervalsClient : IDisposable
     private readonly HttpClient _http;
     private readonly string _athlete;
 
-    public IntervalsClient(string apiKey, string athleteId = "0", HttpMessageHandler? handler = null)
+    public IntervalsClient(IHttpClientFactory httpClientFactory, string apiKey, string athleteId = "0")
+        : this(httpClientFactory.CreateClient(HttpClientNames.Intervals), apiKey, athleteId)
     {
+    }
+
+    /// <summary>For tests: a client whose requests go to <paramref name="handler"/>.</summary>
+    internal IntervalsClient(string apiKey, string athleteId, HttpMessageHandler handler)
+        : this(new HttpClient(handler), apiKey, athleteId)
+    {
+        Configure(_http);
+    }
+
+    private IntervalsClient(HttpClient http, string apiKey, string athleteId)
+    {
+        _http = http;
         _athlete = athleteId;
-        _http = handler is null ? new HttpClient() : new HttpClient(handler);
-        _http.BaseAddress = new Uri(BaseUrl);
-        _http.Timeout = TimeSpan.FromSeconds(30);
+
+        // Each client from the factory is a new instance over a shared handler, so the key stays with this one.
         var token = Convert.ToBase64String(Encoding.UTF8.GetBytes($"API_KEY:{apiKey}"));
         _http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", token);
-        _http.DefaultRequestHeaders.UserAgent.ParseAdd("simple-bike-trainer/1.0");
-        _http.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+    }
+
+    public static void Configure(HttpClient client)
+    {
+        client.BaseAddress = new Uri(BaseUrl);
+        client.Timeout = TimeSpan.FromSeconds(30);
+        client.DefaultRequestHeaders.UserAgent.ParseAdd("simple-bike-trainer/1.0");
+        client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
     }
 
     /// <summary>Planned rides between two dates, inclusive, with targets resolved to watts.</summary>

@@ -1,10 +1,9 @@
-using Linux.Bluetooth;
 using SimpleBikeTrainer.Devices;
 
 namespace SimpleBikeTrainer.Ble;
 
 /// <summary>A BLE heart rate strap, or a watch broadcasting heart rate (Forerunner: Broadcast Heart Rate).</summary>
-public sealed class BleHeartRateMonitor(Device device, string name, string address) : BleConnection(device, name, address), IHeartRateMonitor
+public sealed class BleHeartRateMonitor(BlePeripheral peripheral, string name, DeviceId id) : BleConnection(peripheral, name, id), IHeartRateMonitor
 {
     public event Action<int>? HeartRateReceived;
 

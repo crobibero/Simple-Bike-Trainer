@@ -113,7 +113,7 @@
     <value>{0} has no workout steps.</value>
   </data>
   <data name="Workout_NoDuration" xml:space="preserve">
-    <value>Line {0}: step "{1}" has no duration, such as 10m or 30s.</value>
+    <value>Line {0}: step "{1}" has no duration. Add one, such as 10m or 30s.</value>
   </data>
   <data name="Ramp_Name" xml:space="preserve">
     <value>Ramp FTP test</value>
@@ -130,6 +130,9 @@
   </data>
   <data name="Ride_DefaultName" xml:space="preserve">
     <value>Ride</value>
+  </data>
+  <data name="Session_NoSimulation" xml:space="preserve">
+    <value>{0} cannot simulate a road, so the app sets its power from the virtual gears instead.</value>
   </data>
   <data name="Session_WorkoutComplete" xml:space="preserve">
     <value>Workout complete. The ride continues on the virtual gears; press Q twice to finish.</value>
@@ -159,7 +162,7 @@
     <value>failed: {0}</value>
   </data>
   <data name="Connect_Scanning" xml:space="preserve">
-    <value>Scanning for Bluetooth devices…</value>
+    <value>Scanning for Bluetooth and ANT+ devices…</value>
   </data>
   <data name="Connect_Waiting" xml:space="preserve">
     <value>No trainer found yet. Pedal to wake the KICKR, and close any other app connected to it…</value>
@@ -197,8 +200,59 @@
   <data name="Ble_Reconnecting" xml:space="preserve">
     <value>reconnecting: {0}</value>
   </data>
+  <data name="Ble_Unsupported" xml:space="preserve">
+    <value>Bluetooth is not supported on this system.</value>
+  </data>
+  <data name="Ble_RadioOff" xml:space="preserve">
+    <value>Bluetooth is off. Turn it on and try again.</value>
+  </data>
+  <data name="Ble_Unauthorized" xml:space="preserve">
+    <value>Simple Bike Trainer does not have permission to use Bluetooth. Allow it in System Settings &gt; Privacy &amp; Security &gt; Bluetooth.</value>
+  </data>
+  <data name="Ble_NotFound" xml:space="preserve">
+    <value>Windows could not find the device {0}.</value>
+  </data>
+  <data name="Ble_RequestFailed" xml:space="preserve">
+    <value>Bluetooth request failed: {0}</value>
+  </data>
+  <data name="Ant_NoStick" xml:space="preserve">
+    <value>No ANT+ stick is plugged in.</value>
+  </data>
+  <data name="Ant_OpenFailed" xml:space="preserve">
+    <value>An ANT+ stick is plugged in but would not open ({0}). See ANT+ in the README.</value>
+  </data>
+  <data name="Ant_UsbFailed" xml:space="preserve">
+    <value>The ANT+ stick stopped answering ({0}).</value>
+  </data>
+  <data name="Ant_StickLost" xml:space="preserve">
+    <value>ANT+ stick unplugged</value>
+  </data>
+  <data name="Ant_NoChannel" xml:space="preserve">
+    <value>The ANT+ stick has no free channel.</value>
+  </data>
+  <data name="Ant_Refused" xml:space="preserve">
+    <value>The ANT+ stick refused message 0x{0:X2} (code 0x{1:X2}).</value>
+  </data>
+  <data name="Ant_NoResponse" xml:space="preserve">
+    <value>The ANT+ stick did not answer message 0x{0:X2}.</value>
+  </data>
+  <data name="Ant_NoData" xml:space="preserve">
+    <value>Nothing heard from {0}. Check that it is awake and in range.</value>
+  </data>
+  <data name="Ant_NotAcknowledged" xml:space="preserve">
+    <value>{0} did not acknowledge the last command</value>
+  </data>
+  <data name="Ant_TrainerName" xml:space="preserve">
+    <value>ANT+ trainer {0}</value>
+  </data>
+  <data name="Ant_HeartRateName" xml:space="preserve">
+    <value>ANT+ heart rate {0}</value>
+  </data>
   <data name="Ftms_NoSpinDown" xml:space="preserve">
     <value>{0} does not support spin-down calibration over FTMS.</value>
+  </data>
+  <data name="Device_NoSimulation" xml:space="preserve">
+    <value>{0} cannot simulate a road.</value>
   </data>
   <data name="Device_NoSpinDown" xml:space="preserve">
     <value>{0} does not support spin-down calibration.</value>
@@ -328,5 +382,14 @@
   </data>
   <data name="Feature_SpinDown" xml:space="preserve">
     <value>spin-down</value>
+  </data>
+  <data name="Transport_Bluetooth" xml:space="preserve">
+    <value>Bluetooth</value>
+  </data>
+  <data name="Transport_AntPlus" xml:space="preserve">
+    <value>ANT+</value>
+  </data>
+  <data name="Transport_Wifi" xml:space="preserve">
+    <value>Wi-Fi</value>
   </data>
 </root>
