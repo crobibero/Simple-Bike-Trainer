@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFrameworks>$(AppTargetFramework)</TargetFrameworks>
+    <TargetFramework Condition="'$(AndroidBuild)' != 'true'">$(AppTargetFramework)</TargetFramework>
     <TargetFrameworks Condition="'$(AndroidBuild)' == 'true'">$(AppTargetFramework);$(AndroidTargetFramework)</TargetFrameworks>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
