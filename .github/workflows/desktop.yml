@@ -20,8 +20,8 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-dotnet@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-dotnet@v6
         with:
           dotnet-version: 10.0.x
       - name: Check XAML formatting
@@ -34,7 +34,7 @@ jobs:
           SIMPLE_BIKE_TRAINER_SCREENSHOTS: ${{ github.workspace }}/screenshots
       - name: Upload screenshots
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: screenshots
           path: screenshots
@@ -57,8 +57,8 @@ jobs:
       run:
         shell: bash
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-dotnet@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-dotnet@v6
         with:
           dotnet-version: 10.0.x
 
@@ -117,7 +117,7 @@ jobs:
           codesign --force --deep --sign - "$app"
           ditto -c -k --keepParent "$app" simple-bike-trainer-${{ matrix.rid }}.zip
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: simple-bike-trainer-${{ matrix.rid }}
           path: simple-bike-trainer-${{ matrix.rid }}*
