@@ -77,17 +77,23 @@ public sealed partial class CalibrationViewModel : ViewModelBase
 
     private bool CanStart() => IsSupported && !IsRunning;
 
-    [RelayCommand]
-    private void Back()
+    public override bool GoBack()
+    {
+        Back();
+        return true;
+    }
+
+    public override void OnLeaving()
     {
         if (_trainer is not null)
         {
             _trainer.DataReceived -= OnData;
             _trainer.SpinDownUpdated -= OnUpdate;
         }
-
-        _main.ShowHome();
     }
+
+    [RelayCommand]
+    private void Back() => _main.ShowHome();
 
     private void OnData(IndoorBikeData data)
     {

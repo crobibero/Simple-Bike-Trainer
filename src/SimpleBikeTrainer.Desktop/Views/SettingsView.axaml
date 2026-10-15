@@ -201,6 +201,54 @@
                     <Border Classes="card">
                         <StackPanel Spacing="10">
                             <TextBlock Classes="label"
+                                       Text="{x:Static r:Strings.Settings_Trainer}" />
+                            <TextBlock Classes="muted"
+                                       Text="{x:Static r:Strings.Settings_TrainerNote}"
+                                       TextWrapping="Wrap" />
+                            <RadioButton Content="{x:Static r:Strings.Settings_ResistancePower}"
+                                         GroupName="resistance"
+                                         IsChecked="{Binding ResistancePower}"
+                                         ToolTip.Tip="{x:Static r:Strings.Settings_ResistancePowerTip}" />
+                            <RadioButton Content="{x:Static r:Strings.Settings_ResistanceVirtualGears}"
+                                         GroupName="resistance"
+                                         IsChecked="{Binding ResistanceVirtualGears}"
+                                         ToolTip.Tip="{x:Static r:Strings.Settings_ResistanceVirtualGearsTip}" />
+                            <RadioButton Content="{x:Static r:Strings.Settings_ResistanceRealGears}"
+                                         GroupName="resistance"
+                                         IsChecked="{Binding ResistanceRealGears}"
+                                         ToolTip.Tip="{x:Static r:Strings.Settings_ResistanceRealGearsTip}" />
+                            <Grid ColumnDefinitions="*,12,*,12,*">
+                                <StackPanel>
+                                    <TextBlock Classes="muted"
+                                               FontSize="12"
+                                               Text="{x:Static r:Strings.Settings_Crr}" />
+                                    <TextBox Text="{Binding RollingResistance}" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="2"
+                                            IsVisible="{Binding ResistanceVirtualGears}">
+                                    <TextBlock Classes="muted"
+                                               FontSize="12"
+                                               Text="{x:Static r:Strings.Settings_Chainring}" />
+                                    <TextBox Text="{Binding Chainring}" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="4"
+                                            IsVisible="{Binding ResistanceVirtualGears}">
+                                    <TextBlock Classes="muted"
+                                               FontSize="12"
+                                               Text="{x:Static r:Strings.Settings_Cog}" />
+                                    <TextBox Text="{Binding Cog}" />
+                                </StackPanel>
+                            </Grid>
+                            <TextBlock Classes="muted"
+                                       FontSize="12"
+                                       Text="{x:Static r:Strings.Settings_SimulationNote}"
+                                       TextWrapping="Wrap" />
+                        </StackPanel>
+                    </Border>
+
+                    <Border Classes="card">
+                        <StackPanel Spacing="10">
+                            <TextBlock Classes="label"
                                        Text="{x:Static r:Strings.Settings_Appearance}" />
                             <StackPanel Orientation="Horizontal"
                                         Spacing="16">
@@ -253,9 +301,16 @@
                                                         Spacing="2">
                                                 <TextBox PlaceholderText="{Binding AdvertisedName}"
                                                          Text="{Binding Name}" />
-                                                <TextBlock Classes="muted"
-                                                           FontSize="12"
-                                                           Text="{Binding Address}" />
+                                                <!--  How it connects, as in the scan picker: one trainer can be saved over Bluetooth and over Wi-Fi.  -->
+                                                <StackPanel Orientation="Horizontal"
+                                                            Spacing="8">
+                                                    <TextBlock FontSize="12"
+                                                               FontWeight="SemiBold"
+                                                               Text="{Binding Id.TransportLabel}" />
+                                                    <TextBlock Classes="muted"
+                                                               FontSize="12"
+                                                               Text="{Binding Id.Address}" />
+                                                </StackPanel>
                                             </StackPanel>
                                             <StackPanel Grid.Column="2"
                                                         Margin="8,0,0,0"

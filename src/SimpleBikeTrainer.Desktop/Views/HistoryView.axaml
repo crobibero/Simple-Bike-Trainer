@@ -28,6 +28,7 @@
                         Spacing="10">
                 <Button Classes="Outline"
                         Command="{Binding OpenFolderCommand}"
+                        IsVisible="{x:Static vm:MainWindowViewModel.CanOpenFolder}"
                         ToolTip.Tip="{Binding Folder}">
                     <icons:MaterialIconText Kind="FolderOutline"
                                             Text="{x:Static r:Strings.History_Folder}" />

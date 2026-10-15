@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
+using SimpleBikeTrainer.AntPlus;
 using SimpleBikeTrainer.Ble;
 using SimpleBikeTrainer.Desktop.Resources;
 using SimpleBikeTrainer.Devices;
@@ -48,7 +49,7 @@ public sealed class SavedDeviceRow
 
     public required string Name { get; init; }
 
-    public required string Address { get; init; }
+    public required DeviceId Id { get; init; }
 }
 
 /// <summary>A device found by a scan, for the rider to tick.</summary>
@@ -58,7 +59,13 @@ public sealed partial class CandidateRow : ObservableObject
 
     public DeviceKind Kind => Found.Kind;
 
-    public string KindLabel => Kind switch
+    public string KindLabel => LabelOf(Kind);
+
+    public string Name => Found.Name;
+
+    public DeviceId Id => Found.Id;
+
+    public static string LabelOf(DeviceKind kind) => kind switch
     {
         DeviceKind.Trainer => Strings.Device_Trainer,
         DeviceKind.HeartRate => Strings.Device_HeartRate,
@@ -66,12 +73,11 @@ public sealed partial class CandidateRow : ObservableObject
         _ => Strings.Device_Other,
     };
 
-    public string Name => Found.Name;
-
-    public string Address => Found.Address;
-
-    /// <summary>Signal strength; BlueZ also lists devices it remembers but cannot hear now.</summary>
-    public string Signal => Found.Rssi is { } rssi ? Loc.Format(Strings.Device_Rssi, rssi) : Strings.Device_OutOfRange;
+    /// <summary>Rssi is null for a device BlueZ only remembers, from some ANT+ sticks, and for every Wi-Fi trainer.</summary>
+    public string Signal => Found.Rssi is { } rssi ? Loc.Format(Strings.Device_Rssi, rssi)
+        : Id.Transport == DeviceTransport.Wifi ? Strings.Device_OnNetwork
+        : Id.Transport == DeviceTransport.AntPlus ? Strings.Device_InRange
+        : Strings.Device_OutOfRange;
 
     [ObservableProperty]
     public partial bool Selected { get; set; }
@@ -83,16 +89,12 @@ public sealed partial class CandidateRow : ObservableObject
     }
 }
 
-/// <summary>
-/// Finds and keeps the trainer, heart rate monitor and Zwift controllers connected between rides. The first connect
-/// scans and lets the rider pick; later connects go straight to the picked devices.
-/// </summary>
 public sealed partial class DeviceManager : ObservableRecipient, IAsyncDisposable
 {
     private readonly DispatcherTimer _timer;
     private readonly AppConfig _config;
     private readonly List<string> _warnings = [];
-    private BleScanner? _scanner;
+    private DeviceScanner? _scanner;
     private CancellationTokenSource? _cancel;
 
     public DeviceManager(AppConfig config)
@@ -205,9 +207,16 @@ public sealed partial class DeviceManager : ObservableRecipient, IAsyncDisposabl
         Status = IsConnected ? Strings.Devices_ScanningToAdd : Strings.Devices_Scanning;
         try
         {
-            _scanner = await BleScanner.CreateAsync(config.Devices.Adapter);
+            _scanner = await DeviceScanner.CreateAsync(config.Devices);
             _scanner.DeviceFound += found => Dispatcher.UIThread.Post(() => AddCandidate(found, config.Devices));
             await _scanner.StartAsync();
+
+            // E.g. Bluetooth is off while an ANT+ stick scans, or a stick is plugged in that would not open.
+            if (_scanner.Warnings.Count > 0)
+            {
+                Status = string.Join(" ", [Status, .. _scanner.Warnings]);
+            }
+
             foreach (var found in _scanner.Found)
             {
                 AddCandidate(found, config.Devices);
@@ -266,11 +275,11 @@ public sealed partial class DeviceManager : ObservableRecipient, IAsyncDisposabl
     }
 
     /// <summary>Removes a saved device, so Connect no longer looks for it. A connected one stays connected until Disconnect.</summary>
-    public void Forget(string address)
+    public void Forget(DeviceId id)
     {
         var saved = _config.Devices;
-        saved.Forget(address);
-        if (string.IsNullOrEmpty(saved.Trainer) && string.IsNullOrEmpty(saved.HeartRate) && saved.Shifters.Count == 0)
+        saved.Forget(id);
+        if (saved.Saved.Count == 0)
         {
             saved.Picked = false;
         }
@@ -283,21 +292,17 @@ public sealed partial class DeviceManager : ObservableRecipient, IAsyncDisposabl
     public void SavedChanged()
     {
         var saved = _config.Devices;
-        HasSaved = !string.IsNullOrEmpty(saved.Trainer);
+        HasSaved = saved.Trainer is not null;
         foreach (var row in Rows)
         {
             row.Alias = AliasOf(row.Device);
         }
 
-        var connected = Devices?.All.Select(d => d.Address).OfType<string>().ToHashSet(StringComparer.OrdinalIgnoreCase) ?? [];
+        var connected = Devices?.All.Select(d => d.Id).OfType<DeviceId>().ToHashSet() ?? [];
         Saved.Clear();
-        foreach (var (kind, address) in new[] { (Strings.Device_Trainer, saved.Trainer), (Strings.Device_HeartRate, saved.HeartRate) }
-            .Concat(saved.Shifters.Select(s => (Strings.Device_Controller, s))))
+        foreach (var device in saved.Saved.OrderBy(d => d.Kind).Where(d => !connected.Contains(d.Id)))
         {
-            if (!string.IsNullOrEmpty(address) && !connected.Contains(address))
-            {
-                Saved.Add(new SavedDeviceRow { Kind = kind, Name = saved.NameOf(address), Address = address });
-            }
+            Saved.Add(new SavedDeviceRow { Kind = CandidateRow.LabelOf(device.Kind), Name = saved.NameOf(device.Id), Id = device.Id });
         }
     }
 
@@ -341,12 +346,12 @@ public sealed partial class DeviceManager : ObservableRecipient, IAsyncDisposabl
     internal void AddCandidate(DiscoveredDevice found, DevicesConfig saved)
     {
         // A connected device is already in use; the picker offers the others.
-        if (found.Kind == DeviceKind.Other || Devices?.All.Any(d => string.Equals(d.Address, found.Address, StringComparison.OrdinalIgnoreCase)) == true)
+        if (found.Kind == DeviceKind.Other || Devices?.All.Any(d => d.Id == found.Id) == true)
         {
             return;
         }
 
-        if (Candidates.FirstOrDefault(c => string.Equals(c.Address, found.Address, StringComparison.OrdinalIgnoreCase)) is { } existing)
+        if (Candidates.FirstOrDefault(c => c.Id == found.Id) is { } existing)
         {
             existing.Update(found);
             return;
@@ -357,9 +362,9 @@ public sealed partial class DeviceManager : ObservableRecipient, IAsyncDisposabl
             Found = found,
             Selected = found.Kind switch
             {
-                DeviceKind.Trainer => string.Equals(saved.Trainer, found.Address, StringComparison.OrdinalIgnoreCase),
-                DeviceKind.HeartRate => string.Equals(saved.HeartRate, found.Address, StringComparison.OrdinalIgnoreCase),
-                DeviceKind.Shifter => saved.Shifters.Contains(found.Address, StringComparer.OrdinalIgnoreCase),
+                DeviceKind.Trainer => saved.Trainer == found.Id,
+                DeviceKind.HeartRate => saved.HeartRate == found.Id,
+                DeviceKind.Shifter => saved.Shifters.Contains(found.Id),
                 _ => false,
             },
         };
@@ -468,7 +473,7 @@ public sealed partial class DeviceManager : ObservableRecipient, IAsyncDisposabl
     }
 
     private string? AliasOf(ISensorDevice device) =>
-        device.Address is { } address && _config.Devices.Aliases.TryGetValue(address, out var alias) ? alias : null;
+        device.Id is { } id && _config.Devices.Find(id) is { Alias.Length: > 0 } saved ? saved.Alias : null;
 
     private static string ConnectedStatus(ConnectedDevices devices) =>
         devices.Shifters.Count == 0 ? Strings.Devices_NoClick : Strings.Devices_ConnectedStatus;

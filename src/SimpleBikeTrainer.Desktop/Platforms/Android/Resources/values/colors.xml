@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <!-- ShadUI's near-black, as in Assets/icon.svg. -->
+  <color name="ic_launcher_background">#18181B</color>
+  <!-- The window behind the app as it starts: ShadUI's light and dark page backgrounds. -->
+  <color name="window_background">#FFFFFF</color>
+</resources>

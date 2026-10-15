@@ -114,7 +114,7 @@ public sealed partial class SummaryViewModel : ViewModelBase
             CanSetFtp = main.Config.HasApiKey;
         }
 
-        var uploads = new UploadService(main.Config);
+        var uploads = main.CreateUploads();
         var defaults = uploads.DefaultTargets();
         foreach (var (target, name, hint) in new[]
         {
@@ -201,7 +201,7 @@ public sealed partial class SummaryViewModel : ViewModelBase
 
     private async Task UploadRowsAsync()
     {
-        var uploads = new UploadService(_main.Config);
+        var uploads = _main.CreateUploads();
         var rows = Uploads.Where(u => u.Selected && u.Available).ToList();
 
         // The destinations are independent, so they go up together.
@@ -259,13 +259,25 @@ public sealed partial class SummaryViewModel : ViewModelBase
         }
     }
 
+    public static string FitButtonText => OperatingSystem.IsAndroid() ? Strings.Summary_ShareFit : Strings.Summary_ShowFit;
+
     [RelayCommand]
     private void OpenFolder()
     {
         if (FitPath is not null)
         {
+#if ANDROID
+            Platforms.AndroidApp.ShareFile(FitPath);
+#else
             MainWindowViewModel.Open(Path.GetDirectoryName(FitPath)!);
+#endif
         }
+    }
+
+    public override bool GoBack()
+    {
+        DoneCommand.Execute(null);
+        return true;
     }
 
     [RelayCommand]

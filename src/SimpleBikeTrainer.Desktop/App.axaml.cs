@@ -4,6 +4,7 @@ using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using Avalonia.Threading;
 using Avalonia;
+using Microsoft.Extensions.DependencyInjection;
 using SimpleBikeTrainer.Desktop.ViewModels;
 using SimpleBikeTrainer.Desktop.Views;
 
@@ -39,16 +40,31 @@ public partial class App : Application
     {
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
-            var config = ConfigOverride ?? AppConfig.Load();
-            ApplyTheme(config.Theme);
-            var main = new MainWindowViewModel(config);
+            var main = CreateMain();
             var window = new MainWindow { DataContext = main };
             desktop.MainWindow = window;
             KeepOpenUntilCleanedUp(window, main, desktop, ShutdownTimeout);
             main.Home.InitializeAsync().SafeFireAndForget();
         }
+        else if (ApplicationLifetime is IActivityApplicationLifetime activity)
+        {
+            // Android: the app outlives its activity, which Android can recreate; each new one gets a view onto the same app.
+            var main = CreateMain();
+            activity.MainViewFactory = () => new MainView { DataContext = main };
+            main.Home.InitializeAsync().SafeFireAndForget();
+        }
 
         base.OnFrameworkInitializationCompleted();
+    }
+
+    private static MainWindowViewModel CreateMain()
+    {
+        var config = ConfigOverride ?? AppConfig.Load();
+        ApplyTheme(config.Theme);
+
+        // Lives as long as the app, as the factory's pooled handlers need it to.
+        var services = new ServiceCollection().AddTrainerHttpClients().BuildServiceProvider();
+        return new MainWindowViewModel(config, services.GetRequiredService<IHttpClientFactory>());
     }
 
     /// <summary>How long closing waits for the ride to stop and the devices to disconnect.</summary>

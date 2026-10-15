@@ -57,8 +57,8 @@
   <data name="Home_Unfinished" xml:space="preserve">
     <value>Unfinished ride</value>
   </data>
-  <data name="Home_SaveAndReview" xml:space="preserve">
-    <value>Save and review</value>
+  <data name="Home_Review" xml:space="preserve">
+    <value>Review</value>
   </data>
   <data name="Home_Planned" xml:space="preserve">
     <value>PLANNED · NEXT 7 DAYS</value>
@@ -232,13 +232,13 @@
     <value>Target</value>
   </data>
   <data name="Help_Target" xml:space="preserve">
-    <value>The power the workout asks for. In ERG the trainer holds it at any gear or cadence.</value>
+    <value>The power the workout asks for. In ERG the trainer holds it at any gear or cadence. In road simulation there is none: the trainer sets the resistance from the road.</value>
   </data>
   <data name="Help_HeartRate" xml:space="preserve">
     <value>Colored by heart rate zone. The zones come from Intervals.icu, or from the max heart rate in Settings.</value>
   </data>
   <data name="Help_Grade" xml:space="preserve">
-    <value>The virtual slope. With ERG off, it sets the resistance of each gear; ERG does not use it. On a route, the road sets it.</value>
+    <value>The virtual slope. With ERG off, it sets the resistance of each gear, or the road the trainer simulates; ERG does not use it. On a route, the road sets it.</value>
   </data>
   <data name="Help_NpTerm" xml:space="preserve">
     <value>NP (normalized power)</value>
@@ -256,7 +256,7 @@
     <value>TSS (training load)</value>
   </data>
   <data name="Help_Tss" xml:space="preserve">
-    <value>Training Stress Score combines time and intensity. One hour at FTP is 100. Most riders recover from a day under about 150 by the next day.</value>
+    <value>Training Stress Score combines time and intensity. One hour at FTP is 100. After a day under about 150, most riders recover by the next day.</value>
   </data>
   <data name="Help_WPrimeTerm" xml:space="preserve">
     <value>W′ (anaerobic reserve)</value>
@@ -301,7 +301,7 @@
     <value>Harder / easier</value>
   </data>
   <data name="Help_Harder" xml:space="preserve">
-    <value>Click + and − (Y and B on the Click V2), or press ↑ and ↓. With ERG off they shift the virtual gears; in ERG they move the target by 5 W.</value>
+    <value>Press + or − on the Click (Y or B on the Click V2), or ↑ or ↓ on the keyboard. With ERG off they shift the virtual gears; in ERG they move the target by 5 W. In road simulation with the bike's own gears, shift on the bike.</value>
   </data>
   <data name="Help_GradeKeys" xml:space="preserve">
     <value>← and → change it by 0.5%. On a route the road sets it.</value>
@@ -540,6 +540,45 @@
   <data name="Settings_Rider" xml:space="preserve">
     <value>RIDER</value>
   </data>
+  <data name="Settings_Trainer" xml:space="preserve">
+    <value>TRAINER</value>
+  </data>
+  <data name="Settings_TrainerNote" xml:space="preserve">
+    <value>How free rides, routes, and ERG off set the resistance. ERG workout steps always hold the target power.</value>
+  </data>
+  <data name="Settings_ResistancePower" xml:space="preserve">
+    <value>The app sets the power</value>
+  </data>
+  <data name="Settings_ResistancePowerTip" xml:space="preserve">
+    <value>Works with every trainer. Once a second, the app calculates the power that the virtual gear, cadence, and grade require.</value>
+  </data>
+  <data name="Settings_ResistanceVirtualGears" xml:space="preserve">
+    <value>The trainer simulates the road, with virtual gears</value>
+  </data>
+  <data name="Settings_ResistanceVirtualGearsTip" xml:space="preserve">
+    <value>For a single-speed setup such as the Zwift Cog. The trainer answers sprints and surges at once, as a road does.</value>
+  </data>
+  <data name="Settings_ResistanceRealGears" xml:space="preserve">
+    <value>The trainer simulates the road, with the bike's gears</value>
+  </data>
+  <data name="Settings_ResistanceRealGearsTip" xml:space="preserve">
+    <value>For a bike with a cassette. Shift on the bike; the Click and the arrow keys do not shift.</value>
+  </data>
+  <data name="Settings_Chainring" xml:space="preserve">
+    <value>Chainring (teeth)</value>
+  </data>
+  <data name="Settings_Cog" xml:space="preserve">
+    <value>Cog (teeth)</value>
+  </data>
+  <data name="Settings_Crr" xml:space="preserve">
+    <value>Rolling resistance (Crr)</value>
+  </data>
+  <data name="Settings_SimulationNote" xml:space="preserve">
+    <value>Bluetooth (FTMS) trainers use the weight set in their own app; ANT+ trainers get the weights above. Crr is about 0.003 for fast road tires, 0.004 for typical ones, and 0.008 for gravel.</value>
+  </data>
+  <data name="Settings_TrainerError" xml:space="preserve">
+    <value>Enter a chainring of 20-60 teeth, a cog of 9-36 teeth, and a rolling resistance of 0.001-0.012.</value>
+  </data>
   <data name="Settings_RiderNote" xml:space="preserve">
     <value>These apply when Intervals.icu has no value. Weight sets the displayed speed and the resistance of the virtual gears. Max heart rate sets the heart rate zones.</value>
   </data>
@@ -602,6 +641,9 @@
   </data>
   <data name="Summary_ShowFit" xml:space="preserve">
     <value>Show FIT file</value>
+  </data>
+  <data name="Summary_ShareFit" xml:space="preserve">
+    <value>Share FIT file</value>
   </data>
   <data name="Summary_Done" xml:space="preserve">
     <value>Done</value>
@@ -682,7 +724,7 @@
     <value>{0:0} TSS</value>
   </data>
   <data name="Home_ConfirmDiscard" xml:space="preserve">
-    <value>Click again to delete</value>
+    <value>Click again to discard</value>
   </data>
   <data name="Home_Discard" xml:space="preserve">
     <value>Discard</value>
@@ -906,8 +948,14 @@
   <data name="Device_Rssi" xml:space="preserve">
     <value>{0} dBm</value>
   </data>
+  <data name="Device_OnNetwork" xml:space="preserve">
+    <value>on the network</value>
+  </data>
   <data name="Device_OutOfRange" xml:space="preserve">
     <value>not in range</value>
+  </data>
+  <data name="Device_InRange" xml:space="preserve">
+    <value>in range</value>
   </data>
   <data name="Devices_NotConnected" xml:space="preserve">
     <value>Not connected</value>
@@ -1064,6 +1112,19 @@
   </data>
   <data name="Ride_ErgOffset" xml:space="preserve">
     <value>ERG {0:+0;-0} W</value>
+  </data>
+  <data name="Ride_Simulation" xml:space="preserve">
+    <value>road simulation</value>
+  </data>
+  <data name="Ride_SimulationVirtualGears" xml:space="preserve">
+    <value>road simulation, virtual gears</value>
+  </data>
+  <data name="Ride_SimCaps" xml:space="preserve">
+    <value>SIM</value>
+    <comment>The trainer is simulating the road.</comment>
+  </data>
+  <data name="Ride_ShiftOnBike" xml:space="preserve">
+    <value>shift on the bike</value>
   </data>
   <data name="Ride_VirtualGears" xml:space="preserve">
     <value>virtual gears</value>
@@ -1232,5 +1293,20 @@
   </data>
   <data name="History_Climbing" xml:space="preserve">
     <value>{0} climbing</value>
+  </data>
+  <data name="Android_BluetoothDenied" xml:space="preserve">
+    <value>Bluetooth needs the Nearby devices permission. Allow it for Simple Bike Trainer in the system settings.</value>
+  </data>
+  <data name="Android_BluetoothOff" xml:space="preserve">
+    <value>Bluetooth is off</value>
+  </data>
+  <data name="Android_AntDenied" xml:space="preserve">
+    <value>The ANT+ stick needs permission. Allow Simple Bike Trainer to use it when Android asks, or unplug the stick and plug it in again.</value>
+  </data>
+  <data name="Android_RideChannel" xml:space="preserve">
+    <value>Rides</value>
+  </data>
+  <data name="Android_RideNotification" xml:space="preserve">
+    <value>Keeps the trainer and sensors connected. Tap to go back to the ride.</value>
   </data>
 </root>

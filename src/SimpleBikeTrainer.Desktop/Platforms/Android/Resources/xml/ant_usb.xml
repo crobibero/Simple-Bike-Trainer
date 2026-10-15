@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  The ANT+ sticks AndroidUsbTransport opens: Garmin and Dynastream's ANTUSB2 (0x1008) and ANTUSB-m (0x1009), vendor
+  0x0FCF. Plugging one in offers to open the app, which also gives it the stick.
+-->
+<resources>
+  <usb-device vendor-id="4047" product-id="4104" />
+  <usb-device vendor-id="4047" product-id="4105" />
+</resources>

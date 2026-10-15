@@ -9,8 +9,20 @@
              xmlns:vm="using:SimpleBikeTrainer.Desktop.ViewModels"
              x:DataType="vm:RideViewModel">
     <Panel>
-        <Grid Margin="20"
-              RowDefinitions="Auto,Auto,*,Auto,Auto">
+        <!--
+            The step card needs its minimum height for its text. On a short screen, such as a tablet's, the stats under
+            it give up height first and scroll (RideView.FitStats).
+        -->
+        <Grid x:Name="Page"
+              Margin="20">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*"
+                               MinHeight="230" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
 
             <!--  Header  -->
             <Grid Margin="0,0,0,14"
@@ -82,7 +94,7 @@
                     </StackPanel>
                     <Button VerticalAlignment="Center"
                             Classes="help Ghost"
-                            Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ShowHelpCommand}"
+                            Command="{Binding $parent[v:MainView].((vm:MainWindowViewModel)DataContext).ShowHelpCommand}"
                             Content="{icons:MaterialIconExt Kind=HelpCircleOutline,
                                                             IconSize=24}"
                             ToolTip.Tip="{x:Static r:Strings.Common_HelpTip}" />
@@ -198,14 +210,28 @@
                     <StackPanel>
                         <TextBlock Classes="label"
                                    Text="{x:Static r:Strings.Ride_Grade}" />
+                        <!--
+                            Sized for the widest grade, so the fit scales every grade alike: "+" is wider than "-",
+                            and a positive grade would otherwise shrink.
+                        -->
                         <Viewbox Classes="fit">
-                            <StackPanel Orientation="Horizontal">
-                                <TextBlock Classes="big"
-                                           Foreground="{Binding GradeBrush}"
-                                           Text="{Binding Grade}" />
-                                <TextBlock Classes="unit"
-                                           Text="%" />
-                            </StackPanel>
+                            <Grid>
+                                <StackPanel Opacity="0"
+                                            Orientation="Horizontal">
+                                    <TextBlock Classes="big"
+                                               Text="+00.0" />
+                                    <TextBlock Classes="unit"
+                                               Text="%" />
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock x:Name="GradeValue"
+                                               Classes="big"
+                                               Foreground="{Binding GradeBrush}"
+                                               Text="{Binding Grade}" />
+                                    <TextBlock Classes="unit"
+                                               Text="%" />
+                                </StackPanel>
+                            </Grid>
                         </Viewbox>
                         <TextBlock Classes="muted"
                                    FontSize="13"
@@ -230,7 +256,8 @@
             <Grid Grid.Row="2"
                   Margin="0,0,0,12"
                   ColumnDefinitions="340,*">
-                <Border Margin="0,0,12,0"
+                <Border x:Name="StepCard"
+                        Margin="0,0,12,0"
                         Padding="20"
                         Classes="card">
                     <Grid RowDefinitions="Auto,Auto,Auto,*,Auto,Auto">
@@ -258,16 +285,19 @@
                                            FontWeight="Bold"
                                            Text="{Binding StepRemaining}" />
                             </Viewbox>
-                            <c:Bar Grid.Row="1"
+                            <c:Bar x:Name="StepBar"
+                                   Grid.Row="1"
                                    Height="10"
                                    Value="{Binding StepProgress}" />
                         </Grid>
-                        <TextBlock Grid.Row="4"
+                        <TextBlock x:Name="StepNext"
+                                   Grid.Row="4"
                                    Margin="0,0,0,8"
                                    Classes="muted"
                                    Text="{Binding NextStep}"
                                    TextWrapping="Wrap" />
-                        <TextBlock Grid.Row="5"
+                        <TextBlock x:Name="StepWorkout"
+                                   Grid.Row="5"
                                    Classes="muted"
                                    FontSize="13"
                                    Text="{Binding WorkoutProgress}" />
@@ -321,93 +351,105 @@
             </Grid>
 
             <!--  Stats  -->
-            <Grid Grid.Row="3"
+            <Grid x:Name="Stats"
+                  Grid.Row="3"
                   Margin="0,0,0,12"
                   ColumnDefinitions="*,*,*">
                 <Border Margin="0,0,12,0"
                         Classes="card">
-                    <StackPanel Spacing="4">
-                        <TextBlock Classes="label"
-                                   Text="{x:Static r:Strings.Ride_Ride}" />
-                        <ItemsControl ItemsSource="{Binding RideStats}">
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate x:DataType="vm:StatRow">
-                                    <Grid Margin="0,2"
-                                          ColumnDefinitions="*,Auto">
-                                        <TextBlock Classes="muted"
-                                                   Text="{Binding Label}"
-                                                   ToolTip.Tip="{Binding Tip}" />
-                                        <TextBlock Grid.Column="1"
-                                                   Classes="stat"
-                                                   Text="{Binding Value}" />
-                                    </Grid>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-                        <c:Bar Height="6"
-                               Margin="0,4,0,0"
-                               Fill="{DynamicResource WPrimeBrush}"
-                               IsVisible="{Binding ShowsWBalance}"
-                               ToolTip.Tip="{x:Static r:Strings.Ride_WPrimeTip}"
-                               Value="{Binding WBalanceFraction}" />
-                    </StackPanel>
+                    <ScrollViewer HorizontalScrollBarVisibility="Disabled">
+                        <!--  Clear of the scroll bar, which shows over the values.  -->
+                        <StackPanel Margin="0,0,10,0"
+                                    Spacing="4">
+                            <TextBlock Classes="label"
+                                       Text="{x:Static r:Strings.Ride_Ride}" />
+                            <ItemsControl ItemsSource="{Binding RideStats}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:DataType="vm:StatRow">
+                                        <Grid Margin="0,2"
+                                              ColumnDefinitions="*,Auto">
+                                            <TextBlock Classes="muted"
+                                                       Text="{Binding Label}"
+                                                       ToolTip.Tip="{Binding Tip}" />
+                                            <TextBlock Grid.Column="1"
+                                                       Classes="stat"
+                                                       Text="{Binding Value}" />
+                                        </Grid>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                            <c:Bar Height="6"
+                                   Margin="0,4,0,0"
+                                   Fill="{DynamicResource WPrimeBrush}"
+                                   IsVisible="{Binding ShowsWBalance}"
+                                   ToolTip.Tip="{x:Static r:Strings.Ride_WPrimeTip}"
+                                   Value="{Binding WBalanceFraction}" />
+                        </StackPanel>
+                    </ScrollViewer>
                 </Border>
                 <Border Grid.Column="1"
                         Margin="0,0,12,0"
                         Classes="card">
-                    <StackPanel Spacing="4">
-                        <TextBlock Classes="label"
-                                   Text="{x:Static r:Strings.Ride_CurrentLap}" />
-                        <ItemsControl ItemsSource="{Binding LapStats}">
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate x:DataType="vm:StatRow">
-                                    <Grid Margin="0,2"
-                                          ColumnDefinitions="*,Auto">
-                                        <TextBlock Classes="muted"
-                                                   Text="{Binding Label}"
-                                                   ToolTip.Tip="{Binding Tip}" />
-                                        <TextBlock Grid.Column="1"
-                                                   Classes="stat"
-                                                   Text="{Binding Value}" />
-                                    </Grid>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-                    </StackPanel>
+                    <ScrollViewer HorizontalScrollBarVisibility="Disabled">
+                        <StackPanel Margin="0,0,10,0"
+                                    Spacing="4">
+                            <TextBlock Classes="label"
+                                       Text="{x:Static r:Strings.Ride_CurrentLap}" />
+                            <ItemsControl ItemsSource="{Binding LapStats}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:DataType="vm:StatRow">
+                                        <Grid Margin="0,2"
+                                              ColumnDefinitions="*,Auto">
+                                            <TextBlock Classes="muted"
+                                                       Text="{Binding Label}"
+                                                       ToolTip.Tip="{Binding Tip}" />
+                                            <TextBlock Grid.Column="1"
+                                                       Classes="stat"
+                                                       Text="{Binding Value}" />
+                                        </Grid>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </ScrollViewer>
                 </Border>
                 <Border Grid.Column="2"
                         Classes="card">
-                    <StackPanel Spacing="4">
-                        <TextBlock Classes="label"
-                                   Text="{x:Static r:Strings.Ride_TimeInZones}" />
-                        <ItemsControl ItemsSource="{Binding Zones}">
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate x:DataType="vm:ZoneRow">
-                                    <Grid Margin="0,3"
-                                          ColumnDefinitions="110,*,60">
-                                        <TextBlock Classes="muted"
-                                                   FontSize="13"
-                                                   Text="{Binding Name}" />
-                                        <c:Bar Grid.Column="1"
-                                               Height="10"
-                                               Margin="0,0,8,0"
-                                               VerticalAlignment="Center"
-                                               Fill="{Binding Brush}"
-                                               Value="{Binding Fraction}" />
-                                        <TextBlock Grid.Column="2"
-                                                   Classes="stat"
-                                                   FontSize="13"
-                                                   Text="{Binding Time}" />
-                                    </Grid>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-                    </StackPanel>
+                    <ScrollViewer HorizontalScrollBarVisibility="Disabled">
+                        <StackPanel Margin="0,0,10,0"
+                                    Spacing="4">
+                            <TextBlock Classes="label"
+                                       Text="{x:Static r:Strings.Ride_TimeInZones}" />
+                            <ItemsControl ItemsSource="{Binding Zones}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:DataType="vm:ZoneRow">
+                                        <Grid Margin="0,3"
+                                              ColumnDefinitions="110,*,60">
+                                            <TextBlock Classes="muted"
+                                                       FontSize="13"
+                                                       Text="{Binding Name}" />
+                                            <c:Bar Grid.Column="1"
+                                                   Height="10"
+                                                   Margin="0,0,8,0"
+                                                   VerticalAlignment="Center"
+                                                   Fill="{Binding Brush}"
+                                                   Value="{Binding Fraction}" />
+                                            <TextBlock Grid.Column="2"
+                                                       Classes="stat"
+                                                       FontSize="13"
+                                                       Text="{Binding Time}" />
+                                        </Grid>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </ScrollViewer>
                 </Border>
             </Grid>
 
             <!--  Controls  -->
-            <Grid Grid.Row="4"
+            <Grid x:Name="Controls"
+                  Grid.Row="4"
                   ColumnDefinitions="*,Auto">
                 <StackPanel Orientation="Horizontal"
                             Spacing="10">

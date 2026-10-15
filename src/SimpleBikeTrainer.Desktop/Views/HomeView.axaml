@@ -34,7 +34,7 @@
                 <Button Grid.Column="2"
                         VerticalAlignment="Center"
                         Classes="help Ghost"
-                        Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ShowHelpCommand}"
+                        Command="{Binding $parent[v:MainView].((vm:MainWindowViewModel)DataContext).ShowHelpCommand}"
                         Content="{icons:MaterialIconExt Kind=HelpCircleOutline,
                                                         IconSize=24}"
                         ToolTip.Tip="{x:Static r:Strings.Common_HelpTip}" />
@@ -91,7 +91,7 @@
                                                     Command="{Binding $parent[UserControl].((vm:HomeViewModel)DataContext).RecoverCommand}"
                                                     CommandParameter="{Binding}">
                                                 <icons:MaterialIconText Kind="ContentSaveOutline"
-                                                                        Text="{x:Static r:Strings.Home_SaveAndReview}" />
+                                                                        Text="{x:Static r:Strings.Home_Review}" />
                                             </Button>
                                             <Button Classes="Outline"
                                                     Command="{Binding $parent[UserControl].((vm:HomeViewModel)DataContext).DiscardCommand}"
@@ -410,9 +410,13 @@
                                                    Classes="muted"
                                                    Text="{x:Static r:Strings.Device_Saved}" />
                                         <TextBlock VerticalAlignment="Center"
+                                                   FontSize="12"
+                                                   FontWeight="SemiBold"
+                                                   Text="{Binding Id.TransportLabel}" />
+                                        <TextBlock VerticalAlignment="Center"
                                                    Classes="muted"
                                                    FontSize="12"
-                                                   Text="{Binding Address}" />
+                                                   Text="{Binding Id.Address}" />
                                     </StackPanel>
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
@@ -429,19 +433,26 @@
                                             <DataTemplate x:DataType="s:CandidateRow">
                                                 <CheckBox Margin="0,1"
                                                           IsChecked="{Binding Selected}">
-                                                    <Grid ColumnDefinitions="100,250,150,100">
+                                                    <Grid ColumnDefinitions="100,250,80,170,100">
                                                         <TextBlock Classes="muted"
                                                                    Text="{Binding KindLabel}" />
                                                         <TextBlock Grid.Column="1"
                                                                    FontWeight="SemiBold"
                                                                    Text="{Binding Name}"
                                                                    TextTrimming="CharacterEllipsis" />
+                                                        <!--  A trainer can show up over Bluetooth and Wi-Fi, or Bluetooth and ANT+: this tells them apart.  -->
                                                         <TextBlock Grid.Column="2"
+                                                                   VerticalAlignment="Center"
+                                                                   FontSize="12"
+                                                                   FontWeight="SemiBold"
+                                                                   Text="{Binding Id.TransportLabel}" />
+                                                        <TextBlock Grid.Column="3"
                                                                    VerticalAlignment="Center"
                                                                    Classes="muted"
                                                                    FontSize="12"
-                                                                   Text="{Binding Address}" />
-                                                        <TextBlock Grid.Column="3"
+                                                                   Text="{Binding Id.Address}"
+                                                                   TextTrimming="CharacterEllipsis" />
+                                                        <TextBlock Grid.Column="4"
                                                                    VerticalAlignment="Center"
                                                                    Classes="muted"
                                                                    FontSize="12"

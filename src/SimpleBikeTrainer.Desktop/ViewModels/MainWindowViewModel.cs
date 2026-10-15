@@ -6,6 +6,7 @@ using SimpleBikeTrainer.Desktop.Controls;
 using SimpleBikeTrainer.Desktop.Services;
 using SimpleBikeTrainer.Intervals;
 using SimpleBikeTrainer.Session;
+using SimpleBikeTrainer.Uploads;
 using SimpleBikeTrainer.Workouts;
 
 namespace SimpleBikeTrainer.Desktop.ViewModels;
@@ -13,9 +14,12 @@ namespace SimpleBikeTrainer.Desktop.ViewModels;
 /// <summary>Owns the config, the devices and the page on screen.</summary>
 public sealed partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
 {
-    public MainWindowViewModel(AppConfig config)
+    private readonly IHttpClientFactory _httpClientFactory;
+
+    public MainWindowViewModel(AppConfig config, IHttpClientFactory httpClientFactory)
     {
         Config = config;
+        _httpClientFactory = httpClientFactory;
         Devices = new DeviceManager(config);
         Home = new HomeViewModel(this);
         Current = Home;
@@ -54,7 +58,11 @@ public sealed partial class MainWindowViewModel : ViewModelBase, IAsyncDisposabl
     private void CloseHelp() => IsHelpOpen = false;
 
     public IntervalsClient? CreateIntervals() =>
-        Config.HasApiKey ? new IntervalsClient(Config.Intervals.ApiKey, Config.Intervals.AthleteId) : null;
+        Config.HasApiKey ? new IntervalsClient(_httpClientFactory, Config.Intervals.ApiKey, Config.Intervals.AthleteId) : null;
+
+    public GarminClient CreateGarmin() => new(Config, _httpClientFactory);
+
+    public UploadService CreateUploads() => new(Config, _httpClientFactory);
 
     public void StartRide(Workout workout)
     {
@@ -82,8 +90,8 @@ public sealed partial class MainWindowViewModel : ViewModelBase, IAsyncDisposabl
 
     public void ShowSettings() => Current = new SettingsViewModel(this);
 
-    /// <summary>Escape closes the help; otherwise keyboard shortcuts work on the ride page only.</summary>
-    public bool HandleKey(Key key)
+    /// <summary>Escape closes the help; otherwise the page on screen gets the key.</summary>
+    public override bool HandleKey(Key key)
     {
         if (IsShuttingDown)
         {
@@ -102,11 +110,37 @@ public sealed partial class MainWindowViewModel : ViewModelBase, IAsyncDisposabl
             return true;
         }
 
-        return Current is RideViewModel ride && ride.HandleKey(key);
+        return Current.HandleKey(key);
     }
+
+    /// <summary>Android's back gesture: closes the help, or hands it to the page on screen.</summary>
+    public override bool GoBack()
+    {
+        if (IsShuttingDown)
+        {
+            return true;
+        }
+
+        if (IsHelpOpen)
+        {
+            IsHelpOpen = false;
+            return true;
+        }
+
+        return Current.GoBack();
+    }
+
+    // Null on the constructor's first page.
+    partial void OnCurrentChanged(ViewModelBase oldValue, ViewModelBase newValue) => oldValue?.OnLeaving();
+
+    /// <summary>Whether the system has a file manager to show the rides folder in; Android does not.</summary>
+    public static bool CanOpenFolder => !OperatingSystem.IsAndroid();
 
     public static void Open(string target)
     {
+#if ANDROID
+        Platforms.AndroidApp.OpenUrl(target);
+#else
         try
         {
             Process.Start(new ProcessStartInfo(target) { UseShellExecute = true });
@@ -115,6 +149,7 @@ public sealed partial class MainWindowViewModel : ViewModelBase, IAsyncDisposabl
         {
             // No browser or file manager registered; nothing else to do.
         }
+#endif
     }
 
     /// <summary>Stops the ride and disconnects the devices. It runs once; a second call waits for the first.</summary>
@@ -131,6 +166,7 @@ public sealed partial class MainWindowViewModel : ViewModelBase, IAsyncDisposabl
             await ride.StopAsync();
         }
 
+        Current.OnLeaving();
         await Devices.DisposeAsync();
     }
 }

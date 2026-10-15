@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- What the share button can hand to other apps: the rides, in the app's folder on shared storage. -->
+<paths>
+  <external-files-path name="rides" path="." />
+</paths>

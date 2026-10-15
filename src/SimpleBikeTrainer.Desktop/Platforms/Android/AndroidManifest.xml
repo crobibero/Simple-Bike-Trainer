@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+  <application android:label="Simple Bike Trainer"
+               android:icon="@mipmap/ic_launcher"
+               android:theme="@style/AppTheme"
+               android:supportsRtl="true">
+    <!-- Hands a ride's FIT file to another app, such as Drive or a mail app. -->
+    <provider android:name="androidx.core.content.FileProvider"
+              android:authorities="${applicationId}.files"
+              android:exported="false"
+              android:grantUriPermissions="true">
+      <meta-data android:name="android.support.FILE_PROVIDER_PATHS" android:resource="@xml/file_paths" />
+    </provider>
+  </application>
+
+  <!-- Intervals.icu and Garmin Connect. -->
+  <uses-permission android:name="android.permission.INTERNET" />
+
+  <!-- Bluetooth trainers, heart rate monitors and Zwift controllers. The scan is not used to find where the tablet is. -->
+  <uses-permission android:name="android.permission.BLUETOOTH_SCAN" android:usesPermissionFlags="neverForLocation" />
+  <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+  <uses-feature android:name="android.hardware.bluetooth_le" android:required="false" />
+
+  <!-- An ANT+ USB stick, through USB host mode (OTG). -->
+  <uses-feature android:name="android.hardware.usb.host" android:required="false" />
+
+  <!-- A ride runs as a foreground service, so the devices stay connected when another app is in front. -->
+  <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+  <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE" />
+  <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+</manifest>

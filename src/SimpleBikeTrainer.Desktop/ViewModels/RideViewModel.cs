@@ -50,11 +50,12 @@ public sealed partial class RideViewModel : ViewModelBase
     private Task? _run;
     private int _lastRecorded;
     private long? _completedAt;
+    private (double X, int Seconds)? _cooldownFrom; // where a ramp test's chart was, and the time ridden, at its cooldown
     private DispatcherTimer? _finishReset;
     private readonly bool _soundCues;
     private (int Step, int Second) _lastCue = (-1, -1);
     private int _lastStep = -1;
-    private SimpleBikeTrainer.Platform.KeepAwake? _awake;
+    private IAsyncDisposable? _awake;
     private readonly int[]? _hrZones;
     private readonly IReadOnlyList<string>? _hrZoneNames;
 
@@ -282,10 +283,13 @@ public sealed partial class RideViewModel : ViewModelBase
         await ReleaseScreenAsync();
     }
 
-    /// <summary>Asks the desktop not to blank the screen or sleep until the ride ends.</summary>
     private async Task KeepScreenOnAsync()
     {
+#if ANDROID
+        var awake = await Platforms.RideLock.AcquireAsync(Loc.Format(Strings.Ride_AwakeReason, Title));
+#else
         var awake = await SimpleBikeTrainer.Platform.KeepAwake.AcquireAsync(Loc.Format(Strings.Ride_AwakeReason, Title));
+#endif
         if (_run is { IsCompleted: true } || _stop.IsCancellationRequested)
         {
             await awake.DisposeAsync();
@@ -304,7 +308,10 @@ public sealed partial class RideViewModel : ViewModelBase
         }
     }
 
-    public bool HandleKey(Key key)
+    /// <summary>A ride ends only with Finish, so the back gesture does nothing.</summary>
+    public override bool GoBack() => true;
+
+    public override bool HandleKey(Key key)
     {
         RideCommand? command = key switch
         {
@@ -455,7 +462,9 @@ public sealed partial class RideViewModel : ViewModelBase
         PowerInstant = Loc.Format(Strings.Ride_PowerNow, s.Power);
         PowerBrush = s.ErgActive && s.TargetWatts is > 0 and var t ? Deviation(s.Power3s, t, Math.Max(10, t * 0.05), Math.Max(25, t * 0.12)) : Plain;
         Target = s.TargetWatts?.ToString() ?? "-";
-        TargetMode = s.ErgActive ? (s.ErgOffset != 0 ? Loc.Format(Strings.Ride_ErgOffset, s.ErgOffset) : Strings.Common_Erg) : Strings.Ride_VirtualGears;
+        TargetMode = s.ErgActive ? (s.ErgOffset != 0 ? Loc.Format(Strings.Ride_ErgOffset, s.ErgOffset) : Strings.Common_Erg)
+            : s.Simulating ? (s.VirtualGears ? Strings.Ride_SimulationVirtualGears : Strings.Ride_Simulation)
+            : Strings.Ride_VirtualGears;
 
         Cadence = s.Cadence?.ToString() ?? "-";
         CadenceTarget = s.CadenceTarget is { } ct ? Loc.Format(Strings.Ride_CadenceTarget, ct) : string.Empty;
@@ -485,6 +494,12 @@ public sealed partial class RideViewModel : ViewModelBase
             GearLabel = Strings.Ride_ModeCaps;
             Gear = Strings.Common_Erg;
             GearDetail = Strings.Ride_ErgNudge;
+        }
+        else if (!s.VirtualGears)
+        {
+            GearLabel = Strings.Ride_ModeCaps;
+            Gear = Strings.Ride_SimCaps;
+            GearDetail = Strings.Ride_ShiftOnBike;
         }
         else
         {
@@ -622,9 +637,21 @@ public sealed partial class RideViewModel : ViewModelBase
             // A route's chart runs along the road.
             x = s.DistanceKm * 1000;
         }
-        else if (!finite || Workout.IsRampTest)
+        else if (Workout.IsRampTest)
         {
-            // Ending a ramp test jumps the workout to its cooldown, so its chart follows the time ridden instead.
+            // Ending the ramp jumps the workout to its far-right cooldown, so from there the trace continues in time ridden.
+            if (s.StepIndex >= Workout.Steps.Count - 1)
+            {
+                _cooldownFrom ??= (Position, seconds);
+                x = _cooldownFrom.Value.X + (seconds - _cooldownFrom.Value.Seconds);
+            }
+            else
+            {
+                x = s.WorkoutElapsed;
+            }
+        }
+        else if (!finite)
+        {
             x = seconds;
         }
         else if (s.WorkoutComplete)

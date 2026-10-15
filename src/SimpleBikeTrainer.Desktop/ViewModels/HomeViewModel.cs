@@ -421,7 +421,7 @@ public sealed partial class HomeViewModel : ViewModelBase, IRecipient<PropertyCh
         card.Subtitle = Loc.Format(Strings.Home_RouteSubtitle, units.FormatDistance(course.DistanceMeters, "0.#"), units.FormatElevation(course.ElevationGain));
 
         // How long it takes at a steady 70% of FTP, from the same physics the ride uses.
-        var rider = new RiderModel(TotalMassKg: main.Athlete.WeightKg + main.Athlete.BikeWeightKg);
+        var rider = main.Athlete.Rider(main.Config);
         var power = main.Athlete.Ftp * 0.7;
         double seconds = 0;
         for (var i = 1; i < course.Points.Count; i++)

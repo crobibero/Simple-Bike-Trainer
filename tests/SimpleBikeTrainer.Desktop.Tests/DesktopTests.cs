@@ -1,6 +1,8 @@
 using Avalonia.Headless;
 using Avalonia.Threading;
+using Avalonia.VisualTree;
 using Avalonia;
+using Microsoft.Extensions.DependencyInjection;
 using SimpleBikeTrainer.Ble;
 using SimpleBikeTrainer.Desktop.Resources;
 using SimpleBikeTrainer.Desktop.ViewModels;
@@ -21,6 +23,11 @@ public static class HeadlessApp
             .UseSkia()
             .UseHeadless(new AvaloniaHeadlessPlatformOptions { UseHeadlessDrawing = false })
             .WithInterFont();
+
+    public static readonly TimeProvider Fast = new ScaledTimeProvider(40);
+
+    public static IHttpClientFactory Http { get; } =
+        new ServiceCollection().AddTrainerHttpClients().BuildServiceProvider().GetRequiredService<IHttpClientFactory>();
 }
 
 /// <summary>The desktop test rides in real time, so it has its own project and process, apart from the other ride tests.</summary>
@@ -64,7 +71,7 @@ public sealed class DesktopTests(HeadlessSession headless) : IDisposable
         config.RidesDirectory = Path.Combine(_dir, "rides");
         config.Rider.Ftp = 240;
         config.Rider.MaxHeartRate = 190;
-        var main = new MainWindowViewModel(config) { Athlete = Athlete.FromConfig(config) };
+        var main = new MainWindowViewModel(config, HeadlessApp.Http) { Athlete = Athlete.FromConfig(config) };
         var window = new MainWindow { DataContext = main, Width = 1440, Height = 900 };
         window.Show();
         var rides = new List<RideViewModel>();
@@ -87,10 +94,10 @@ public sealed class DesktopTests(HeadlessSession headless) : IDisposable
             Assert.False(main.Devices.HasSaved);
             Assert.Equal("Find devices…", main.Devices.ConnectLabel);
             main.Devices.IsScanning = true;
-            main.Devices.AddCandidate(Found("CE:D1:96:5E:7A:BB", "KICKR CORE 6107", DeviceKind.Trainer, -58), config.Devices);
-            main.Devices.AddCandidate(Found("C8:A3:BD:AE:3B:B6", "Zwift Click", DeviceKind.Shifter, -64), config.Devices);
-            main.Devices.AddCandidate(Found("E1:22:33:44:55:66", "HRM-Pro:123456", DeviceKind.HeartRate, -71), config.Devices);
-            main.Devices.AddCandidate(Found("D4:00:00:00:00:01", "KICKR BIKE 0001", DeviceKind.Trainer, null), config.Devices);
+            main.Devices.AddCandidate(Found(DeviceId.Bluetooth("CE:D1:96:5E:7A:BB"), "KICKR CORE 6107", DeviceKind.Trainer, -58), config.Devices);
+            main.Devices.AddCandidate(Found(DeviceId.Bluetooth("C8:A3:BD:AE:3B:B6"), "Zwift Click", DeviceKind.Shifter, -64), config.Devices);
+            main.Devices.AddCandidate(Found(DeviceId.Bluetooth("E1:22:33:44:55:66"), "HRM-Pro:123456", DeviceKind.HeartRate, -71), config.Devices);
+            main.Devices.AddCandidate(Found(DeviceId.Bluetooth("D4:00:00:00:00:01"), "KICKR BIKE 0001", DeviceKind.Trainer, null), config.Devices);
             Assert.Equal(["Trainer", "Trainer", "Heart rate", "Controller"], main.Devices.Candidates.Select(c => c.KindLabel));
             Assert.False(main.Devices.HasTrainerPicked);
             main.Devices.Candidates[0].Selected = true;
@@ -101,6 +108,15 @@ public sealed class DesktopTests(HeadlessSession headless) : IDisposable
             main.Devices.Candidates[3].Selected = true;
             Assert.True(main.Devices.HasTrainerPicked);
             Assert.Equal("not in range", main.Devices.Candidates[1].Signal);
+
+            // The same trainer over Wi-Fi, and a strap over ANT+: the transport column tells them apart.
+            main.Devices.AddCandidate(Found(DeviceId.Wifi("DC:06:75:B6:E8:20"), "KICKR CORE 6107", DeviceKind.Trainer, null), config.Devices);
+            main.Devices.AddCandidate(Found(DeviceId.AntPlus(12345), "HRM-Dual", DeviceKind.HeartRate, null), config.Devices);
+            Assert.Equal(["Bluetooth", "Bluetooth", "Wi-Fi", "Bluetooth", "ANT+", "Bluetooth"], main.Devices.Candidates.Select(c => c.Id.TransportLabel));
+            Assert.Equal("on the network", main.Devices.Candidates[2].Signal);
+            Assert.Equal("DC:06:75:B6:E8:20", main.Devices.Candidates[2].Id.Address);
+            Assert.Equal("12345", main.Devices.Candidates[4].Id.Address);
+            Assert.Equal("in range", main.Devices.Candidates[4].Signal);
             await ShootBoth(window, "0-picker");
             await main.Devices.CancelAsync();
             Assert.False(main.Devices.IsScanning);
@@ -146,8 +162,8 @@ public sealed class DesktopTests(HeadlessSession headless) : IDisposable
 
             // A short version of the selected workout, ridden by the simulator at 40x.
             var workout = WorkoutTextParser.Parse("- Warmup 2m 55-65% 80rpm\n\nSweet spot 3x\n- Sweet spot 2m 88-93%\n- Recover 1m 55-65% 80rpm\n\n- Cooldown 2m ramp 65-45%", "Sweet spot 3x12") with { EventId = 1 };
-            var options = main.Athlete.Options(config, workout, speedFactor: 40);
-            var session = new RideSession(workout, options, main.Devices.Devices!.Trainer, main.Devices.Devices.HeartRate, []);
+            var options = main.Athlete.Options(config, workout);
+            var session = new RideSession(workout, options, main.Devices.Devices!.Trainer, main.Devices.Devices.HeartRate, [], HeadlessApp.Fast);
             var ride = new RideViewModel(main, session, options.Ftp, main.Devices) { CountdownStep = TimeSpan.FromMilliseconds(600) };
             main.Current = ride;
             rides.Add(ride);
@@ -251,7 +267,7 @@ public sealed class DesktopTests(HeadlessSession headless) : IDisposable
             Assert.Equal(ridesBefore, Directory.GetFiles(config.RidesDirectory, "*.fit*").Length);
 
             // Free ride: shifting changes the target the gears ask for.
-            var free = new RideSession(Workout.FreeRide(), main.Athlete.Options(config, Workout.FreeRide(), speedFactor: 40), main.Devices.Devices.Trainer, main.Devices.Devices.HeartRate, []);
+            var free = new RideSession(Workout.FreeRide(), main.Athlete.Options(config, Workout.FreeRide()), main.Devices.Devices.Trainer, main.Devices.Devices.HeartRate, [], HeadlessApp.Fast);
             var freeRide = new RideViewModel(main, free, options.Ftp, main.Devices);
             main.Current = freeRide;
             rides.Add(freeRide);
@@ -280,7 +296,7 @@ public sealed class DesktopTests(HeadlessSession headless) : IDisposable
 
             // A short generated route: the grade follows the road and the climbing is recorded.
             var route = RideSetup.Route(config.Units, 2, 150, seed: 11);
-            var routeSession = new RideSession(route, main.Athlete.Options(config, route, speedFactor: 40), main.Devices.Devices.Trainer, main.Devices.Devices.HeartRate, []);
+            var routeSession = new RideSession(route, main.Athlete.Options(config, route), main.Devices.Devices.Trainer, main.Devices.Devices.HeartRate, [], HeadlessApp.Fast);
             var routeRide = new RideViewModel(main, routeSession, options.Ftp, main.Devices) { CountdownStep = TimeSpan.Zero };
             main.Current = routeRide;
             rides.Add(routeRide);
@@ -400,13 +416,15 @@ public sealed class DesktopTests(HeadlessSession headless) : IDisposable
             config.RidesDirectory = Path.Combine(_dir, "rides");
             config.Devices = new DevicesConfig
             {
-                Trainer = "CE:D1:96:5E:7A:BB",
-                HeartRate = "E1:22:33:44:55:66",
-                Shifters = ["C8:A3:BD:AE:3B:B6"],
+                Saved =
+                [
+                    new() { Kind = DeviceKind.Trainer, Address = "CE:D1:96:5E:7A:BB", Name = "KICKR CORE 6107" },
+                    new() { Kind = DeviceKind.HeartRate, Address = "E1:22:33:44:55:66", Name = "COOSPO H6" },
+                    new() { Kind = DeviceKind.Shifter, Address = "C8:A3:BD:AE:3B:B6" },
+                ],
                 Picked = true,
-                Names = new() { ["CE:D1:96:5E:7A:BB"] = "KICKR CORE 6107", ["E1:22:33:44:55:66"] = "COOSPO H6" },
             };
-            var main = new MainWindowViewModel(config) { Athlete = Athlete.FromConfig(config) };
+            var main = new MainWindowViewModel(config, HeadlessApp.Http) { Athlete = Athlete.FromConfig(config) };
             var devices = main.Devices;
             var before = (devices.Saved.Select(r => $"{r.Kind}: {r.Name}").ToList(), devices.ScanLabel, devices.CanScan);
 
@@ -418,12 +436,12 @@ public sealed class DesktopTests(HeadlessSession headless) : IDisposable
 
             // Adding while connected: a saved monitor that was not found starts ticked, and no trainer is needed.
             devices.IsScanning = true;
-            devices.AddCandidate(Found("E1:22:33:44:55:66", "COOSPO H6", DeviceKind.HeartRate, -60), config.Devices);
+            devices.AddCandidate(Found(DeviceId.Bluetooth("E1:22:33:44:55:66"), "COOSPO H6", DeviceKind.HeartRate, -60), config.Devices);
             var picked = (devices.Candidates.Single().Selected, devices.CanConnectPicked);
             await devices.CancelAsync();
 
-            devices.Forget("E1:22:33:44:55:66");
-            var after = (devices.Saved.Select(r => r.Name).ToList(), AppConfig.Load(config.Path).Devices.HeartRate);
+            devices.Forget(DeviceId.Bluetooth("E1:22:33:44:55:66"));
+            var after = (devices.Saved.Select(r => r.Name).ToList(), AppConfig.Load(config.Path).Devices.HeartRate?.ToString() ?? string.Empty);
             await main.DisposeAsync();
             return (before, connected, picked, after);
         }, TestContext.Current.CancellationToken);
@@ -434,7 +452,7 @@ public sealed class DesktopTests(HeadlessSession headless) : IDisposable
         Assert.Equal((Strings.Devices_Add, true, 3), result.connected);
         Assert.Equal((true, true), result.picked);
         Assert.Equal(["KICKR CORE 6107", "C8:A3:BD:AE:3B:B6"], result.after.Item1);
-        Assert.Equal(string.Empty, result.after.HeartRate);
+        Assert.Equal(string.Empty, result.after.Item2);
     }
 
     [Fact]
@@ -446,52 +464,73 @@ public sealed class DesktopTests(HeadlessSession headless) : IDisposable
             config.RidesDirectory = Path.Combine(_dir, "rides");
             config.Devices = new DevicesConfig
             {
-                Trainer = "CE:D1:96:5E:7A:BB",
-                HeartRate = "E1:22:33:44:55:66",
-                Shifters = ["C8:A3:BD:AE:3B:B6"],
+                Saved =
+                [
+                    new() { Kind = DeviceKind.Trainer, Transport = DeviceTransport.Wifi, Address = "DC:06:75:B6:E8:20", Name = "KICKR CORE 6107" },
+                    new() { Kind = DeviceKind.HeartRate, Transport = DeviceTransport.AntPlus, Address = "12345", Name = "COOSPO H6" },
+                    new() { Kind = DeviceKind.Shifter, Address = "C8:A3:BD:AE:3B:B6" },
+                ],
                 Picked = true,
-                Names = new() { ["CE:D1:96:5E:7A:BB"] = "KICKR CORE 6107", ["E1:22:33:44:55:66"] = "COOSPO H6" },
+                WifiTrainers = ["192.168.1.40"],
             };
-            var main = new MainWindowViewModel(config) { Athlete = Athlete.FromConfig(config) };
+            var main = new MainWindowViewModel(config, HeadlessApp.Http) { Athlete = Athlete.FromConfig(config) };
+            var window = new MainWindow { DataContext = main, Width = 1440, Height = 900 };
+            window.Show();
             main.ShowSettings();
             var settings = (SettingsViewModel)main.Current;
-            var listed = settings.SavedDevices.Select(d => $"{d.Kind}: {d.Name}").ToList();
+            var listed = settings.SavedDevices.Select(d => $"{d.Kind}: {d.Name} ({d.Id.TransportLabel} {d.Id.Address})").ToList();
+
+            // The devices card is at the bottom of the page.
+            Dispatcher.UIThread.RunJobs();
+            foreach (var scroller in window.GetVisualDescendants().OfType<Avalonia.Controls.ScrollViewer>())
+            {
+                scroller.ScrollToEnd();
+            }
+
+            Shoot(window, "4a-settings-devices.png");
 
             // Rename the trainer; Save shows the new name on the home page too.
             settings.SavedDevices[0].Name = "Garage KICKR";
             await settings.SaveCommand.ExecuteAsync(null);
             var home = main.Devices.Saved[0].Name;
-            var alias = AppConfig.Load(config.Path).Devices.NameOf("CE:D1:96:5E:7A:BB");
+            var alias = AppConfig.Load(config.Path).Devices.NameOf(DeviceId.Wifi("DC:06:75:B6:E8:20"));
 
             // Forget asks first, and Cancel keeps the device.
             main.ShowSettings();
             settings = (SettingsViewModel)main.Current;
             var monitor = settings.SavedDevices[1];
             settings.ForgetDeviceCommand.Execute(monitor);
-            var asked = (settings.SavedDevices.Count, monitor.ForgetLabel, AppConfig.Load(config.Path).Devices.HeartRate);
+            var asked = (settings.SavedDevices.Count, monitor.ForgetLabel, AppConfig.Load(config.Path).Devices.HeartRate?.ToString() ?? string.Empty);
             settings.KeepDeviceCommand.Execute(monitor);
             var kept = monitor.ConfirmForget;
             settings.ForgetDeviceCommand.Execute(monitor);
             settings.ForgetDeviceCommand.Execute(monitor);
-            var forgot = (settings.SavedDevices.Count, AppConfig.Load(config.Path).Devices.HeartRate, main.Devices.Saved.Count);
+            var forgot = (settings.SavedDevices.Count, AppConfig.Load(config.Path).Devices.HeartRate?.ToString() ?? string.Empty, main.Devices.Saved.Count);
 
             settings.ForgetDevicesCommand.Execute(null);
             var allAsked = settings.SavedDevices.Count;
             settings.ForgetDevicesCommand.Execute(null);
-            var allGone = (settings.HasDevices, main.Devices.Saved.Count, AppConfig.Load(config.Path).Devices.Trainer);
+            var allGone = (settings.HasDevices, main.Devices.Saved.Count, AppConfig.Load(config.Path).Devices.Trainer?.ToString() ?? string.Empty);
+            var wifiKept = AppConfig.Load(config.Path).Devices.WifiTrainers;
             settings.CancelCommand.Execute(null);
+            window.Close();
             await main.DisposeAsync();
-            return (listed, home, alias, asked, kept, forgot, allAsked, allGone);
+            return (listed, home, alias, asked, kept, forgot, allAsked, allGone, wifiKept);
         }, TestContext.Current.CancellationToken);
 
-        Assert.Equal(["Trainer: KICKR CORE 6107", "Heart rate: COOSPO H6", "Controller: C8:A3:BD:AE:3B:B6"], result.listed);
+        Assert.Equal(
+            ["Trainer: KICKR CORE 6107 (Wi-Fi DC:06:75:B6:E8:20)", "Heart rate: COOSPO H6 (ANT+ 12345)", "Controller: C8:A3:BD:AE:3B:B6 (Bluetooth C8:A3:BD:AE:3B:B6)"],
+            result.listed);
         Assert.Equal("Garage KICKR", result.home);
         Assert.Equal("Garage KICKR", result.alias);
-        Assert.Equal((3, Strings.Settings_ConfirmForget, "E1:22:33:44:55:66"), result.asked);
+        Assert.Equal((3, Strings.Settings_ConfirmForget, "ANT+ 12345"), result.asked);
         Assert.False(result.kept);
         Assert.Equal((2, string.Empty, 2), result.forgot);
         Assert.Equal(2, result.allAsked);
         Assert.Equal((false, 0, string.Empty), result.allGone);
+
+        // Forgetting the devices keeps the Wi-Fi addresses typed in, as it keeps the Bluetooth adapter.
+        Assert.Equal(["192.168.1.40"], result.wifiKept);
     }
 
     [Fact]
@@ -502,7 +541,7 @@ public sealed class DesktopTests(HeadlessSession headless) : IDisposable
         {
             var config = AppConfig.Load(Path.Combine(_dir, "config.json"));
             config.RidesDirectory = Path.Combine(_dir, "rides");
-            var main = new MainWindowViewModel(config) { Athlete = Athlete.FromConfig(config) };
+            var main = new MainWindowViewModel(config, HeadlessApp.Http) { Athlete = Athlete.FromConfig(config) };
 
             // The startup refresh, still running when Settings or the summary page refreshes again.
             await Task.WhenAll(main.Home.InitializeAsync(), main.Home.RefreshCommand.ExecuteAsync(null));
@@ -562,11 +601,112 @@ public sealed class DesktopTests(HeadlessSession headless) : IDisposable
         Assert.InRange(x, moving - 5, moving + 5);
     }
 
+    [Fact]
+    public async Task SkippingARampTestsWarmupMovesTheChartToTheRamp()
+    {
+        var session = headless.Session;
+        var (moving, position) = await session.Dispatch(async () =>
+        {
+            var (config, main) = await ConnectedAsync();
+            var ride = StartRide(main, config, RampTest.Create(100));
+            await Until(() => Seconds(ride.Moving) >= 10, TimeSpan.FromSeconds(30));
+            var warmup = ride.StepLabel;
+            ride.SkipCommand.Execute(null);
+            await Until(() => ride.StepLabel != warmup, TimeSpan.FromSeconds(10));
+            var result = (Seconds(ride.Moving), ride.Position);
+            await main.DisposeAsync();
+            return result;
+        }, TestContext.Current.CancellationToken);
+
+        // Ahead of the time ridden, by the warmup's unridden part: the line is on the first ramp step.
+        Assert.InRange(position - moving, RampTest.WarmupSeconds - 60, RampTest.WarmupSeconds);
+    }
+
+    [Fact]
+    public async Task TheGradeStaysOneSizeWhicheverWayItGoes()
+    {
+        var session = headless.Session;
+        var heights = await session.Dispatch(async () =>
+        {
+            var (config, main) = await ConnectedAsync();
+            var window = new Avalonia.Controls.Window { Content = new MainView { DataContext = main }, Width = 1316, Height = 760 };
+            window.Show();
+            var ride = StartRide(main, config, Workout.FreeRide());
+            var view = window.GetVisualDescendants().OfType<RideView>().Single();
+            var heights = new Dictionary<string, double>();
+            foreach (var (command, grade) in new[] { (ride.GradeUpCommand, "0.0"), (ride.GradeUpCommand, "+1.0"), (ride.GradeDownCommand, "-1.0") })
+            {
+                // One step of 0.5% at a time, each shown before the next, so the grade cannot overshoot.
+                while (ride.Grade != grade)
+                {
+                    var shown = ride.Grade;
+                    command.Execute(null);
+                    await Until(() => ride.Grade != shown, TimeSpan.FromSeconds(10));
+                }
+
+                window.UpdateLayout();
+                var (top, bottom) = (view.GradeValue.TranslatePoint(default, window)!.Value.Y,
+                    view.GradeValue.TranslatePoint(new Point(0, view.GradeValue.Bounds.Height), window)!.Value.Y);
+                heights[grade] = bottom - top;
+            }
+
+            await main.DisposeAsync();
+            window.Close();
+            return heights;
+        }, TestContext.Current.CancellationToken);
+
+        Assert.Equal(heights["0.0"], heights["+1.0"], 0.5);
+        Assert.Equal(heights["0.0"], heights["-1.0"], 0.5);
+    }
+
+    [Fact]
+    public async Task TheStepCardKeepsItsTextInsideOnATablet()
+    {
+        var session = headless.Session;
+        var (card, bar, next, workout, controls, height) = await session.Dispatch(async () =>
+        {
+            var (config, main) = await ConnectedAsync();
+
+            // A Galaxy Tab S9 FE in landscape, less Android's status and navigation bars.
+            var window = new Avalonia.Controls.Window { Content = new MainView { DataContext = main }, Width = 1316, Height = 760 };
+            window.Show();
+            var ride = StartRide(main, config, RampTest.Create(100));
+            await Until(() => ride.NextStep.Length > 0, TimeSpan.FromSeconds(10));
+            for (var i = 0; i < 5; i++)
+            {
+                Dispatcher.UIThread.RunJobs();
+                window.UpdateLayout();
+            }
+
+            var view = window.GetVisualDescendants().OfType<RideView>().Single();
+            Shoot(window, "ride-tablet.png");
+            var result = (Span(view.StepCard, window), Span(view.StepBar, window), Span(view.StepNext, window), Span(view.StepWorkout, window),
+                Span(view.Controls, window), window.Bounds.Height);
+            await main.DisposeAsync();
+            window.Close();
+            return result;
+        }, TestContext.Current.CancellationToken);
+
+        // Top to bottom, inside the card's padding and without overlapping: the progress bar, the next step, the workout.
+        Assert.True(bar.Bottom <= next.Top, $"bar {bar} overlaps next {next}");
+        Assert.True(next.Bottom <= workout.Top, $"next {next} overlaps workout {workout}");
+        Assert.True(workout.Bottom <= card.Bottom - 20, $"workout {workout} runs out of card {card}");
+
+        // The stats make the room, so the buttons stay on screen.
+        Assert.True(controls.Bottom <= height, $"controls {controls} below the screen ({height})");
+    }
+
+    private static (double Top, double Bottom) Span(Avalonia.Controls.Control control, Avalonia.Visual window)
+    {
+        var top = control.TranslatePoint(default, window)!.Value.Y;
+        return (top, top + control.Bounds.Height);
+    }
+
     private async Task<(AppConfig Config, MainWindowViewModel Main)> ConnectedAsync()
     {
         var config = AppConfig.Load(Path.Combine(_dir, "config.json"));
         config.RidesDirectory = Path.Combine(_dir, "rides");
-        var main = new MainWindowViewModel(config) { Athlete = Athlete.FromConfig(config) };
+        var main = new MainWindowViewModel(config, HeadlessApp.Http) { Athlete = Athlete.FromConfig(config) };
         main.Devices.Simulate = true;
         await main.Devices.ConnectAsync(config);
         return (config, main);
@@ -574,21 +714,21 @@ public sealed class DesktopTests(HeadlessSession headless) : IDisposable
 
     private static RideViewModel StartRide(MainWindowViewModel main, AppConfig config, Workout workout, string? path = null)
     {
-        var options = main.Athlete.Options(config, workout, speedFactor: 40);
+        var options = main.Athlete.Options(config, workout);
         if (path is not null)
         {
             options = options with { OutputPath = path };
         }
 
-        var session = new RideSession(workout, options, main.Devices.Devices!.Trainer, main.Devices.Devices.HeartRate, []);
+        var session = new RideSession(workout, options, main.Devices.Devices!.Trainer, main.Devices.Devices.HeartRate, [], HeadlessApp.Fast);
         var ride = new RideViewModel(main, session, options.Ftp, main.Devices) { CountdownStep = TimeSpan.Zero };
         main.Current = ride;
         ride.Start();
         return ride;
     }
 
-    private static DiscoveredDevice Found(string address, string name, DeviceKind kind, short? rssi) =>
-        new(null!, address, name, kind, rssi);
+    private static DiscoveredDevice Found(DeviceId id, string name, DeviceKind kind, short? rssi) =>
+        new(null!, id, name, kind, rssi);
 
     private static PlannedRide Planned(long id, DateOnly date, string name, string text) =>
         new(id, date, "VirtualRide", (text.Length == 0 ? new Workout(name, []) : WorkoutTextParser.Parse(text, name)) with { EventId = id, Ftp = 240 });
@@ -686,5 +826,4 @@ public sealed class DesktopTests(HeadlessSession headless) : IDisposable
         AvaloniaHeadlessPlatform.ForceRenderTimerTick();
         var frame = window.CaptureRenderedFrame() ?? throw new InvalidOperationException("no frame rendered");
         frame.Save(Path.Combine(_shots, name), Avalonia.Media.Imaging.PngBitmapEncoderOptions.Default);
-    }
-}
+    }}

@@ -2,6 +2,7 @@ using System.Globalization;
 using AsyncAwaitBestPractices;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using SimpleBikeTrainer.Ble;
 using SimpleBikeTrainer.Desktop.Resources;
 using SimpleBikeTrainer.Resources;
 using SimpleBikeTrainer.Uploads;
@@ -13,7 +14,7 @@ public sealed partial class SavedDeviceSetting : ObservableObject
 {
     public required string Kind { get; init; }
 
-    public required string Address { get; init; }
+    public required DeviceId Id { get; init; }
 
     /// <summary>What the device calls itself, shown when the name box is empty; Save then goes back to it.</summary>
     public required string AdvertisedName { get; init; }
@@ -30,7 +31,7 @@ public sealed partial class SavedDeviceSetting : ObservableObject
 }
 
 /// <summary>Intervals.icu, rider, upload and Garmin settings.</summary>
-public sealed partial class SettingsViewModel : ViewModelBase, IDisposable
+public sealed partial class SettingsViewModel : ViewModelBase
 {
     private readonly MainWindowViewModel _main;
     private readonly AppConfig _config;
@@ -48,6 +49,10 @@ public sealed partial class SettingsViewModel : ViewModelBase, IDisposable
         Weight = Show(_config.Rider.WeightKg);
         BikeWeight = Show(_config.Rider.BikeWeightKg);
         MaxHeartRate = _config.Rider.MaxHeartRate > 0 ? _config.Rider.MaxHeartRate.ToString(CultureInfo.InvariantCulture) : string.Empty;
+        Resistance = _config.Trainer.Resistance;
+        Chainring = _config.Trainer.ChainringTeeth.ToString(CultureInfo.InvariantCulture);
+        Cog = _config.Trainer.CogTeeth.ToString(CultureInfo.InvariantCulture);
+        RollingResistance = _config.Rider.RollingResistance.ToString(CultureInfo.InvariantCulture);
         UploadIntervals = _config.Uploads.Intervals;
         UploadGarmin = _config.Uploads.Garmin;
         Automatic = _config.Uploads.Automatic;
@@ -57,11 +62,15 @@ public sealed partial class SettingsViewModel : ViewModelBase, IDisposable
         GarminSignedIn = GarminClient.IsSignedIn(_config);
         GarminStatus = GarminSignedIn ? Strings.Settings_SignedIn : Strings.Settings_NotSignedIn;
         var saved = _config.Devices;
-        foreach (var (kind, address) in new[] { (Strings.Device_Trainer, saved.Trainer), (Strings.Device_HeartRate, saved.HeartRate) }
-            .Concat(saved.Shifters.Select(s => (Strings.Device_Controller, s)))
-            .Where(d => !string.IsNullOrEmpty(d.Item2)))
+        foreach (var device in saved.Saved.OrderBy(d => d.Kind))
         {
-            SavedDevices.Add(new SavedDeviceSetting { Kind = kind, Address = address, AdvertisedName = saved.AdvertisedName(address), Name = saved.NameOf(address) });
+            SavedDevices.Add(new SavedDeviceSetting
+            {
+                Kind = Services.CandidateRow.LabelOf(device.Kind),
+                Id = device.Id,
+                AdvertisedName = saved.AdvertisedName(device.Id),
+                Name = saved.NameOf(device.Id),
+            });
         }
 
         HasDevices = SavedDevices.Count > 0;
@@ -93,6 +102,53 @@ public sealed partial class SettingsViewModel : ViewModelBase, IDisposable
 
     /// <summary>Optional; colors heart rate by zone when Intervals.icu has no heart rate zones.</summary>
     [ObservableProperty] public partial string MaxHeartRate { get; set; }
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ResistancePower), nameof(ResistanceVirtualGears), nameof(ResistanceRealGears))]
+    public partial ResistanceMode Resistance { get; set; }
+
+    public bool ResistancePower
+    {
+        get => Resistance == ResistanceMode.Power;
+        set
+        {
+            if (value)
+            {
+                Resistance = ResistanceMode.Power;
+            }
+        }
+    }
+
+    /// <summary>Also shows the chainring and cog, which only virtual gears in simulation use.</summary>
+    public bool ResistanceVirtualGears
+    {
+        get => Resistance == ResistanceMode.SimulationVirtualGears;
+        set
+        {
+            if (value)
+            {
+                Resistance = ResistanceMode.SimulationVirtualGears;
+            }
+        }
+    }
+
+    public bool ResistanceRealGears
+    {
+        get => Resistance == ResistanceMode.SimulationRealGears;
+        set
+        {
+            if (value)
+            {
+                Resistance = ResistanceMode.SimulationRealGears;
+            }
+        }
+    }
+
+    [ObservableProperty] public partial string Chainring { get; set; }
+
+    [ObservableProperty] public partial string Cog { get; set; }
+
+    [ObservableProperty] public partial string RollingResistance { get; set; }
 
     [ObservableProperty] public partial bool UploadIntervals { get; set; }
 
@@ -198,10 +254,21 @@ public sealed partial class SettingsViewModel : ViewModelBase, IDisposable
             return;
         }
 
+        if (!int.TryParse(Chainring, CultureInfo.InvariantCulture, out var chainring) || chainring is < 20 or > 60
+            || !int.TryParse(Cog, CultureInfo.InvariantCulture, out var cog) || cog is < 9 or > 36
+            || !double.TryParse(RollingResistance, CultureInfo.InvariantCulture, out var crr) || crr is < 0.001 or > 0.012)
+        {
+            Error = Strings.Settings_TrainerError;
+            return;
+        }
+
         Apply(ftp, weight, bike, maxHr);
+        _config.Trainer.Resistance = Resistance;
+        _config.Trainer.ChainringTeeth = chainring;
+        _config.Trainer.CogTeeth = cog;
+        _config.Rider.RollingResistance = crr;
         _config.Save();
         _main.Devices.SavedChanged();
-        Dispose();
         _main.ShowHome();
         await _main.Home.RefreshCommand.ExecuteAsync(null);
     }
@@ -210,8 +277,13 @@ public sealed partial class SettingsViewModel : ViewModelBase, IDisposable
     private void Cancel()
     {
         App.ApplyTheme(_config.Theme);
-        Dispose();
         _main.ShowHome();
+    }
+
+    public override bool GoBack()
+    {
+        Cancel();
+        return true;
     }
 
     [RelayCommand]
@@ -220,7 +292,7 @@ public sealed partial class SettingsViewModel : ViewModelBase, IDisposable
         GarminBusy = true;
         try
         {
-            _garmin ??= new GarminClient(_config);
+            _garmin ??= _main.CreateGarmin();
             GarminStatus = Strings.Settings_SigningIn;
             if (await _garmin.SignInAsync(GarminEmail.Trim(), GarminPassword, CancellationToken.None))
             {
@@ -272,7 +344,7 @@ public sealed partial class SettingsViewModel : ViewModelBase, IDisposable
     [RelayCommand]
     private void GarminSignOut()
     {
-        _garmin ??= new GarminClient(_config);
+        _garmin ??= _main.CreateGarmin();
         _garmin.SignOut();
 
         GarminSignedIn = false;
@@ -292,7 +364,7 @@ public sealed partial class SettingsViewModel : ViewModelBase, IDisposable
             return;
         }
 
-        _main.Devices.Forget(device.Address);
+        _main.Devices.Forget(device.Id);
         SavedDevices.Remove(device);
         HasDevices = SavedDevices.Count > 0;
     }
@@ -310,7 +382,7 @@ public sealed partial class SettingsViewModel : ViewModelBase, IDisposable
             return;
         }
 
-        _config.Devices = new DevicesConfig { Adapter = _config.Devices.Adapter };
+        _config.Devices = new DevicesConfig { Adapter = _config.Devices.Adapter, WifiTrainers = _config.Devices.WifiTrainers };
         _config.Save();
         _main.Devices.SavedChanged();
         SavedDevices.Clear();
@@ -321,7 +393,7 @@ public sealed partial class SettingsViewModel : ViewModelBase, IDisposable
     [RelayCommand]
     private void KeepDevices() => ConfirmForgetAll = false;
 
-    public void Dispose()
+    public override void OnLeaving()
     {
         _garmin?.Dispose();
         _garmin = null;
@@ -346,7 +418,7 @@ public sealed partial class SettingsViewModel : ViewModelBase, IDisposable
 
         try
         {
-            using var garmin = new GarminClient(_config);
+            using var garmin = _main.CreateGarmin();
             GarminStatus = Loc.Format(Strings.Settings_SignedInAs, await garmin.GetNameAsync(CancellationToken.None));
         }
         catch (Exception e) when (e is GarminException or HttpRequestException or TaskCanceledException or IOException)
@@ -369,7 +441,7 @@ public sealed partial class SettingsViewModel : ViewModelBase, IDisposable
         _config.Uploads.Automatic = Automatic;
         foreach (var device in SavedDevices)
         {
-            _config.Devices.Rename(device.Address, device.Name);
+            _config.Devices.Rename(device.Id, device.Name);
         }
         _config.Theme = Theme;
         _config.SoundCues = SoundCues;

@@ -98,6 +98,12 @@ public sealed partial class HistoryViewModel(MainWindowViewModel main) : ViewMod
     [RelayCommand]
     private void OpenFolder() => MainWindowViewModel.Open(Folder);
 
+    public override bool GoBack()
+    {
+        Back();
+        return true;
+    }
+
     [RelayCommand]
     private void Back() => main.ShowHome();
 

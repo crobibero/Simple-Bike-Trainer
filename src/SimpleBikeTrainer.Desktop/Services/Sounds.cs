@@ -2,13 +2,18 @@ using System.Diagnostics;
 
 namespace SimpleBikeTrainer.Desktop.Services;
 
-/// <summary>
-/// Short beeps for step cues. They are written once as WAV files and played with the first player found
-/// (PipeWire's pw-play, PulseAudio's paplay, or ALSA's aplay); with none, cues stay silent.
-/// </summary>
+/// <summary>Played with pw-play, paplay or aplay, whichever is found first; with none, cues stay silent.</summary>
 public static class Sounds
 {
+    // E5 and A5: a fourth apart, high enough to carry over a trainer and a fan.
+    private const double E5 = 659.26;
+    private const double A5 = 880;
+
+    private static readonly Note[] TickNotes = [new(E5, 0, 0.06)];
+    private static readonly Note[] GoNotes = [new(E5, 0, 0.18), new(A5, 0.11, 0.22)];
+
     private static readonly Lazy<string?> Player = new(FindPlayer);
+    private static readonly HashSet<string> Written = [];
     private static readonly Lazy<string> Directory = new(() =>
     {
         var dir = Path.Combine(Path.GetTempPath(), $"simple-bike-trainer-{Environment.UserName}");
@@ -19,13 +24,13 @@ public static class Sounds
     /// <summary>Set by tests to record what would play instead of playing it.</summary>
     internal static Action<string>? Played { get; set; }
 
-    /// <summary>A short high beep: 3, 2, 1.</summary>
-    public static void Tick() => Play("tick", 880, 0.12);
+    /// <summary>A short tap: 3, 2, 1.</summary>
+    public static void Tick() => Play("tick", TickNotes, 0.25);
 
-    /// <summary>A longer, higher beep as a step starts.</summary>
-    public static void Go() => Play("go", 1320, 0.45);
+    /// <summary>Two rising notes as a step starts.</summary>
+    public static void Go() => Play("go", GoNotes, 0.8);
 
-    private static void Play(string name, double hertz, double seconds)
+    private static void Play(string name, Note[] notes, double seconds)
     {
         if (Played is { } record)
         {
@@ -33,6 +38,9 @@ public static class Sounds
             return;
         }
 
+#if ANDROID
+        Platforms.AndroidSounds.Play(name, () => Chime(notes, seconds, Platforms.AndroidSounds.SampleRate));
+#else
         if (Player.Value is not { } player)
         {
             return;
@@ -40,10 +48,14 @@ public static class Sounds
 
         try
         {
+            // Rewritten on each run's first play, so a file left by an older version, with other tones, is replaced.
             var file = Path.Combine(Directory.Value, $"{name}.wav");
-            if (!File.Exists(file))
+            lock (Written)
             {
-                File.WriteAllBytes(file, Tone(hertz, seconds));
+                if (Written.Add(name))
+                {
+                    File.WriteAllBytes(file, Chime(notes, seconds));
+                }
             }
 
             var start = new ProcessStartInfo(player) { UseShellExecute = false };
@@ -54,6 +66,7 @@ public static class Sounds
         {
             // A missed beep is not worth interrupting a ride for.
         }
+#endif
     }
 
     private static string? FindPlayer()
@@ -64,11 +77,27 @@ public static class Sounds
             .FirstOrDefault(File.Exists);
     }
 
-    /// <summary>A 16-bit mono sine tone with 10 ms fades, as a WAV file.</summary>
-    internal static byte[] Tone(double hertz, double seconds, int rate = 44100)
+    /// <summary>Mallet-struck notes as a 16-bit mono WAV, peaking at half of full scale, with the last 20 ms faded out.</summary>
+    internal static byte[] Chime(IReadOnlyList<Note> notes, double seconds, int rate = 44100)
     {
+        const double Attack = 0.012;
+        const double Overtone = 0.12;
         var count = (int)(seconds * rate);
-        var fade = rate / 100;
+        var samples = new double[count];
+        foreach (var note in notes)
+        {
+            for (var i = (int)(note.Start * rate); i < count; i++)
+            {
+                var t = (i / (double)rate) - note.Start;
+                var rise = t < Attack ? 0.5 - (0.5 * Math.Cos(Math.PI * t / Attack)) : 1;
+                var tone = Math.Sin(2 * Math.PI * note.Hertz * t) * Math.Exp(-t / note.Ring);
+                var strike = Overtone * Math.Sin(4 * Math.PI * note.Hertz * t) * Math.Exp(-t * 3 / note.Ring);
+                samples[i] += rise * (tone + strike);
+            }
+        }
+
+        var peak = samples.Max(Math.Abs);
+        var tail = rate / 50;
         using var stream = new MemoryStream();
         using var writer = new BinaryWriter(stream);
         writer.Write("RIFF"u8);
@@ -85,11 +114,14 @@ public static class Sounds
         writer.Write(count * 2);
         for (var i = 0; i < count; i++)
         {
-            var envelope = Math.Min(1, Math.Min(i, count - i) / (double)fade);
-            writer.Write((short)(Math.Sin(2 * Math.PI * hertz * i / rate) * envelope * short.MaxValue * 0.5));
+            var fade = Math.Min(1, (count - i) / (double)tail);
+            writer.Write((short)(samples[i] / peak * fade * short.MaxValue * 0.5));
         }
 
         writer.Flush();
         return stream.ToArray();
     }
+
+    /// <summary><see cref="Ring"/> is the time for the note to fall to 37% (1/e).</summary>
+    internal readonly record struct Note(double Hertz, double Start, double Ring);
 }
