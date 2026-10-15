@@ -17,4 +17,12 @@
     <AndroidTargetFramework>net10.0-android</AndroidTargetFramework>
   </PropertyGroup>
 
+  <PropertyGroup>
+    <TargetFramework>$(AppTargetFramework)</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <NeutralLanguage>en</NeutralLanguage>
+  </PropertyGroup>
+
 </Project>

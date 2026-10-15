@@ -2,13 +2,9 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>$(AppTargetFramework)</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
     <AssemblyName>simple-bike-trainer-cli</AssemblyName>
     <RootNamespace>SimpleBikeTrainer</RootNamespace>
-    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-    <NeutralLanguage>en</NeutralLanguage>
+    <StringsClassName>CliStrings</StringsClassName>
   </PropertyGroup>
 
   <ItemGroup>
@@ -16,8 +12,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Spectre.Console" Version="0.57.2" />
-    <PackageReference Include="Spectre.Console.Cli" Version="0.57.2" />
+    <PackageReference Include="Spectre.Console" />
+    <PackageReference Include="Spectre.Console.Cli" />
   </ItemGroup>
 
   <!--
@@ -41,17 +37,6 @@
 
   <ItemGroup>
     <ProjectReference Include="../SimpleBikeTrainer.Core/SimpleBikeTrainer.Core.csproj" />
-  </ItemGroup>
-
-  <!-- User-facing text. A Resources/CliStrings.<culture>.resx next to it adds a translation. -->
-  <ItemGroup>
-    <EmbeddedResource Update="Resources/CliStrings.resx">
-      <StronglyTypedFileName>$(IntermediateOutputPath)CliStrings.Designer.cs</StronglyTypedFileName>
-      <StronglyTypedLanguage>CSharp</StronglyTypedLanguage>
-      <StronglyTypedNamespace>SimpleBikeTrainer.Resources</StronglyTypedNamespace>
-      <StronglyTypedClassName>CliStrings</StronglyTypedClassName>
-      <PublicClass>true</PublicClass>
-    </EmbeddedResource>
   </ItemGroup>
 
 </Project>

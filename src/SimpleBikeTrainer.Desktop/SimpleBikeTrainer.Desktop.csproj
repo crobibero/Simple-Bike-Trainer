@@ -2,19 +2,19 @@
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework Condition="'$(AndroidBuild)' != 'true'">$(AppTargetFramework)</TargetFramework>
+    <!-- The single TargetFramework from Directory.Build.props is cleared so the build runs once per framework. -->
     <TargetFrameworks Condition="'$(AndroidBuild)' == 'true'">$(AppTargetFramework);$(AndroidTargetFramework)</TargetFrameworks>
-    <Nullable>enable</Nullable>
-    <ImplicitUsings>enable</ImplicitUsings>
+    <TargetFramework Condition="'$(AndroidBuild)' == 'true'" />
+    <IsAndroid>false</IsAndroid>
+    <IsAndroid Condition="'$([MSBuild]::GetTargetPlatformIdentifier($(TargetFramework)))' == 'android'">true</IsAndroid>
     <AssemblyName>simple-bike-trainer</AssemblyName>
     <RootNamespace>SimpleBikeTrainer.Desktop</RootNamespace>
-    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-    <NeutralLanguage>en</NeutralLanguage>
+    <StringsClassName>Strings</StringsClassName>
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
-    <!-- The .exe's icon on Windows. The window sets its own from the same file. -->
     <!-- Analyzers flag code that would break in trimmed or native AOT builds. -->
     <EnableTrimAnalyzer>true</EnableTrimAnalyzer>
     <EnableAotAnalyzer>true</EnableAotAnalyzer>
+    <!-- The .exe's icon on Windows. The window sets its own from the same file. -->
     <ApplicationIcon>Assets/icon.ico</ApplicationIcon>
   </PropertyGroup>
 
@@ -27,16 +27,16 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="AsyncAwaitBestPractices" Version="10.0.0" />
-    <PackageReference Include="Avalonia" Version="12.1.3" />
-    <PackageReference Include="Avalonia.Fonts.Inter" Version="12.1.3" />
-    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
-    <PackageReference Include="Material.Icons.Avalonia" Version="3.0.2" />
-    <PackageReference Include="ShadUI" Version="0.2.4" />
+    <PackageReference Include="AsyncAwaitBestPractices" />
+    <PackageReference Include="Avalonia" />
+    <PackageReference Include="Avalonia.Fonts.Inter" />
+    <PackageReference Include="CommunityToolkit.Mvvm" />
+    <PackageReference Include="Material.Icons.Avalonia" />
+    <PackageReference Include="ShadUI" />
   </ItemGroup>
 
-  <ItemGroup Condition="'$([MSBuild]::GetTargetPlatformIdentifier($(TargetFramework)))' != 'android'">
-    <PackageReference Include="Avalonia.Desktop" Version="12.1.3" />
+  <ItemGroup Condition="'$(IsAndroid)' != 'true'">
+    <PackageReference Include="Avalonia.Desktop" />
   </ItemGroup>
 
   <!--
@@ -45,8 +45,8 @@
     three assemblies keeps a trimmed Linux build working; their remaining trim and AOT warnings stay warnings.
   -->
   <ItemGroup>
-    <TrimmerRootAssembly Include="Tmds.DBus" RootMode="All" Condition="'$([MSBuild]::GetTargetPlatformIdentifier($(TargetFramework)))' != 'android'" />
-    <TrimmerRootAssembly Include="Linux.Bluetooth" RootMode="All" Condition="'$([MSBuild]::GetTargetPlatformIdentifier($(TargetFramework)))' != 'android'" />
+    <TrimmerRootAssembly Include="Tmds.DBus" RootMode="All" Condition="'$(IsAndroid)' != 'true'" />
+    <TrimmerRootAssembly Include="Linux.Bluetooth" RootMode="All" Condition="'$(IsAndroid)' != 'true'" />
     <TrimmerRootAssembly Include="SimpleBikeTrainer.Core" RootMode="All" />
   </ItemGroup>
 
@@ -58,22 +58,11 @@
     <ProjectReference Include="../SimpleBikeTrainer.Core/SimpleBikeTrainer.Core.csproj" />
   </ItemGroup>
 
-  <!-- User-facing text. A Resources/Strings.<culture>.resx next to it adds a translation. -->
-  <ItemGroup>
-    <EmbeddedResource Update="Resources/Strings.resx">
-      <StronglyTypedFileName>$(IntermediateOutputPath)Strings.Designer.cs</StronglyTypedFileName>
-      <StronglyTypedLanguage>CSharp</StronglyTypedLanguage>
-      <StronglyTypedNamespace>SimpleBikeTrainer.Desktop.Resources</StronglyTypedNamespace>
-      <StronglyTypedClassName>Strings</StronglyTypedClassName>
-      <PublicClass>true</PublicClass>
-    </EmbeddedResource>
-  </ItemGroup>
-
   <!--
     The Android tablet app: the same app in one full-screen view, with Bluetooth and the ANT+ stick through Android's
     own APIs (Platforms/Android). Program.cs, the desktop entry point, is left out.
   -->
-  <PropertyGroup Condition="'$([MSBuild]::GetTargetPlatformIdentifier($(TargetFramework)))' == 'android'">
+  <PropertyGroup Condition="'$(IsAndroid)' == 'true'">
     <OutputType>Exe</OutputType>
     <!-- Android 12: the Bluetooth permissions it brought in need no location permission. -->
     <SupportedOSPlatformVersion>31</SupportedOSPlatformVersion>
@@ -87,8 +76,8 @@
     <RuntimeIdentifiers>android-arm64;android-x64</RuntimeIdentifiers>
   </PropertyGroup>
 
-  <ItemGroup Condition="'$([MSBuild]::GetTargetPlatformIdentifier($(TargetFramework)))' == 'android'">
-    <PackageReference Include="Avalonia.Android" Version="12.1.3" />
+  <ItemGroup Condition="'$(IsAndroid)' == 'true'">
+    <PackageReference Include="Avalonia.Android" />
     <Compile Remove="Program.cs" />
     <!-- Android's global usings clash with Avalonia's names, such as Application, in the shared code. -->
     <Using Remove="Android.App" />
@@ -96,7 +85,7 @@
     <Using Remove="Android.OS.Bundle" />
   </ItemGroup>
 
-  <ItemGroup Condition="'$([MSBuild]::GetTargetPlatformIdentifier($(TargetFramework)))' != 'android'">
+  <ItemGroup Condition="'$(IsAndroid)' != 'true'">
     <Compile Remove="Platforms/Android/**" />
     <None Include="Platforms/Android/**" />
   </ItemGroup>

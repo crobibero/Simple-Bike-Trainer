@@ -1,16 +1,12 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>$(AppTargetFramework)</TargetFramework>
     <!-- Analyzers flag code that would break in trimmed or native AOT builds of the apps. -->
     <IsAotCompatible>true</IsAotCompatible>
     <!-- CoreBluetooth and libusb are called through function pointers. -->
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
     <RootNamespace>SimpleBikeTrainer</RootNamespace>
-    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-    <NeutralLanguage>en</NeutralLanguage>
+    <StringsClassName>CoreStrings</StringsClassName>
   </PropertyGroup>
 
   <ItemGroup>
@@ -21,23 +17,12 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="AsyncAwaitBestPractices" Version="10.0.0" />
-    <PackageReference Include="Garmin.FIT.Sdk" Version="21.218.0" />
-    <PackageReference Include="Linux.Bluetooth" Version="6.0.0-pre3" />
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.13" />
-    <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.13" />
-    <PackageReference Include="Microsoft.Extensions.Http.Resilience" Version="10.11.0" />
-  </ItemGroup>
-
-  <!-- User-facing text. A Resources/CoreStrings.<culture>.resx next to it adds a translation. -->
-  <ItemGroup>
-    <EmbeddedResource Update="Resources/CoreStrings.resx">
-      <StronglyTypedFileName>$(IntermediateOutputPath)CoreStrings.Designer.cs</StronglyTypedFileName>
-      <StronglyTypedLanguage>CSharp</StronglyTypedLanguage>
-      <StronglyTypedNamespace>SimpleBikeTrainer.Resources</StronglyTypedNamespace>
-      <StronglyTypedClassName>CoreStrings</StronglyTypedClassName>
-      <PublicClass>true</PublicClass>
-    </EmbeddedResource>
+    <PackageReference Include="AsyncAwaitBestPractices" />
+    <PackageReference Include="Garmin.FIT.Sdk" />
+    <PackageReference Include="Linux.Bluetooth" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
+    <PackageReference Include="Microsoft.Extensions.Http" />
+    <PackageReference Include="Microsoft.Extensions.Http.Resilience" />
   </ItemGroup>
 
 </Project>

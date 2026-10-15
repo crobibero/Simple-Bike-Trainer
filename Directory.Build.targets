@@ -1,0 +1,18 @@
+<Project>
+
+  <!--
+    User-facing text. A project that sets StringsClassName keeps it in Resources/$(StringsClassName).resx, which
+    generates a public class of that name in $(RootNamespace).Resources. A Resources/$(StringsClassName).<culture>.resx
+    next to it adds a translation.
+  -->
+  <ItemGroup Condition="'$(StringsClassName)' != ''">
+    <EmbeddedResource Update="Resources/$(StringsClassName).resx">
+      <StronglyTypedFileName>$(IntermediateOutputPath)$(StringsClassName).Designer.cs</StronglyTypedFileName>
+      <StronglyTypedLanguage>CSharp</StronglyTypedLanguage>
+      <StronglyTypedNamespace>$(RootNamespace).Resources</StronglyTypedNamespace>
+      <StronglyTypedClassName>$(StringsClassName)</StronglyTypedClassName>
+      <PublicClass>true</PublicClass>
+    </EmbeddedResource>
+  </ItemGroup>
+
+</Project>
