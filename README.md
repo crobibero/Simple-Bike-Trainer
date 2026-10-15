@@ -1,6 +1,6 @@
 # Simple Bike Trainer
 
-Simple Bike Trainer rides Intervals.icu workouts on a Wahoo KICKR, shifts virtual gears with a Zwift Click, records each ride as a FIT file, and uploads it to Intervals.icu and Garmin Connect. It also generates rolling routes with a set length and amount of climbing. `simple-bike-trainer` is the desktop app; `simple-bike-trainer-cli` is the terminal version, with Bluetooth diagnostics.
+Simple Bike Trainer rides Intervals.icu workouts on a Wahoo KICKR or any other Bluetooth FTMS or ANT+ FE-C trainer, shifts virtual gears with a Zwift Click, records each ride as a FIT file, and uploads it to Intervals.icu and Garmin Connect. It also generates rolling routes with a set length and amount of climbing. `simple-bike-trainer` is the desktop app; `simple-bike-trainer-cli` is the terminal version, with Bluetooth and ANT+ diagnostics.
 
 | | Light | Dark |
 | --- | --- | --- |
@@ -19,6 +19,7 @@ Each release on the repository's Releases page has one download per platform, pl
 | Windows | `simple-bike-trainer-win-x64.exe`, `simple-bike-trainer-win-arm64.exe` |
 | Linux | `simple-bike-trainer-linux-x64`, `simple-bike-trainer-linux-arm64` |
 | macOS | `simple-bike-trainer-osx-arm64.zip` (Apple silicon), `simple-bike-trainer-osx-x64.zip` (Intel) |
+| Android 12 or later | `simple-bike-trainer-android.apk` |
 
 ## Setup
 
@@ -29,6 +30,42 @@ Get an Intervals.icu API key under Settings > Developer Settings in Intervals.ic
 | Settings | `~/.config/simple-bike-trainer/config.json`, mode 0600. `INTERVALS_API_KEY` and `INTERVALS_ATHLETE_ID` override the saved values. |
 | Garmin session tokens | `~/.config/simple-bike-trainer/garmin/garmin_tokens.json`, mode 0600 |
 | Rides | `~/.local/share/simple-bike-trainer/rides/` |
+
+## Devices
+
+Connect scans Bluetooth, the local network for Wi-Fi trainers and, when an ANT+ USB stick is plugged in, ANT+ at the same time. Any one is enough.
+
+| Device | Bluetooth | ANT+ |
+| --- | --- | --- |
+| Trainer | FTMS (KICKR and most smart trainers): ERG, road simulation, spin-down | FE-C: ERG, road simulation |
+| Heart rate | Heart Rate Service, including watches that broadcast it | Heart rate straps and watches that broadcast it |
+| Zwift Click, Play, Ride | Yes | No such devices |
+
+| System | Bluetooth |
+| --- | --- |
+| Linux | BlueZ. `devices.adapter` in `config.json` picks an adapter, such as `hci1`. |
+| Windows 10 2004 or later | Built in |
+| macOS 12 or later | Built in |
+| Android 12 or later | Built in |
+
+### ANT+
+
+ANT+ works with Garmin and Dynastream ANTUSB2 and ANTUSB-m sticks, through [libusb](https://libusb.info). The app finds the stick at each scan and keeps going without it.
+
+| System | Setup |
+| --- | --- |
+| Linux | libusb comes with most distributions. Give your user the stick with `/etc/udev/rules.d/70-ant-stick.rules` holding `SUBSYSTEM=="usb", ATTR{idVendor}=="0fcf", ATTR{idProduct}=="100[89]", TAG+="uaccess"`, run `sudo udevadm control --reload`, and plug the stick in again. |
+| macOS | `brew install libusb` |
+| Windows | Put `libusb-1.0.dll` (64-bit, from the libusb releases) next to `simple-bike-trainer.exe`, and give the stick the WinUSB driver with [Zadig](https://zadig.akeo.ie). Other ANT+ apps on the PC may then not see the stick. |
+| Android | Plug the stick into the tablet's USB-C port through an OTG adapter. No libusb, and no ANT Radio Service or ANT USB Service app: Android asks once whether the app may use the stick, either when it is plugged in or at the first scan. If the ANT USB Service is installed, tell Android not to open it for the stick. |
+
+A stick that is plugged in but will not open, for lack of permission or because another app has it, shows a warning when scanning. `simple-bike-trainer-cli scan` lists the ANT+ devices with the Bluetooth ones.
+
+### Wi-Fi
+
+Wahoo trainers with Wi-Fi, or with the KICKR Direct Connect Ethernet adapter, also connect over the network using Wahoo Direct Connect. The trainer offers the same FTMS service it offers over Bluetooth, so ERG, road simulation and spin-down work the same way. The scan finds these trainers by mDNS (`_wahoo-fitness-tnp._tcp`) and lists them with a `Wi-Fi` address next to their Bluetooth entry. Pick the Wi-Fi entry to ride over the network. Heart rate monitors and Zwift controllers still connect over Bluetooth or ANT+.
+
+When mDNS does not reach the trainer, for example across VLANs or on a guest network, give the trainer's address with `simple-bike-trainer-cli config --wifi-trainers 192.168.1.40` (the port defaults to 36866). `simple-bike-trainer-cli probe --wifi 192.168.1.40` connects to that address without scanning. On macOS the app asks for Local Network access the first time it scans.
 
 ## Riding
 
@@ -43,6 +80,18 @@ The home page lists the next 7 days of planned rides from Intervals.icu, plus a 
 | `s`, `l`, `p` or space | skip step, lap, pause | |
 | `x` | end the ramp test | |
 | `q` twice | finish the ride | |
+
+### Resistance off ERG
+
+Settings > Trainer picks how free rides, routes and ERG off set the resistance. ERG steps always hold their power.
+
+| Choice | How it works | For |
+| --- | --- | --- |
+| The app sets the power (default) | Once a second, the app works out the power the virtual gear, cadence and grade cost, and holds the trainer at it. | Any trainer |
+| The trainer simulates the road, with virtual gears | The app sends the grade, rolling resistance, wind resistance and weights, and the trainer sets the resistance from its flywheel speed, so sprints feel like the road. A virtual gear k times the real one scales grade and rolling resistance by k and wind by k³; what FTMS and FE-C cannot carry goes into the grade. Set the chainring and cog the chain is on. | A single-speed setup such as the Zwift Cog |
+| The trainer simulates the road, with the bike's gears | The app sends the road as it is; shift on the bike. The Click and arrow keys do not shift. | A bike with a cassette |
+
+FE-C trainers get the rider and bike weights; FTMS has no weight in its simulation command, so Bluetooth trainers use the weight set in their own app. Rolling resistance (Crr) is a setting too: about 0.003 for fast road tires, 0.004 for typical ones, and 0.008 for gravel. A trainer that cannot simulate falls back to the app setting the power, and the ride page says so.
 
 The ride timer starts on the first pedal stroke and pauses after 3 seconds without power or cadence. Every 5 minutes the app saves a checkpoint; after a crash, the home page offers to save the unfinished ride.
 
@@ -78,10 +127,21 @@ dotnet tool restore && DOTNET_ROLL_FORWARD=Major dotnet xstyler --recursive --di
 
 The last command checks XAML formatting with [XamlStyler](https://github.com/Xavalon/XamlStyler); without `--passive` it rewrites the files. [tests/SimpleBikeTrainer.Desktop.Tests](tests/SimpleBikeTrainer.Desktop.Tests) drives every page headlessly with simulated devices and saves screenshots to `$SIMPLE_BIKE_TRAINER_SCREENSHOTS`; the images above come from it.
 
+On Windows, every project builds for `net10.0-windows10.0.19041.0`, for the WinRT Bluetooth API; elsewhere they build for `net10.0`. `dotnet build -p:WindowsBuild=true` checks the Windows build on Linux or macOS.
+
+The Android app is a second target framework of the desktop project, `net10.0-android`, added by `-p:AndroidBuild=true`. It needs `dotnet workload install android`, the Android SDK, and a JDK. With a tablet connected over adb:
+
+```sh
+dotnet build src/SimpleBikeTrainer.Desktop -t:Install -f net10.0-android -p:AndroidBuild=true
+dotnet publish src/SimpleBikeTrainer.Desktop -c Release -f net10.0-android -p:AndroidBuild=true -o publish/android
+```
+
+`-p:AndroidSdkDirectory=...` points at the SDK when it is not found, and `-p:AdbTarget="-s SERIAL"` picks one of several devices. Android's Bluetooth, USB, screen lock, sounds and sharing are in [Platforms/Android](src/SimpleBikeTrainer.Desktop/Platforms/Android). CI signs the APK with the keystore in the `ANDROID_KEYSTORE` secret (base64), with `ANDROID_KEYSTORE_PASSWORD` and the key alias in `ANDROID_KEY_ALIAS`; without them it uses a throwaway debug key, and Android will not install such an APK over one signed with another key.
+
 | Project | Contents |
 | --- | --- |
-| [src/SimpleBikeTrainer.Core](src/SimpleBikeTrainer.Core) | Bluetooth devices, workouts, the ride loop, metrics, FIT recording, and the Intervals.icu and Garmin clients |
-| [src/SimpleBikeTrainer.Desktop](src/SimpleBikeTrainer.Desktop) | The Avalonia app |
+| [src/SimpleBikeTrainer.Core](src/SimpleBikeTrainer.Core) | Bluetooth (BlueZ, WinRT, CoreBluetooth) and ANT+ devices, workouts, the ride loop, metrics, FIT recording, and the Intervals.icu and Garmin clients |
+| [src/SimpleBikeTrainer.Desktop](src/SimpleBikeTrainer.Desktop) | The Avalonia app, for the desktop and Android |
 | [src/SimpleBikeTrainer.Cli](src/SimpleBikeTrainer.Cli) | The terminal app and the `scan` and `probe` diagnostics |
 
 

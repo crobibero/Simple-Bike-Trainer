@@ -8,7 +8,7 @@
     <key>CFBundleDisplayName</key>
     <string>Simple Bike Trainer</string>
     <key>CFBundleIdentifier</key>
-    <string>io.github.crobibero.SimpleBikeTrainer</string>
+    <string>dev.codyrobibero.SimpleBikeTrainer</string>
     <key>CFBundleExecutable</key>
     <string>simple-bike-trainer</string>
     <key>CFBundleIconFile</key>
@@ -23,5 +23,15 @@
     <string>12.0</string>
     <key>NSHighResolutionCapable</key>
     <true/>
+    <!-- Without it, macOS ends the app the first time it uses Bluetooth. -->
+    <key>NSBluetoothAlwaysUsageDescription</key>
+    <string>Simple Bike Trainer connects to your trainer, heart rate monitor, and Zwift controllers over Bluetooth.</string>
+    <!-- Without these, macOS silently blocks the mDNS scan and the connection to a Wi-Fi trainer. -->
+    <key>NSLocalNetworkUsageDescription</key>
+    <string>Simple Bike Trainer finds and connects to Wi-Fi trainers on your local network.</string>
+    <key>NSBonjourServices</key>
+    <array>
+        <string>_wahoo-fitness-tnp._tcp</string>
+    </array>
 </dict>
 </plist>

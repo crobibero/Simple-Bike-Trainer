@@ -1,4 +1,4 @@
-# Tests every push and pull request, then builds the desktop app's download for each platform: one file per platform.
+# Tests every push and pull request, then builds the downloads: one file per desktop platform, and an Android APK.
 # release.yml calls this workflow for v* tags and attaches the downloads to the release.
 name: Desktop
 
@@ -28,6 +28,9 @@ jobs:
         run: |
           dotnet tool restore
           DOTNET_ROLL_FORWARD=Major dotnet xstyler --recursive --directory . --passive
+      # Windows builds use the WinRT Bluetooth API; this catches a break there before the publish job.
+      - name: Build for Windows
+        run: dotnet build SimpleBikeTrainer.slnx -p:WindowsBuild=true
       - name: Test
         run: dotnet test --solution SimpleBikeTrainer.slnx
         env:
@@ -39,6 +42,65 @@ jobs:
           name: screenshots
           path: screenshots
           if-no-files-found: ignore
+
+  # The Android tablet app: one APK for arm64 and x64 tablets.
+  android:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 10.0.x
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 21
+      - name: Install the Android workload
+        run: dotnet workload install android
+
+      # As for the desktop app, plus Android's version code, which has to grow from release to release: 1.2.3 is 10203.
+      - name: Version
+        id: version
+        run: |
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
+            version="${GITHUB_REF_NAME#v}"
+          else
+            version="0.0.${GITHUB_RUN_NUMBER}"
+          fi
+          IFS=. read -r major minor patch <<< "${version%%-*}"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "code=$((major * 10000 + minor * 100 + patch))" >> "$GITHUB_OUTPUT"
+
+      # Android installs an update only over an APK signed with the same key. Without the secrets, the APK gets the
+      # SDK's debug key, made fresh on each runner.
+      - name: Signing key
+        id: signing
+        env:
+          ANDROID_KEYSTORE: ${{ secrets.ANDROID_KEYSTORE }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+        run: |
+          if [[ -n "$ANDROID_KEYSTORE" ]]; then
+            echo "$ANDROID_KEYSTORE" | base64 -d > "$RUNNER_TEMP/release.keystore"
+            echo "args=-p:AndroidKeyStore=true -p:AndroidSigningKeyStore=$RUNNER_TEMP/release.keystore -p:AndroidSigningKeyAlias=$ANDROID_KEY_ALIAS -p:AndroidSigningKeyPass=env:ANDROID_KEYSTORE_PASSWORD -p:AndroidSigningStorePass=env:ANDROID_KEYSTORE_PASSWORD" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Publish
+        env:
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+        run: |
+          dotnet publish src/SimpleBikeTrainer.Desktop -c Release -f net10.0-android -p:AndroidBuild=true \
+            -p:Version=${{ steps.version.outputs.version }} \
+            -p:ApplicationDisplayVersion=${{ steps.version.outputs.version }} \
+            -p:ApplicationVersion=${{ steps.version.outputs.code }} \
+            ${{ steps.signing.outputs.args }} -o publish
+          cp publish/*-Signed.apk simple-bike-trainer-android.apk
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: simple-bike-trainer-android
+          path: simple-bike-trainer-android.apk
+          if-no-files-found: error
 
   publish:
     needs: test
