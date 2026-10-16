@@ -1,4 +1,8 @@
-<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk" TreatAsLocalProperty="PublishAot">
+
+  <PropertyGroup>
+    <PublishAot>false</PublishAot>
+  </PropertyGroup>
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
@@ -16,11 +20,6 @@
     <PackageReference Include="Spectre.Console.Cli" />
   </ItemGroup>
 
-  <!--
-    Trimmed and native AOT builds. Spectre.Console.Cli reads each command's settings type, and the settings' options, by
-    reflection: trimmed, it cannot start. Rooting it and this assembly, which holds the commands, keeps them; its
-    remaining trim and AOT warnings stay warnings.
-  -->
   <ItemGroup>
     <TrimmerRootAssembly Include="Spectre.Console.Cli" />
     <TrimmerRootAssembly Include="$(AssemblyName)" />
