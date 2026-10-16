@@ -175,6 +175,16 @@ public sealed class DesktopTests(HeadlessSession headless) : IDisposable
                 }
             };
 
+            // Caught as it changes: at 40x each count shows for 25ms, which a slow runner's polling can miss.
+            string? firstCue = null;
+            ride.PropertyChanged += (_, e) =>
+            {
+                if (e.PropertyName == nameof(RideViewModel.CueTitle) && ride.CueCount != Strings.Ride_Go)
+                {
+                    firstCue ??= ride.CueTitle;
+                }
+            };
+
             // 3, 2, 1, GO with a beep each before the session starts; nothing moves until it ends.
             ride.Start();
             Assert.Equal("3", ride.Countdown);
@@ -190,10 +200,9 @@ public sealed class DesktopTests(HeadlessSession headless) : IDisposable
             }
 
             // The countdown banner and beeps before each step.
-            string? cueTitle = null;
-            await Until(() => (cueTitle = ride.CueVisible && ride.CueCount is "3" or "2" ? ride.CueTitle : null) is not null, TimeSpan.FromSeconds(30));
+            await Until(() => ride.CueVisible && ride.CueCount != Strings.Ride_Go, TimeSpan.FromSeconds(30));
             Shoot(window, "2a-cue.png");
-            Assert.StartsWith("Next: Sweet spot", cueTitle, StringComparison.Ordinal);
+            Assert.StartsWith("Next: Sweet spot", firstCue, StringComparison.Ordinal);
             await Until(() => ride.CueCount == Strings.Ride_Go, TimeSpan.FromSeconds(10));
             lock (cues)
             {
