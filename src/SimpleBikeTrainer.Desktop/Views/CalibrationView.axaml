@@ -1,7 +1,8 @@
 ﻿<UserControl x:Class="SimpleBikeTrainer.Desktop.Views.CalibrationView"
              xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:icons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+             xmlns:c="using:SimpleBikeTrainer.Desktop.Controls"
+             xmlns:icons="https://github.com/oneo-me/fluentui-icons-like"
              xmlns:r="using:SimpleBikeTrainer.Desktop.Resources"
              xmlns:shadui="clr-namespace:ShadUI;assembly=ShadUI"
              xmlns:vm="using:SimpleBikeTrainer.Desktop.ViewModels"
@@ -26,8 +27,8 @@
                     VerticalAlignment="Center"
                     Classes="Primary"
                     Command="{Binding BackCommand}">
-                <icons:MaterialIconText Kind="ArrowLeft"
-                                        Text="{x:Static r:Strings.Common_Back}" />
+                <c:IconLabel Symbol="ArrowLeft"
+                             Text="{x:Static r:Strings.Common_Back}" />
             </Button>
         </Grid>
 
@@ -73,17 +74,16 @@
                                 Spacing="12">
                         <Button Classes="Primary"
                                 Command="{Binding StartCommand}">
-                            <icons:MaterialIconText Kind="Tune"
-                                                    Text="{x:Static r:Strings.Cal_Start}" />
+                            <c:IconLabel Symbol="Options"
+                                         Text="{x:Static r:Strings.Cal_Start}" />
                         </Button>
                         <shadui:Loading Width="24"
                                         Height="24"
                                         IsVisible="{Binding IsRunning}" />
-                        <icons:MaterialIcon Width="26"
-                                            Height="26"
-                                            Foreground="{DynamicResource GoodBrush}"
-                                            IsVisible="{Binding Succeeded, Converter={x:Static ObjectConverters.Equal}, ConverterParameter={x:True}}"
-                                            Kind="CheckCircleOutline" />
+                        <icons:FluentIcon Foreground="{DynamicResource GoodBrush}"
+                                          IsVisible="{Binding Succeeded, Converter={x:Static ObjectConverters.Equal}, ConverterParameter={x:True}}"
+                                          Size="Size28"
+                                          Symbol="CheckmarkCircle" />
                     </StackPanel>
                 </StackPanel>
             </StackPanel>

@@ -27,7 +27,8 @@
     <PackageReference Include="AsyncAwaitBestPractices" />
     <PackageReference Include="Avalonia" />
     <PackageReference Include="CommunityToolkit.Mvvm" />
-    <PackageReference Include="Material.Icons.Avalonia" />
+    <PackageReference Include="ONEO.FluentUIIconsLike" />
+    <PackageReference Include="ONEO.FluentUIIconsLike.Generator" PrivateAssets="all" />
     <PackageReference Include="ShadUI" />
     <PackageReference Include="Avalonia.Desktop" Condition="'$(IsMobile)' != 'true'" />
     <PackageReference Include="StaticLink.Avalonia" Condition="$(RuntimeIdentifier.StartsWith('win-')) Or $(RuntimeIdentifier.StartsWith('linux-'))" />

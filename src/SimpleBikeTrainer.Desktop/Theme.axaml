@@ -1,6 +1,7 @@
 ﻿<Styles xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:c="using:SimpleBikeTrainer.Desktop.Controls">
+        xmlns:c="using:SimpleBikeTrainer.Desktop.Controls"
+        xmlns:icons="https://github.com/oneo-me/fluentui-icons-like">
     <!--
         The app's look on top of ShadUI. Surfaces and text use ShadUI's colors (CardBackgroundColor, ForegroundColor,
         MutedColor, BorderColor, PrimaryColor...), which follow the light or dark theme. The colors below are the app's
@@ -218,6 +219,11 @@
     <!--  A whole clickable row, as on the history page: plain text, no button chrome.  -->
     <Style Selector="Button.row">
         <Setter Property="Theme" Value="{StaticResource RowButtonTheme}" />
+    </Style>
+
+    <!--  An icon takes the text color around it, as a glyph would; one with its own Foreground keeps it.  -->
+    <Style Selector="icons|FluentIcon">
+        <Setter Property="Foreground" Value="{Binding $self.(TextElement.Foreground)}" />
     </Style>
 
     <Style Selector="Path.bike">

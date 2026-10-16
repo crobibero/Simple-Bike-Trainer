@@ -1,7 +1,8 @@
 ﻿<UserControl x:Class="SimpleBikeTrainer.Desktop.Views.HistoryView"
              xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:icons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+             xmlns:c="using:SimpleBikeTrainer.Desktop.Controls"
+             xmlns:icons="https://github.com/oneo-me/fluentui-icons-like"
              xmlns:r="using:SimpleBikeTrainer.Desktop.Resources"
              xmlns:shadui="clr-namespace:ShadUI;assembly=ShadUI"
              xmlns:vm="using:SimpleBikeTrainer.Desktop.ViewModels"
@@ -30,13 +31,13 @@
                         Command="{Binding OpenFolderCommand}"
                         IsVisible="{x:Static vm:MainWindowViewModel.CanOpenFolder}"
                         ToolTip.Tip="{Binding Folder}">
-                    <icons:MaterialIconText Kind="FolderOutline"
-                                            Text="{x:Static r:Strings.History_Folder}" />
+                    <c:IconLabel Symbol="Folder"
+                                 Text="{x:Static r:Strings.History_Folder}" />
                 </Button>
                 <Button Classes="Primary"
                         Command="{Binding BackCommand}">
-                    <icons:MaterialIconText Kind="ArrowLeft"
-                                            Text="{x:Static r:Strings.Common_Back}" />
+                    <c:IconLabel Symbol="ArrowLeft"
+                                 Text="{x:Static r:Strings.Common_Back}" />
                 </Button>
             </StackPanel>
         </Grid>
@@ -142,16 +143,14 @@
                                                         VerticalAlignment="Center"
                                                         Orientation="Horizontal"
                                                         Spacing="6">
-                                                <icons:MaterialIcon Width="18"
-                                                                    Height="18"
-                                                                    Foreground="{DynamicResource GoodBrush}"
-                                                                    IsVisible="{Binding IsUploaded}"
-                                                                    Kind="CloudCheckOutline" />
-                                                <icons:MaterialIcon Width="18"
-                                                                    Height="18"
-                                                                    Foreground="{DynamicResource MutedColor}"
-                                                                    IsVisible="{Binding !IsUploaded}"
-                                                                    Kind="CloudOffOutline" />
+                                                <icons:FluentIcon Foreground="{DynamicResource GoodBrush}"
+                                                                  IsVisible="{Binding IsUploaded}"
+                                                                  Size="Size16"
+                                                                  Symbol="CloudCheckmark" />
+                                                <icons:FluentIcon Foreground="{DynamicResource MutedColor}"
+                                                                  IsVisible="{Binding !IsUploaded}"
+                                                                  Size="Size16"
+                                                                  Symbol="CloudOff" />
                                                 <TextBlock Classes="muted"
                                                            FontSize="13"
                                                            Text="{Binding Uploads}" />

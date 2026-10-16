@@ -2,7 +2,7 @@
              xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:c="using:SimpleBikeTrainer.Desktop.Controls"
-             xmlns:icons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+             xmlns:icons="https://github.com/oneo-me/fluentui-icons-like"
              xmlns:r="using:SimpleBikeTrainer.Desktop.Resources"
              xmlns:s="using:SimpleBikeTrainer.Desktop.Services"
              xmlns:shadui="clr-namespace:ShadUI;assembly=ShadUI"
@@ -33,11 +33,13 @@
                 </StackPanel>
                 <Button Grid.Column="2"
                         VerticalAlignment="Center"
+                        AutomationProperties.Name="{x:Static r:Strings.Common_HelpTip}"
                         Classes="help Ghost"
                         Command="{Binding $parent[v:MainView].((vm:MainWindowViewModel)DataContext).ShowHelpCommand}"
-                        Content="{icons:MaterialIconExt Kind=HelpCircleOutline,
-                                                        IconSize=24}"
-                        ToolTip.Tip="{x:Static r:Strings.Common_HelpTip}" />
+                        ToolTip.Tip="{x:Static r:Strings.Common_HelpTip}">
+                    <icons:FluentIcon Size="Size24"
+                                      Symbol="QuestionCircle" />
+                </Button>
             </Grid>
             <StackPanel Margin="0,12,0,0"
                         DockPanel.Dock="Bottom"
@@ -46,19 +48,19 @@
                 <Button Classes="Outline"
                         Command="{Binding OpenFileCommand}"
                         ToolTip.Tip="{x:Static r:Strings.Home_OpenTip}">
-                    <icons:MaterialIconText Kind="FolderOpenOutline"
-                                            Text="{x:Static r:Strings.Home_Open}" />
+                    <c:IconLabel Symbol="FolderOpen"
+                                 Text="{x:Static r:Strings.Home_Open}" />
                 </Button>
                 <Button Classes="Outline"
                         Command="{Binding HistoryCommand}"
                         ToolTip.Tip="{x:Static r:Strings.Home_HistoryTip}">
-                    <icons:MaterialIconText Kind="History"
-                                            Text="{x:Static r:Strings.Home_History}" />
+                    <c:IconLabel Symbol="History"
+                                 Text="{x:Static r:Strings.Home_History}" />
                 </Button>
                 <Button Classes="Outline"
                         Command="{Binding SettingsCommand}">
-                    <icons:MaterialIconText Kind="CogOutline"
-                                            Text="{x:Static r:Strings.Home_Settings}" />
+                    <c:IconLabel Symbol="Settings"
+                                 Text="{x:Static r:Strings.Home_Settings}" />
                 </Button>
             </StackPanel>
             <!--  Planned rides above the divider, everything else below.  -->
@@ -74,10 +76,9 @@
                                     <StackPanel Spacing="8">
                                         <StackPanel Orientation="Horizontal"
                                                     Spacing="8">
-                                            <icons:MaterialIcon Width="20"
-                                                                Height="20"
-                                                                Foreground="{DynamicResource WarnBrush}"
-                                                                Kind="BackupRestore" />
+                                            <icons:FluentIcon Foreground="{DynamicResource WarnBrush}"
+                                                              Size="Size20"
+                                                              Symbol="ArchiveArrowBack" />
                                             <TextBlock VerticalAlignment="Center"
                                                        FontWeight="SemiBold"
                                                        Text="{x:Static r:Strings.Home_Unfinished}" />
@@ -90,8 +91,8 @@
                                             <Button Classes="Primary"
                                                     Command="{Binding $parent[UserControl].((vm:HomeViewModel)DataContext).RecoverCommand}"
                                                     CommandParameter="{Binding}">
-                                                <icons:MaterialIconText Kind="ContentSaveOutline"
-                                                                        Text="{x:Static r:Strings.Home_Review}" />
+                                                <c:IconLabel Symbol="Save"
+                                                             Text="{x:Static r:Strings.Home_Review}" />
                                             </Button>
                                             <Button Classes="Outline"
                                                     Command="{Binding $parent[UserControl].((vm:HomeViewModel)DataContext).DiscardCommand}"
@@ -113,12 +114,14 @@
                                 Width="32"
                                 Height="32"
                                 MinHeight="32"
+                                AutomationProperties.Name="{x:Static r:Strings.Home_RefreshTip}"
                                 Classes="help Ghost"
                                 Command="{Binding RefreshCommand}"
-                                Content="{icons:MaterialIconExt Kind=Refresh,
-                                                                IconSize=20}"
                                 CornerRadius="16"
-                                ToolTip.Tip="{x:Static r:Strings.Home_RefreshTip}" />
+                                ToolTip.Tip="{x:Static r:Strings.Home_RefreshTip}">
+                            <icons:FluentIcon Size="Size20"
+                                              Symbol="ArrowClockwise" />
+                        </Button>
                     </Grid>
                     <StackPanel Margin="4,4,0,16"
                                 IsVisible="{Binding IsLoading}"
@@ -145,10 +148,9 @@
                         <StackPanel Spacing="8">
                             <StackPanel Orientation="Horizontal"
                                         Spacing="8">
-                                <icons:MaterialIcon Width="20"
-                                                    Height="20"
-                                                    Foreground="{DynamicResource BadBrush}"
-                                                    Kind="AlertCircleOutline" />
+                                <icons:FluentIcon Foreground="{DynamicResource BadBrush}"
+                                                  Size="Size20"
+                                                  Symbol="ErrorCircle" />
                                 <TextBlock VerticalAlignment="Center"
                                            FontWeight="SemiBold"
                                            Text="{x:Static r:Strings.Home_LoadFailed}" />
@@ -160,14 +162,14 @@
                                         Spacing="8">
                                 <Button Classes="Outline"
                                         Command="{Binding RefreshCommand}">
-                                    <icons:MaterialIconText Kind="Refresh"
-                                                            Text="{x:Static r:Strings.Home_TryAgain}" />
+                                    <c:IconLabel Symbol="ArrowClockwise"
+                                                 Text="{x:Static r:Strings.Home_TryAgain}" />
                                 </Button>
                                 <Button Classes="Outline"
                                         Command="{Binding SettingsCommand}"
                                         IsVisible="{Binding LoadErrorNeedsSettings}">
-                                    <icons:MaterialIconText Kind="CogOutline"
-                                                            Text="{x:Static r:Strings.Home_OpenSettings}" />
+                                    <c:IconLabel Symbol="Settings"
+                                                 Text="{x:Static r:Strings.Home_OpenSettings}" />
                                 </Button>
                             </StackPanel>
                         </StackPanel>
@@ -498,8 +500,8 @@
                                     Command="{Binding CalibrateCommand}"
                                     IsVisible="{Binding Devices.IsConnected}"
                                     ToolTip.Tip="{x:Static r:Strings.Home_CalibrateTip}">
-                                <icons:MaterialIconText Kind="Tune"
-                                                        Text="{x:Static r:Strings.Home_Calibrate}" />
+                                <c:IconLabel Symbol="Options"
+                                             Text="{x:Static r:Strings.Home_Calibrate}" />
                             </Button>
                             <CheckBox Content="{x:Static r:Strings.Home_Simulate}"
                                       IsChecked="{Binding Devices.Simulate}">
@@ -523,10 +525,11 @@
                             VerticalAlignment="Bottom"
                             Classes="Primary"
                             Command="{Binding StartCommand}"
-                            Content="{icons:MaterialIconTextExt Kind=Play,
-                                                                Text={x:Static r:Strings.Home_StartRide},
-                                                                IconSize=26}"
-                            FontSize="20" />
+                            FontSize="20">
+                        <c:IconLabel Size="Size28"
+                                     Symbol="Play"
+                                     Text="{x:Static r:Strings.Home_StartRide}" />
+                    </Button>
                 </Grid>
             </Border>
         </Grid>

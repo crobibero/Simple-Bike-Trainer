@@ -1,7 +1,6 @@
 ﻿<Application x:Class="SimpleBikeTrainer.Desktop.App"
              xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:icons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
              xmlns:local="using:SimpleBikeTrainer.Desktop"
              xmlns:shadui="clr-namespace:ShadUI;assembly=ShadUI"
              Name="Simple Bike Trainer"
@@ -14,7 +13,6 @@
 
     <Application.Styles>
         <shadui:ShadTheme />
-        <icons:MaterialIconStyles />
         <StyleInclude Source="avares://simple-bike-trainer/Theme.axaml" />
     </Application.Styles>
 </Application>
