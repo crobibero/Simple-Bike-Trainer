@@ -113,8 +113,8 @@ jobs:
           path: simple-bike-trainer-android.apk
           if-no-files-found: error
 
-  # The iPad app: a check that it builds, for the simulator, which needs no signing certificate. There is no download:
-  # an iPad installs only an app signed for it, so each rider builds and signs their own (see the README).
+  # The iPad app: a check that it compiles with native AOT, unsigned, as no signing certificate is at hand. There is no
+  # download: an iPad installs only an app signed for it, so each rider builds and signs their own (see the README).
   ios:
     needs: test
     runs-on: xcode-27
@@ -125,8 +125,10 @@ jobs:
           dotnet-version: 10.0.x
       - name: Install the iOS workload
         run: dotnet workload install ios
-      - name: Build
-        run: dotnet build src/SimpleBikeTrainer.Desktop -c Release -f net10.0-ios -r iossimulator-arm64 -p:IosBuild=true
+      - name: Publish
+        run: |
+          dotnet publish src/SimpleBikeTrainer.Desktop -c Release -f net10.0-ios -r ios-arm64 -p:IosBuild=true \
+            -p:EnableCodeSigning=false -p:CodesignRequireProvisioningProfile=false -p:BuildIpa=false
 
   publish:
     needs: test
@@ -161,23 +163,16 @@ jobs:
             echo "version=0.0.${GITHUB_RUN_NUMBER}" >> "$GITHUB_OUTPUT"
           fi
 
-      # Native AOT links with clang.
+      # Native AOT links with clang; StaticLink.Avalonia switches the linker to lld and links fontconfig.
       - name: Install the native AOT tools
         if: startsWith(matrix.rid, 'linux-')
-        run: sudo apt-get update && sudo apt-get install -y clang zlib1g-dev
+        run: sudo apt-get update && sudo apt-get install -y clang lld zlib1g-dev libfontconfig-dev
 
-      # Windows: one trimmed, self-contained file, with Skia's native libraries inside it; they unpack to a cache folder
-      # on the first start. Native AOT cannot embed those libraries, so it would ship four files.
-      # macOS and Linux: native AOT, with the libraries beside the app: in the .app bundle on macOS, in a tarball on
-      # Linux.
+      # Native AOT everywhere. On Windows and Linux, StaticLink.Avalonia links Skia's libraries into the app, so it is
+      # one file; on macOS they go in the .app bundle.
       - name: Publish
         run: |
-          if [[ "${{ matrix.rid }}" == win-* ]]; then
-            mode="--self-contained -p:PublishTrimmed=true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:EnableCompressionInSingleFile=true"
-          else
-            mode="-p:PublishAot=true"
-          fi
-          dotnet publish src/SimpleBikeTrainer.Desktop -c Release -r ${{ matrix.rid }} $mode \
+          dotnet publish src/SimpleBikeTrainer.Desktop -c Release -r ${{ matrix.rid }} -p:PublishAot=true \
             -p:Version=${{ steps.version.outputs.version }} -p:DebugType=none -o publish
           # SkiaSharp's packages drop their native .pdb files next to the app.
           rm -f publish/*.pdb publish/*.dbg
@@ -187,12 +182,10 @@ jobs:
         if: startsWith(matrix.rid, 'win-')
         run: cp publish/simple-bike-trainer.exe simple-bike-trainer-${{ matrix.rid }}.exe
 
-      - name: Package for Linux
+      # One file, like the Windows .exe. A browser download drops its executable bit (see the README).
+      - name: Name the download for Linux
         if: startsWith(matrix.rid, 'linux-')
-        run: |
-          mkdir simple-bike-trainer
-          cp publish/simple-bike-trainer publish/*.so simple-bike-trainer/
-          tar -czf simple-bike-trainer-${{ matrix.rid }}.tar.gz simple-bike-trainer
+        run: cp publish/simple-bike-trainer simple-bike-trainer-${{ matrix.rid }}
 
       # Ad-hoc signed only: macOS asks before the first launch (see the README).
       - name: Package for macOS

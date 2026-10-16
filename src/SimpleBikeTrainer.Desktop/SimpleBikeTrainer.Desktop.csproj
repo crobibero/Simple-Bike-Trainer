@@ -46,6 +46,14 @@
   </ItemGroup>
 
   <!--
+    Native AOT on Windows and Linux links Skia and HarfBuzz, and on Windows the ANGLE renderer, into the app, so the
+    publish is one file. Its version has to match the SkiaSharp that Avalonia uses. macOS keeps them in the .app bundle.
+  -->
+  <ItemGroup Condition="$(RuntimeIdentifier.StartsWith('win-')) Or $(RuntimeIdentifier.StartsWith('linux-'))">
+    <PackageReference Include="StaticLink.Avalonia" />
+  </ItemGroup>
+
+  <!--
     Trimmed and native AOT builds keep all of the library. The Windows SDK's WinRT assemblies and Android's Mono.Android
     produce trim and AOT warnings of their own, which stay warnings, as do the iOS SDK's for the Objective-C members
     Avalonia.iOS implements explicitly.
@@ -125,6 +133,11 @@
     <ApplicationVersion>1</ApplicationVersion>
     <ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
     <AppIcon>AppIcon</AppIcon>
+    <!--
+      dotnet publish compiles with native AOT; dotnet build keeps Mono, for the debugger. Not tied to Release, unlike
+      Android: on iOS it also sets the trimming feature switches, which should not differ between builds.
+    -->
+    <PublishAot>true</PublishAot>
   </PropertyGroup>
 
   <ItemGroup Condition="'$(IsIos)' == 'true'">

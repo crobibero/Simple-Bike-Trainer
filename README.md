@@ -17,7 +17,7 @@ Each release on the repository's Releases page has one download per platform, pl
 | System | Download |
 | --- | --- |
 | Windows | `simple-bike-trainer-win-x64.exe`, `simple-bike-trainer-win-arm64.exe` |
-| Linux | `simple-bike-trainer-linux-x64.tar.gz`, `simple-bike-trainer-linux-arm64.tar.gz`. Unpack it and run `simple-bike-trainer` in the folder; the two `.so` files beside it must stay there. |
+| Linux | `simple-bike-trainer-linux-x64`, `simple-bike-trainer-linux-arm64`. Make it executable with `chmod +x` and run it. It needs fontconfig, which desktop distributions include. |
 | macOS | `simple-bike-trainer-osx-arm64.zip` (Apple silicon), `simple-bike-trainer-osx-x64.zip` (Intel) |
 | Android 12 or later | `simple-bike-trainer-android.apk` |
 | iPad, iPadOS 15 or later | TODO |
@@ -136,6 +136,14 @@ The last command checks XAML formatting with [XamlStyler](https://github.com/Xav
 
 On Windows, every project builds for `net10.0-windows10.0.19041.0`, for the WinRT Bluetooth API; elsewhere they build for `net10.0`. `dotnet build -p:WindowsBuild=true` checks the Windows build on Linux or macOS.
 
+Releases use native AOT on every platform, which compiles only on the system it targets:
+
+```sh
+dotnet publish src/SimpleBikeTrainer.Desktop -c Release -r linux-x64 -p:PublishAot=true -o publish
+```
+
+Windows needs the Visual Studio C++ build tools; Linux needs clang, lld and the fontconfig headers (`libfontconfig-dev`). On Windows and Linux, [StaticLink.Avalonia](https://github.com/greepar/StaticLink.Avalonia) links Skia and HarfBuzz, and on Windows the ANGLE renderer, into the app, so the publish is one file. Each of its versions is built for one SkiaSharp version, which has to be the one Avalonia uses: an Avalonia update that moves SkiaSharp waits for a matching StaticLink.Avalonia. macOS keeps those libraries in the `.app` bundle.
+
 The Android app is a second target framework of the desktop project, `net10.0-android`, added by `-p:AndroidBuild=true`. It needs `dotnet workload install android`, the Android SDK, and a JDK. With a tablet connected over adb:
 
 ```sh
@@ -151,12 +159,15 @@ The iPad app is a third target framework, `net10.0-ios`, added by `-p:IosBuild=t
 dotnet build src/SimpleBikeTrainer.Desktop -t:Run -f net10.0-ios -p:IosBuild=true
 ```
 
-An iPad needs a build signed with a provisioning profile for the app's bundle identifier, from an Apple developer account; a free account's profile lasts 7 days. With the profile installed and the iPad connected, this installs a Release build, compiled ahead of time:
+An iPad needs a build signed with a provisioning profile for the app's bundle identifier, from an Apple developer account; a free account's profile lasts 7 days. With the profile installed and the iPad connected, this publishes a native AOT build and installs it:
 
 ```sh
-dotnet build src/SimpleBikeTrainer.Desktop -t:Run -c Release -f net10.0-ios -p:IosBuild=true -p:RuntimeIdentifier=ios-arm64 \
-  -p:ApplicationId=YOUR.BUNDLE.ID -p:_DeviceName=IPAD-UDID
+dotnet publish src/SimpleBikeTrainer.Desktop -c Release -f net10.0-ios -r ios-arm64 -p:IosBuild=true \
+  -p:ApplicationId=YOUR.BUNDLE.ID -o publish/ios
+xcrun devicectl device install app --device IPAD-UDID publish/ios/*.ipa
 ```
+
+`dotnet build` runs the iPad app on Mono instead, for the debugger: `dotnet build src/SimpleBikeTrainer.Desktop -t:Run -c Release -f net10.0-ios -p:IosBuild=true -p:RuntimeIdentifier=ios-arm64 -p:ApplicationId=YOUR.BUNDLE.ID -p:_DeviceName=IPAD-UDID` installs that build.
 
 | Project | Contents |
 | --- | --- |
