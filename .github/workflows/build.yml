@@ -60,8 +60,6 @@ jobs:
       - name: Install the Android workload
         run: dotnet workload install android
 
-      # Native AOT links with the NDK. r28: r29's libunwind clashes with the runtime's own (see
-      # SimpleBikeTrainer.Desktop.csproj).
       - name: Install the Android NDK
         id: ndk
         run: |
@@ -69,7 +67,6 @@ jobs:
           yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "ndk;$version" > /dev/null
           echo "dir=$ANDROID_HOME/ndk/$version" >> "$GITHUB_OUTPUT"
 
-      # As for the desktop app, plus Android's version code, which has to grow from release to release: 1.2.3 is 10203.
       - name: Version
         id: version
         run: |
@@ -82,8 +79,6 @@ jobs:
           echo "version=$version" >> "$GITHUB_OUTPUT"
           echo "code=$((major * 10000 + minor * 100 + patch))" >> "$GITHUB_OUTPUT"
 
-      # Android installs an update only over an APK signed with the same key. Without the secrets, the APK gets the
-      # SDK's debug key, made fresh on each runner.
       - name: Signing key
         id: signing
         env:

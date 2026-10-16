@@ -22,7 +22,6 @@
     remaining trim and AOT warnings stay warnings.
   -->
   <ItemGroup>
-    <TrimmerRootAssembly Include="SimpleBikeTrainer.Core" />
     <TrimmerRootAssembly Include="Spectre.Console.Cli" />
     <TrimmerRootAssembly Include="$(AssemblyName)" />
   </ItemGroup>

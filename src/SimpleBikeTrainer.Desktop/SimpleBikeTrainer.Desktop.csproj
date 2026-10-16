@@ -15,9 +15,6 @@
     <EnableTrimAnalyzer>true</EnableTrimAnalyzer>
     <EnableAotAnalyzer>true</EnableAotAnalyzer>
     <WarningsNotAsErrors>$(WarningsNotAsErrors);IL2037;IL2104;IL3053</WarningsNotAsErrors>
-  </PropertyGroup>
-
-  <PropertyGroup>
     <OptimizationPreference>Size</OptimizationPreference>
     <IlcFoldIdenticalMethodBodies>true</IlcFoldIdenticalMethodBodies>
   </PropertyGroup>
@@ -28,7 +25,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="AsyncAwaitBestPractices" />
     <PackageReference Include="Avalonia" />
     <PackageReference Include="CommunityToolkit.Mvvm" />
     <PackageReference Include="ONEO.FluentUIIconsLike" />
