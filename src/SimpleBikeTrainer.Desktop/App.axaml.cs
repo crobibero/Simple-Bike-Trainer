@@ -15,6 +15,9 @@ public partial class App : Application
     /// <summary>Set by tests and screenshots to skip loading the real config.</summary>
     internal static AppConfig? ConfigOverride { get; set; }
 
+    /// <summary>Launching with this offers simulated devices, for trying the app without hardware.</summary>
+    private const string TestFlag = "--test";
+
     public override void Initialize()
     {
         // Background work started with SafeFireAndForget reports its failures here instead of ending the app.
@@ -40,7 +43,7 @@ public partial class App : Application
     {
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
-            var main = CreateMain();
+            var main = CreateMain(desktop.Args?.Contains(TestFlag, StringComparer.OrdinalIgnoreCase) == true);
             var window = new MainWindow { DataContext = main };
             desktop.MainWindow = window;
             KeepOpenUntilCleanedUp(window, main, desktop, ShutdownTimeout);
@@ -49,7 +52,7 @@ public partial class App : Application
         else if (ApplicationLifetime is IActivityApplicationLifetime activity)
         {
             // Android: the app outlives its activity, which Android can recreate; each new one gets a view onto the same app.
-            var main = CreateMain();
+            var main = CreateMain(testMode: false);
             activity.MainViewFactory = () => new MainView { DataContext = main };
             main.Home.InitializeAsync().SafeFireAndForget();
         }
@@ -57,14 +60,14 @@ public partial class App : Application
         base.OnFrameworkInitializationCompleted();
     }
 
-    private static MainWindowViewModel CreateMain()
+    private static MainWindowViewModel CreateMain(bool testMode)
     {
         var config = ConfigOverride ?? AppConfig.Load();
         ApplyTheme(config.Theme);
 
         // Lives as long as the app, as the factory's pooled handlers need it to.
         var services = new ServiceCollection().AddTrainerHttpClients().BuildServiceProvider();
-        return new MainWindowViewModel(config, services.GetRequiredService<IHttpClientFactory>());
+        return new MainWindowViewModel(config, services.GetRequiredService<IHttpClientFactory>(), testMode);
     }
 
     /// <summary>How long closing waits for the ride to stop and the devices to disconnect.</summary>

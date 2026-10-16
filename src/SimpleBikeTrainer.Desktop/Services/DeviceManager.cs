@@ -97,9 +97,10 @@ public sealed partial class DeviceManager : ObservableRecipient, IAsyncDisposabl
     private DeviceScanner? _scanner;
     private CancellationTokenSource? _cancel;
 
-    public DeviceManager(AppConfig config)
+    public DeviceManager(AppConfig config, bool testMode = false)
     {
         _config = config;
+        CanSimulate = testMode;
         _timer = new DispatcherTimer(TimeSpan.FromSeconds(1), DispatcherPriority.Background, (_, _) => RefreshRows());
         _timer.Start();
         SavedChanged();
@@ -143,6 +144,9 @@ public sealed partial class DeviceManager : ObservableRecipient, IAsyncDisposabl
 
     [ObservableProperty]
     public partial string Status { get; set; } = Strings.Devices_NotConnected;
+
+    /// <summary>Offers <see cref="Simulate"/>; only when launched with <c>--test</c>.</summary>
+    public bool CanSimulate { get; }
 
     /// <summary>Use a pretend trainer and heart rate instead of Bluetooth.</summary>
     [ObservableProperty]

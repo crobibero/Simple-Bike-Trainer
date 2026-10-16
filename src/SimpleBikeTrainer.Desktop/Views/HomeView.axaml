@@ -502,8 +502,14 @@
                                                         Text="{x:Static r:Strings.Home_Calibrate}" />
                             </Button>
                             <CheckBox Content="{x:Static r:Strings.Home_Simulate}"
-                                      IsChecked="{Binding Devices.Simulate}"
-                                      IsVisible="{Binding Devices.CanConnect}" />
+                                      IsChecked="{Binding Devices.Simulate}">
+                                <CheckBox.IsVisible>
+                                    <MultiBinding Converter="{x:Static BoolConverters.And}">
+                                        <Binding Path="Devices.CanSimulate" />
+                                        <Binding Path="Devices.CanConnect" />
+                                    </MultiBinding>
+                                </CheckBox.IsVisible>
+                            </CheckBox>
                             <shadui:Loading Width="24"
                                             Height="24"
                                             VerticalAlignment="Center"

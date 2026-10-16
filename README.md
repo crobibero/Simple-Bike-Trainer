@@ -125,6 +125,8 @@ dotnet test --solution SimpleBikeTrainer.slnx
 dotnet tool restore && DOTNET_ROLL_FORWARD=Major dotnet xstyler --recursive --directory . --passive
 ```
 
+`dotnet run --project src/SimpleBikeTrainer.Desktop -- --test` (or `SimpleBikeTrainer.exe --test`) adds a Simulate checkbox to the Home page, for riding a pretend trainer and heart rate monitor without hardware.
+
 The last command checks XAML formatting with [XamlStyler](https://github.com/Xavalon/XamlStyler); without `--passive` it rewrites the files. [tests/SimpleBikeTrainer.Desktop.Tests](tests/SimpleBikeTrainer.Desktop.Tests) drives every page headlessly with simulated devices and saves screenshots to `$SIMPLE_BIKE_TRAINER_SCREENSHOTS`; the images above come from it.
 
 On Windows, every project builds for `net10.0-windows10.0.19041.0`, for the WinRT Bluetooth API; elsewhere they build for `net10.0`. `dotnet build -p:WindowsBuild=true` checks the Windows build on Linux or macOS.

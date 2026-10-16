@@ -16,11 +16,11 @@ public sealed partial class MainWindowViewModel : ViewModelBase, IAsyncDisposabl
 {
     private readonly IHttpClientFactory _httpClientFactory;
 
-    public MainWindowViewModel(AppConfig config, IHttpClientFactory httpClientFactory)
+    public MainWindowViewModel(AppConfig config, IHttpClientFactory httpClientFactory, bool testMode = false)
     {
         Config = config;
         _httpClientFactory = httpClientFactory;
-        Devices = new DeviceManager(config);
+        Devices = new DeviceManager(config, testMode);
         Home = new HomeViewModel(this);
         Current = Home;
     }
