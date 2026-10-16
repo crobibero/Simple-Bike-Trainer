@@ -26,12 +26,15 @@
   <ItemGroup>
     <PackageReference Include="AsyncAwaitBestPractices" />
     <PackageReference Include="Avalonia" />
-    <PackageReference Include="Avalonia.Fonts.Inter" />
     <PackageReference Include="CommunityToolkit.Mvvm" />
     <PackageReference Include="Material.Icons.Avalonia" />
     <PackageReference Include="ShadUI" />
     <PackageReference Include="Avalonia.Desktop" Condition="'$(IsMobile)' != 'true'" />
     <PackageReference Include="StaticLink.Avalonia" Condition="$(RuntimeIdentifier.StartsWith('win-')) Or $(RuntimeIdentifier.StartsWith('linux-'))" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <AvaloniaResource Include="Assets/Fonts/*.ttf" />
   </ItemGroup>
 
   <PropertyGroup Condition="'$(IsMobile)' == 'true'">
