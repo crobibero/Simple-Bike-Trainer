@@ -14,10 +14,30 @@ using SimpleBikeTrainer.Workouts;
 
 namespace SimpleBikeTrainer.Desktop.ViewModels;
 
-public sealed record ZoneRow(string Name, string Time, double Fraction, IBrush Brush);
+/// <summary>Time in one power zone. The ride updates <see cref="Time"/> and <see cref="Fraction"/> in place.</summary>
+public sealed partial class ZoneRow(string name, string time, double fraction, IBrush brush) : ObservableObject
+{
+    public string Name { get; } = name;
 
-/// <summary>A labeled number. <see cref="Tip"/> explains it on hover.</summary>
-public sealed record StatRow(string Label, string Value, string? Tip = null);
+    public IBrush Brush { get; } = brush;
+
+    [ObservableProperty]
+    public partial string Time { get; set; } = time;
+
+    [ObservableProperty]
+    public partial double Fraction { get; set; } = fraction;
+}
+
+/// <summary>A labeled number. <see cref="Tip"/> explains it on hover. The ride updates <see cref="Value"/> in place.</summary>
+public sealed partial class StatRow(string label, string value, string? tip = null) : ObservableObject
+{
+    public string Label { get; } = label;
+
+    public string? Tip { get; } = tip;
+
+    [ObservableProperty]
+    public partial string Value { get; set; } = value;
+}
 
 /// <summary>Hover text for the numbers on the ride and summary pages. The help page has the longer story.</summary>
 public static class Tips
@@ -717,21 +737,32 @@ public sealed partial class RideViewModel : ViewModelBase
     private static readonly IBrush[] ZoneBrushes =
         [.. new[] { 0.45, 0.65, 0.83, 0.98, 1.13, 1.35, 1.6 }.Select(f => (IBrush)new SolidColorBrush(WorkoutChart.ZoneColor(f)))];
 
-    /// <summary>Updates rows in place, so the lists do not flicker every second.</summary>
-    private static void Set<T>(ObservableCollection<T> target, IReadOnlyList<T> values)
+    /// <summary>Updates rows in place, so each row keeps its controls and only its text changes.</summary>
+    private static void Set(ObservableCollection<StatRow> target, IReadOnlyList<StatRow> values) =>
+        Set(target, values, (row, value) => row.Label == value.Label, (row, value) => row.Value = value.Value);
+
+    private static void Set(ObservableCollection<ZoneRow> target, IReadOnlyList<ZoneRow> values) =>
+        Set(target, values, (row, value) => row.Name == value.Name, (row, value) =>
+        {
+            row.Time = value.Time;
+            row.Fraction = value.Fraction;
+        });
+
+    private static void Set<T>(ObservableCollection<T> target, IReadOnlyList<T> values, Func<T, T, bool> sameRow, Action<T, T> update)
     {
         for (var i = 0; i < values.Count; i++)
         {
-            if (i < target.Count)
+            if (i >= target.Count)
             {
-                if (!Equals(target[i], values[i]))
-                {
-                    target[i] = values[i];
-                }
+                target.Add(values[i]);
+            }
+            else if (sameRow(target[i], values[i]))
+            {
+                update(target[i], values[i]);
             }
             else
             {
-                target.Add(values[i]);
+                target[i] = values[i];
             }
         }
 
