@@ -17,6 +17,14 @@
     <AndroidTargetFramework>net10.0-android</AndroidTargetFramework>
   </PropertyGroup>
 
+  <!--
+    -p:IosBuild=true does the same for the iPad app. The ios workload, and Xcode to finish the build, run only on a Mac.
+  -->
+  <PropertyGroup>
+    <IosBuild Condition="'$(IosBuild)' == ''">false</IosBuild>
+    <IosTargetFramework>net10.0-ios</IosTargetFramework>
+  </PropertyGroup>
+
   <PropertyGroup>
     <TargetFramework>$(AppTargetFramework)</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>

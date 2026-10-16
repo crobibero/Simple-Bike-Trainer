@@ -1,6 +1,7 @@
-# Tests every push and pull request, then builds the downloads: one file per desktop platform, and an Android APK.
+# Tests every push and pull request, then builds the downloads: one file per desktop platform, and an Android APK. It
+# also checks that the iPad app builds.
 # release.yml calls this workflow for v* tags and attaches the downloads to the release.
-name: Desktop
+name: Build
 
 on:
   push:
@@ -101,6 +102,21 @@ jobs:
           name: simple-bike-trainer-android
           path: simple-bike-trainer-android.apk
           if-no-files-found: error
+
+  # The iPad app: a check that it builds, for the simulator, which needs no signing certificate. There is no download:
+  # an iPad installs only an app signed for it, so each rider builds and signs their own (see the README).
+  ios:
+    needs: test
+    runs-on: xcode-27
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 10.0.x
+      - name: Install the iOS workload
+        run: dotnet workload install ios
+      - name: Build
+        run: dotnet build src/SimpleBikeTrainer.Desktop -c Release -f net10.0-ios -r iossimulator-arm64 -p:IosBuild=true
 
   publish:
     needs: test

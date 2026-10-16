@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 128 128">
+  <!-- The bike from Assets/icon.svg on a full square: iPadOS rounds the corners itself. After changing it, regenerate:
+       rsvg-convert -w 1024 -h 1024 AppIcon.svg -o Assets.xcassets/AppIcon.appiconset/icon-1024.png -->
+  <rect width="128" height="128" fill="#18181B" />
+  <g transform="translate(19.2,16.4) scale(1.4)" fill="none" stroke="#FAFAFA" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M4,42 a10,10 0 1,0 20,0 a10,10 0 1,0 -20,0 Z M40,42 a10,10 0 1,0 20,0 a10,10 0 1,0 -20,0 Z M14,42 L30,42 L25,24 Z M30,42 L46,26 L50,42 M25,24 L46,26 M25,24 L24,19 M19,19 L29,19 M46,26 L44,17 L50,16" />
+  </g>
+</svg>

@@ -31,7 +31,8 @@ public abstract class BleAdapter : IAsyncDisposable
             return await BlueZ.BlueZAdapter.CreateAsync(name);
         }
 
-        if (OperatingSystem.IsMacOS())
+        // iPadOS has the same CoreBluetooth.
+        if (OperatingSystem.IsMacOS() || OperatingSystem.IsIOS())
         {
             return await CoreBluetooth.CoreBluetoothAdapter.CreateAsync();
         }

@@ -133,13 +133,15 @@ public sealed partial class MainWindowViewModel : ViewModelBase, IAsyncDisposabl
     // Null on the constructor's first page.
     partial void OnCurrentChanged(ViewModelBase oldValue, ViewModelBase newValue) => oldValue?.OnLeaving();
 
-    /// <summary>Whether the system has a file manager to show the rides folder in; Android does not.</summary>
-    public static bool CanOpenFolder => !OperatingSystem.IsAndroid();
+    /// <summary>Whether the app can show the rides folder in a file manager; Android and iPadOS cannot.</summary>
+    public static bool CanOpenFolder => !OperatingSystem.IsAndroid() && !OperatingSystem.IsIOS();
 
     public static void Open(string target)
     {
 #if ANDROID
         Platforms.AndroidApp.OpenUrl(target);
+#elif IOS
+        Platforms.IosApp.OpenUrl(target);
 #else
         try
         {

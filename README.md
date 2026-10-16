@@ -20,6 +20,7 @@ Each release on the repository's Releases page has one download per platform, pl
 | Linux | `simple-bike-trainer-linux-x64`, `simple-bike-trainer-linux-arm64` |
 | macOS | `simple-bike-trainer-osx-arm64.zip` (Apple silicon), `simple-bike-trainer-osx-x64.zip` (Intel) |
 | Android 12 or later | `simple-bike-trainer-android.apk` |
+| iPad, iPadOS 15 or later | TODO |
 
 ## Setup
 
@@ -47,6 +48,7 @@ Connect scans Bluetooth, the local network for Wi-Fi trainers and, when an ANT+ 
 | Windows 10 2004 or later | Built in |
 | macOS 12 or later | Built in |
 | Android 12 or later | Built in |
+| iPadOS 15 or later | Built in |
 
 ### ANT+
 
@@ -58,6 +60,7 @@ ANT+ works with Garmin and Dynastream ANTUSB2 and ANTUSB-m sticks, through [libu
 | macOS | `brew install libusb` |
 | Windows | Put `libusb-1.0.dll` (64-bit, from the libusb releases) next to `simple-bike-trainer.exe`, and give the stick the WinUSB driver with [Zadig](https://zadig.akeo.ie). Other ANT+ apps on the PC may then not see the stick. |
 | Android | Plug the stick into the tablet's USB-C port through an OTG adapter. No libusb, and no ANT Radio Service or ANT USB Service app: Android asks once whether the app may use the stick, either when it is plugged in or at the first scan. If the ANT USB Service is installed, tell Android not to open it for the stick. |
+| iPad | Not supported: iPadOS gives apps no access to USB devices. |
 
 A stick that is plugged in but will not open, for lack of permission or because another app has it, shows a warning when scanning. `simple-bike-trainer-cli scan` lists the ANT+ devices with the Bluetooth ones.
 
@@ -66,6 +69,8 @@ A stick that is plugged in but will not open, for lack of permission or because 
 Wahoo trainers with Wi-Fi, or with the KICKR Direct Connect Ethernet adapter, also connect over the network using Wahoo Direct Connect. The trainer offers the same FTMS service it offers over Bluetooth, so ERG, road simulation and spin-down work the same way. The scan finds these trainers by mDNS (`_wahoo-fitness-tnp._tcp`) and lists them with a `Wi-Fi` address next to their Bluetooth entry. Pick the Wi-Fi entry to ride over the network. Heart rate monitors and Zwift controllers still connect over Bluetooth or ANT+.
 
 When mDNS does not reach the trainer, for example across VLANs or on a guest network, give the trainer's address with `simple-bike-trainer-cli config --wifi-trainers 192.168.1.40` (the port defaults to 36866). `simple-bike-trainer-cli probe --wifi 192.168.1.40` connects to that address without scanning. On macOS the app asks for Local Network access the first time it scans.
+
+The iPad app does not find Wi-Fi trainers: iPadOS blocks mDNS queries from apps without a multicast entitlement from Apple. Ride a Wi-Fi trainer over Bluetooth instead.
 
 ## Riding
 
@@ -140,10 +145,23 @@ dotnet publish src/SimpleBikeTrainer.Desktop -c Release -f net10.0-android -p:An
 
 `-p:AndroidSdkDirectory=...` points at the SDK when it is not found, and `-p:AdbTarget="-s SERIAL"` picks one of several devices. Android's Bluetooth, USB, screen lock, sounds and sharing are in [Platforms/Android](src/SimpleBikeTrainer.Desktop/Platforms/Android). CI signs the APK with the keystore in the `ANDROID_KEYSTORE` secret (base64), with `ANDROID_KEYSTORE_PASSWORD` and the key alias in `ANDROID_KEY_ALIAS`; without them it uses a throwaway debug key, and Android will not install such an APK over one signed with another key.
 
+The iPad app is a third target framework, `net10.0-ios`, added by `-p:IosBuild=true`. It builds only on a Mac, with Xcode and `dotnet workload install ios`. To run it in the simulator:
+
+```sh
+dotnet build src/SimpleBikeTrainer.Desktop -t:Run -f net10.0-ios -p:IosBuild=true
+```
+
+An iPad needs a build signed with a provisioning profile for the app's bundle identifier, from an Apple developer account; a free account's profile lasts 7 days. With the profile installed and the iPad connected:
+
+```sh
+dotnet build src/SimpleBikeTrainer.Desktop -t:Run -f net10.0-ios -p:IosBuild=true -p:RuntimeIdentifier=ios-arm64 \
+  -p:ApplicationId=YOUR.BUNDLE.ID -p:_DeviceName=IPAD-UDID
+```
+
 | Project | Contents |
 | --- | --- |
 | [src/SimpleBikeTrainer.Core](src/SimpleBikeTrainer.Core) | Bluetooth (BlueZ, WinRT, CoreBluetooth) and ANT+ devices, workouts, the ride loop, metrics, FIT recording, and the Intervals.icu and Garmin clients |
-| [src/SimpleBikeTrainer.Desktop](src/SimpleBikeTrainer.Desktop) | The Avalonia app, for the desktop and Android |
+| [src/SimpleBikeTrainer.Desktop](src/SimpleBikeTrainer.Desktop) | The Avalonia app, for the desktop, Android and iPad |
 | [src/SimpleBikeTrainer.Cli](src/SimpleBikeTrainer.Cli) | The terminal app and the `scan` and `probe` diagnostics |
 
 

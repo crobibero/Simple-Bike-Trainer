@@ -55,7 +55,7 @@ public partial class MainView : UserControl
             _topLevel.BackRequested += OnBackRequested;
         }
 
-        // Android draws the app under the status and navigation bars; the padding keeps the pages clear of them.
+        // Android and iPadOS draw the app under the system bars; the padding keeps the pages clear of them.
         _insets = _topLevel.InsetsManager;
         if (_insets is not null)
         {
@@ -136,10 +136,11 @@ public partial class MainView : UserControl
             return null;
         }
 
-        return files[0].TryGetLocalPath() ?? await CopyToTempAsync(files[0]);
+        // iPadOS gives a path, but to a file the app may read only through the picker's own stream.
+        return (OperatingSystem.IsIOS() ? null : files[0].TryGetLocalPath()) ?? await CopyToTempAsync(files[0]);
     }
 
-    /// <summary>Android's picker hands out content URIs, not paths: the workout is read from a copy.</summary>
+    /// <summary>Neither the Android nor the iPadOS picker gives a path the app can read: the workout is read from a copy.</summary>
     private static async Task<string> CopyToTempAsync(IStorageFile file)
     {
         var folder = Path.Combine(Path.GetTempPath(), "picked");

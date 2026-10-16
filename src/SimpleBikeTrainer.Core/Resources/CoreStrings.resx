@@ -207,7 +207,7 @@
     <value>Bluetooth is off. Turn it on and try again.</value>
   </data>
   <data name="Ble_Unauthorized" xml:space="preserve">
-    <value>Simple Bike Trainer does not have permission to use Bluetooth. Allow it in System Settings &gt; Privacy &amp; Security &gt; Bluetooth.</value>
+    <value>Simple Bike Trainer does not have permission to use Bluetooth. Allow it under Privacy &amp; Security &gt; Bluetooth in the system settings.</value>
   </data>
   <data name="Ble_NotFound" xml:space="preserve">
     <value>Windows could not find the device {0}.</value>

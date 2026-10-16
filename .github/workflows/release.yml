@@ -1,5 +1,5 @@
 # Publishes a GitHub release for a v* tag: git tag v1.2.0 && git push origin v1.2.0
-# It runs the tests and builds through desktop.yml, then attaches one download per platform and their SHA-256 sums.
+# It runs the tests and builds through build.yml, then attaches one download per platform and their SHA-256 sums.
 # A tag with a hyphen, such as v1.2.0-beta.1, makes a prerelease.
 name: Release
 
@@ -12,7 +12,7 @@ permissions:
 
 jobs:
   build:
-    uses: ./.github/workflows/desktop.yml
+    uses: ./.github/workflows/build.yml
 
   release:
     needs: build

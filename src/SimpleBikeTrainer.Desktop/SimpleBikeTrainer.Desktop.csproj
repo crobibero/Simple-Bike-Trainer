@@ -3,10 +3,16 @@
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <!-- The single TargetFramework from Directory.Build.props is cleared so the build runs once per framework. -->
-    <TargetFrameworks Condition="'$(AndroidBuild)' == 'true'">$(AppTargetFramework);$(AndroidTargetFramework)</TargetFrameworks>
-    <TargetFramework Condition="'$(AndroidBuild)' == 'true'" />
+    <TargetFrameworks Condition="'$(AndroidBuild)' == 'true' Or '$(IosBuild)' == 'true'">$(AppTargetFramework)</TargetFrameworks>
+    <TargetFrameworks Condition="'$(AndroidBuild)' == 'true'">$(TargetFrameworks);$(AndroidTargetFramework)</TargetFrameworks>
+    <TargetFrameworks Condition="'$(IosBuild)' == 'true'">$(TargetFrameworks);$(IosTargetFramework)</TargetFrameworks>
+    <TargetFramework Condition="'$(AndroidBuild)' == 'true' Or '$(IosBuild)' == 'true'" />
     <IsAndroid>false</IsAndroid>
     <IsAndroid Condition="'$([MSBuild]::GetTargetPlatformIdentifier($(TargetFramework)))' == 'android'">true</IsAndroid>
+    <IsIos>false</IsIos>
+    <IsIos Condition="'$([MSBuild]::GetTargetPlatformIdentifier($(TargetFramework)))' == 'ios'">true</IsIos>
+    <IsMobile>false</IsMobile>
+    <IsMobile Condition="'$(IsAndroid)' == 'true' Or '$(IsIos)' == 'true'">true</IsMobile>
     <AssemblyName>simple-bike-trainer</AssemblyName>
     <RootNamespace>SimpleBikeTrainer.Desktop</RootNamespace>
     <StringsClassName>Strings</StringsClassName>
@@ -35,7 +41,7 @@
     <PackageReference Include="ShadUI" />
   </ItemGroup>
 
-  <ItemGroup Condition="'$(IsAndroid)' != 'true'">
+  <ItemGroup Condition="'$(IsMobile)' != 'true'">
     <PackageReference Include="Avalonia.Desktop" />
   </ItemGroup>
 
@@ -45,8 +51,8 @@
     three assemblies keeps a trimmed Linux build working; their remaining trim and AOT warnings stay warnings.
   -->
   <ItemGroup>
-    <TrimmerRootAssembly Include="Tmds.DBus" RootMode="All" Condition="'$(IsAndroid)' != 'true'" />
-    <TrimmerRootAssembly Include="Linux.Bluetooth" RootMode="All" Condition="'$(IsAndroid)' != 'true'" />
+    <TrimmerRootAssembly Include="Tmds.DBus" RootMode="All" Condition="'$(IsMobile)' != 'true'" />
+    <TrimmerRootAssembly Include="Linux.Bluetooth" RootMode="All" Condition="'$(IsMobile)' != 'true'" />
     <TrimmerRootAssembly Include="SimpleBikeTrainer.Core" RootMode="All" />
   </ItemGroup>
 
@@ -88,6 +94,34 @@
   <ItemGroup Condition="'$(IsAndroid)' != 'true'">
     <Compile Remove="Platforms/Android/**" />
     <None Include="Platforms/Android/**" />
+  </ItemGroup>
+
+  <!-- The iPad app, as on Android (Platforms/iOS), with Bluetooth through the CoreBluetooth code the macOS app uses. -->
+  <PropertyGroup Condition="'$(IsIos)' == 'true'">
+    <OutputType>Exe</OutputType>
+    <!-- Avalonia's Metal renderer. -->
+    <SupportedOSPlatformVersion>15.0</SupportedOSPlatformVersion>
+    <ApplicationId>dev.codyrobibero.SimpleBikeTrainer</ApplicationId>
+    <ApplicationTitle>Simple Bike Trainer</ApplicationTitle>
+    <ApplicationVersion>1</ApplicationVersion>
+    <ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
+    <AppIcon>AppIcon</AppIcon>
+  </PropertyGroup>
+
+  <ItemGroup Condition="'$(IsIos)' == 'true'">
+    <PackageReference Include="Avalonia.iOS" />
+    <Compile Remove="Program.cs" />
+    <None Update="Platforms/iOS/Info.plist" LogicalName="Info.plist" />
+    <!-- As on Android, the global usings would clash with Avalonia's names in the shared code. -->
+    <Using Remove="CoreGraphics" />
+    <Using Remove="Foundation" />
+    <Using Remove="UIKit" />
+    <ImageAsset Include="Platforms/iOS/Assets.xcassets/**" Exclude="Platforms/iOS/Assets.xcassets/**/.*" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(IsIos)' != 'true'">
+    <Compile Remove="Platforms/iOS/**" />
+    <None Include="Platforms/iOS/**" />
   </ItemGroup>
 
 </Project>

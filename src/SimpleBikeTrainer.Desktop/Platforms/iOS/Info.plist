@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!-- The build adds the bundle identifier, versions and minimum system version from the project file. -->
+<plist version="1.0">
+<dict>
+    <key>CFBundleName</key>
+    <string>Simple Bike Trainer</string>
+    <key>CFBundleDisplayName</key>
+    <string>Simple Bike Trainer</string>
+    <key>LSRequiresIPhoneOS</key>
+    <true/>
+    <!-- iPad only. -->
+    <key>UIDeviceFamily</key>
+    <array>
+        <integer>2</integer>
+    </array>
+    <key>UIRequiredDeviceCapabilities</key>
+    <array>
+        <string>arm64</string>
+        <string>bluetooth-le</string>
+    </array>
+    <key>UISupportedInterfaceOrientations~ipad</key>
+    <array>
+        <string>UIInterfaceOrientationPortrait</string>
+        <string>UIInterfaceOrientationPortraitUpsideDown</string>
+        <string>UIInterfaceOrientationLandscapeLeft</string>
+        <string>UIInterfaceOrientationLandscapeRight</string>
+    </array>
+    <!-- Without a launch screen, iPadOS runs the app letterboxed at a legacy screen size. -->
+    <key>UILaunchScreen</key>
+    <dict/>
+    <!-- Avalonia makes its window in the scene its app delegate names. -->
+    <key>UIApplicationSceneManifest</key>
+    <dict>
+        <key>UIApplicationSupportsMultipleScenes</key>
+        <false/>
+    </dict>
+    <!-- Without it, iPadOS ends the app the first time it uses Bluetooth. -->
+    <key>NSBluetoothAlwaysUsageDescription</key>
+    <string>Simple Bike Trainer connects to your trainer, heart rate monitor, and Zwift controllers over Bluetooth.</string>
+    <!-- Lets the devices stay connected for a while when another app is in front. -->
+    <key>UIBackgroundModes</key>
+    <array>
+        <string>bluetooth-central</string>
+    </array>
+    <!-- Without the usage description, iPadOS silently blocks the connection to a Wi-Fi trainer. -->
+    <key>NSLocalNetworkUsageDescription</key>
+    <string>Simple Bike Trainer connects to Wi-Fi trainers on your local network.</string>
+    <key>NSBonjourServices</key>
+    <array>
+        <string>_wahoo-fitness-tnp._tcp</string>
+    </array>
+    <!-- The rides folder shows in the Files app, under On My iPad. -->
+    <key>UIFileSharingEnabled</key>
+    <true/>
+    <key>LSSupportsOpeningDocumentsInPlace</key>
+    <true/>
+</dict>
+</plist>

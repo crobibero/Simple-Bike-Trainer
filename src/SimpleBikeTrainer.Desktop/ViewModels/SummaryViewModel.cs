@@ -259,7 +259,7 @@ public sealed partial class SummaryViewModel : ViewModelBase
         }
     }
 
-    public static string FitButtonText => OperatingSystem.IsAndroid() ? Strings.Summary_ShareFit : Strings.Summary_ShowFit;
+    public static string FitButtonText => MainWindowViewModel.CanOpenFolder ? Strings.Summary_ShowFit : Strings.Summary_ShareFit;
 
     [RelayCommand]
     private void OpenFolder()
@@ -268,6 +268,8 @@ public sealed partial class SummaryViewModel : ViewModelBase
         {
 #if ANDROID
             Platforms.AndroidApp.ShareFile(FitPath);
+#elif IOS
+            Platforms.IosApp.ShareFile(FitPath);
 #else
             MainWindowViewModel.Open(Path.GetDirectoryName(FitPath)!);
 #endif

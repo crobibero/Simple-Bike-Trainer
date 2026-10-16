@@ -11,6 +11,7 @@
     <PackageVersion Include="Avalonia.Desktop" Version="12.1.3" />
     <PackageVersion Include="Avalonia.Fonts.Inter" Version="12.1.3" />
     <PackageVersion Include="Avalonia.Headless" Version="12.1.3" />
+    <PackageVersion Include="Avalonia.iOS" Version="12.1.3" />
     <PackageVersion Include="CommunityToolkit.Mvvm" Version="8.4.2" />
     <PackageVersion Include="Garmin.FIT.Sdk" Version="21.218.0" />
     <PackageVersion Include="Linux.Bluetooth" Version="6.0.0-pre3" />

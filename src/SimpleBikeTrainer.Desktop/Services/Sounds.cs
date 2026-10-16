@@ -40,6 +40,8 @@ public static class Sounds
 
 #if ANDROID
         Platforms.AndroidSounds.Play(name, () => Chime(notes, seconds, Platforms.AndroidSounds.SampleRate));
+#elif IOS
+        Platforms.IosSounds.Play(name, () => Chime(notes, seconds));
 #else
         if (Player.Value is not { } player)
         {

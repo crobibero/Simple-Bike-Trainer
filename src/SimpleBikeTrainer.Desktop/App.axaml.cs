@@ -56,6 +56,13 @@ public partial class App : Application
             activity.MainViewFactory = () => new MainView { DataContext = main };
             main.Home.InitializeAsync().SafeFireAndForget();
         }
+        else if (ApplicationLifetime is ISingleViewApplicationLifetime single)
+        {
+            // iPadOS: one view for the life of the process.
+            var main = CreateMain(testMode: false);
+            single.MainView = new MainView { DataContext = main };
+            main.Home.InitializeAsync().SafeFireAndForget();
+        }
 
         base.OnFrameworkInitializationCompleted();
     }

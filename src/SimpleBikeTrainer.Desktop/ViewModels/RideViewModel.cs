@@ -285,7 +285,7 @@ public sealed partial class RideViewModel : ViewModelBase
 
     private async Task KeepScreenOnAsync()
     {
-#if ANDROID
+#if ANDROID || IOS
         var awake = await Platforms.RideLock.AcquireAsync(Loc.Format(Strings.Ride_AwakeReason, Title));
 #else
         var awake = await SimpleBikeTrainer.Platform.KeepAwake.AcquireAsync(Loc.Format(Strings.Ride_AwakeReason, Title));
