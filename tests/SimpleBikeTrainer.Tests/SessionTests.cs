@@ -194,10 +194,17 @@ public sealed class SessionTests : IDisposable
         // A folder where the checkpoint's temporary file goes makes every checkpoint fail with access denied.
         Directory.CreateDirectory(path + ".partial.tmp");
         var session = new RideSession(Workout.FreeRide(), Options(path), trainer, null, [], TestClock.Fast);
-        using var cts = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
-        cts.CancelAfter(TimeSpan.FromSeconds(3));
 
-        var result = await session.RunAsync(cts.Token);
+        // Ends on ride time, not wall time: Windows timers tick every 15.6 ms, so the clock runs slower there.
+        session.Updated += s =>
+        {
+            if (s.Moving.TotalSeconds >= 310)
+            {
+                session.Send(RideCommand.Finish);
+            }
+        };
+
+        var result = await session.RunAsync(TestContext.Current.CancellationToken);
 
         Assert.True(result.Metrics.Seconds > 300, $"rode {result.Metrics.Seconds} s, past the 5-minute checkpoint");
         Assert.True(System.IO.File.Exists(path));
