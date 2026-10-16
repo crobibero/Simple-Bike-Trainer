@@ -47,14 +47,15 @@
 
   <!--
     Trimmed and native AOT builds keep all of the library. The Windows SDK's WinRT assemblies and Android's Mono.Android
-    produce trim and AOT warnings of their own, which stay warnings.
+    produce trim and AOT warnings of their own, which stay warnings, as do the iOS SDK's for the Objective-C members
+    Avalonia.iOS implements explicitly.
   -->
   <ItemGroup>
     <TrimmerRootAssembly Include="SimpleBikeTrainer.Core" RootMode="All" />
   </ItemGroup>
 
   <PropertyGroup>
-    <WarningsNotAsErrors>$(WarningsNotAsErrors);IL2104;IL3053</WarningsNotAsErrors>
+    <WarningsNotAsErrors>$(WarningsNotAsErrors);IL2037;IL2104;IL3053</WarningsNotAsErrors>
   </PropertyGroup>
 
   <ItemGroup>
