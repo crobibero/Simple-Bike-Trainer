@@ -17,10 +17,14 @@
     <WarningsNotAsErrors>$(WarningsNotAsErrors);IL2037;IL2104;IL3053</WarningsNotAsErrors>
   </PropertyGroup>
 
+  <PropertyGroup>
+    <OptimizationPreference>Size</OptimizationPreference>
+    <IlcFoldIdenticalMethodBodies>true</IlcFoldIdenticalMethodBodies>
+  </PropertyGroup>
+
   <ItemGroup>
     <InternalsVisibleTo Include="SimpleBikeTrainer.Desktop.Tests" />
     <ProjectReference Include="../SimpleBikeTrainer.Core/SimpleBikeTrainer.Core.csproj" />
-    <TrimmerRootAssembly Include="SimpleBikeTrainer.Core" RootMode="All" />
   </ItemGroup>
 
   <ItemGroup>
