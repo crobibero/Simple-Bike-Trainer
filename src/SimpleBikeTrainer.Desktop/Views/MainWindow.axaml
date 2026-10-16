@@ -10,7 +10,6 @@
                MinWidth="1100"
                MinHeight="720"
                x:DataType="vm:MainWindowViewModel"
-               Icon="/Assets/icon.ico"
                TitleFontWeight="SemiBold">
     <v:MainView />
 </shadui:Window>

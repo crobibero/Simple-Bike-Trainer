@@ -1,0 +1,19 @@
+<Project>
+
+  <PropertyGroup>
+    <SupportedOSPlatformVersion>15.0</SupportedOSPlatformVersion>
+    <ApplicationId>dev.codyrobibero.SimpleBikeTrainer</ApplicationId>
+    <AppIcon>AppIcon</AppIcon>
+    <PublishAot>true</PublishAot>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia.iOS" />
+    <None Update="Platforms/iOS/Info.plist" LogicalName="Info.plist" />
+    <Using Remove="CoreGraphics" />
+    <Using Remove="Foundation" />
+    <Using Remove="UIKit" />
+    <ImageAsset Include="Platforms/iOS/Assets.xcassets/**" Exclude="Platforms/iOS/Assets.xcassets/**/.*" />
+  </ItemGroup>
+
+</Project>

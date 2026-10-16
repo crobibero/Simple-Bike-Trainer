@@ -2,34 +2,25 @@
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <!-- The single TargetFramework from Directory.Build.props is cleared so the build runs once per framework. -->
     <TargetFrameworks Condition="'$(AndroidBuild)' == 'true' Or '$(IosBuild)' == 'true'">$(AppTargetFramework)</TargetFrameworks>
     <TargetFrameworks Condition="'$(AndroidBuild)' == 'true'">$(TargetFrameworks);$(AndroidTargetFramework)</TargetFrameworks>
     <TargetFrameworks Condition="'$(IosBuild)' == 'true'">$(TargetFrameworks);$(IosTargetFramework)</TargetFrameworks>
-    <TargetFramework Condition="'$(AndroidBuild)' == 'true' Or '$(IosBuild)' == 'true'" />
-    <IsAndroid>false</IsAndroid>
+    <TargetFramework Condition="'$(TargetFrameworks)' != ''" />
     <IsAndroid Condition="'$([MSBuild]::GetTargetPlatformIdentifier($(TargetFramework)))' == 'android'">true</IsAndroid>
-    <IsIos>false</IsIos>
     <IsIos Condition="'$([MSBuild]::GetTargetPlatformIdentifier($(TargetFramework)))' == 'ios'">true</IsIos>
-    <IsMobile>false</IsMobile>
     <IsMobile Condition="'$(IsAndroid)' == 'true' Or '$(IsIos)' == 'true'">true</IsMobile>
     <AssemblyName>simple-bike-trainer</AssemblyName>
-    <RootNamespace>SimpleBikeTrainer.Desktop</RootNamespace>
     <StringsClassName>Strings</StringsClassName>
-    <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
-    <!-- Analyzers flag code that would break in trimmed or native AOT builds. -->
+    <ApplicationIcon>Assets/icon.ico</ApplicationIcon>
     <EnableTrimAnalyzer>true</EnableTrimAnalyzer>
     <EnableAotAnalyzer>true</EnableAotAnalyzer>
-    <!-- The .exe's icon on Windows. The window sets its own from the same file. -->
-    <ApplicationIcon>Assets/icon.ico</ApplicationIcon>
+    <WarningsNotAsErrors>$(WarningsNotAsErrors);IL2037;IL2104;IL3053</WarningsNotAsErrors>
   </PropertyGroup>
 
   <ItemGroup>
-    <AvaloniaResource Include="Assets/icon.ico" />
-  </ItemGroup>
-
-  <ItemGroup>
     <InternalsVisibleTo Include="SimpleBikeTrainer.Desktop.Tests" />
+    <ProjectReference Include="../SimpleBikeTrainer.Core/SimpleBikeTrainer.Core.csproj" />
+    <TrimmerRootAssembly Include="SimpleBikeTrainer.Core" RootMode="All" />
   </ItemGroup>
 
   <ItemGroup>
@@ -39,121 +30,26 @@
     <PackageReference Include="CommunityToolkit.Mvvm" />
     <PackageReference Include="Material.Icons.Avalonia" />
     <PackageReference Include="ShadUI" />
+    <PackageReference Include="Avalonia.Desktop" Condition="'$(IsMobile)' != 'true'" />
+    <PackageReference Include="StaticLink.Avalonia" Condition="$(RuntimeIdentifier.StartsWith('win-')) Or $(RuntimeIdentifier.StartsWith('linux-'))" />
   </ItemGroup>
 
-  <ItemGroup Condition="'$(IsMobile)' != 'true'">
-    <PackageReference Include="Avalonia.Desktop" />
-  </ItemGroup>
-
-  <!--
-    Native AOT on Windows and Linux links Skia and HarfBuzz, and on Windows the ANGLE renderer, into the app, so the
-    publish is one file. Its version has to match the SkiaSharp that Avalonia uses. macOS keeps them in the .app bundle.
-  -->
-  <ItemGroup Condition="$(RuntimeIdentifier.StartsWith('win-')) Or $(RuntimeIdentifier.StartsWith('linux-'))">
-    <PackageReference Include="StaticLink.Avalonia" />
-  </ItemGroup>
-
-  <!--
-    Trimmed and native AOT builds keep all of the library. The Windows SDK's WinRT assemblies and Android's Mono.Android
-    produce trim and AOT warnings of their own, which stay warnings, as do the iOS SDK's for the Objective-C members
-    Avalonia.iOS implements explicitly.
-  -->
-  <ItemGroup>
-    <TrimmerRootAssembly Include="SimpleBikeTrainer.Core" RootMode="All" />
-  </ItemGroup>
-
-  <PropertyGroup>
-    <WarningsNotAsErrors>$(WarningsNotAsErrors);IL2037;IL2104;IL3053</WarningsNotAsErrors>
-  </PropertyGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="../SimpleBikeTrainer.Core/SimpleBikeTrainer.Core.csproj" />
-  </ItemGroup>
-
-  <!--
-    The Android tablet app: the same app in one full-screen view, with Bluetooth and the ANT+ stick through Android's
-    own APIs (Platforms/Android). Program.cs, the desktop entry point, is left out.
-  -->
-  <PropertyGroup Condition="'$(IsAndroid)' == 'true'">
+  <PropertyGroup Condition="'$(IsMobile)' == 'true'">
     <OutputType>Exe</OutputType>
-    <!-- Android 12: the Bluetooth permissions it brought in need no location permission. -->
-    <SupportedOSPlatformVersion>31</SupportedOSPlatformVersion>
-    <ApplicationId>dev.codyrobibero.simplebiketrainer</ApplicationId>
     <ApplicationTitle>Simple Bike Trainer</ApplicationTitle>
     <ApplicationVersion>1</ApplicationVersion>
     <ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
-    <AndroidPackageFormat>apk</AndroidPackageFormat>
-    <AndroidManifest>Platforms/Android/AndroidManifest.xml</AndroidManifest>
-    <MonoAndroidResourcePrefix>Platforms/Android/Resources</MonoAndroidResourcePrefix>
-    <RuntimeIdentifiers>android-arm64;android-x64</RuntimeIdentifiers>
-    <PublishAot Condition="'$(Configuration)' == 'Release'">true</PublishAot>
   </PropertyGroup>
 
-  <ItemGroup Condition="'$(IsAndroid)' == 'true'">
-    <PackageReference Include="Avalonia.Android" />
-    <Compile Remove="Program.cs" />
-    <!-- Android's global usings clash with Avalonia's names, such as Application, in the shared code. -->
-    <Using Remove="Android.App" />
-    <Using Remove="Android.Widget" />
-    <Using Remove="Android.OS.Bundle" />
+  <ItemGroup>
+    <Compile Remove="Program.cs" Condition="'$(IsMobile)' == 'true'" />
+    <Compile Remove="Platforms/Android/**" Condition="'$(IsAndroid)' != 'true'" />
+    <None Include="Platforms/Android/**" Condition="'$(IsAndroid)' != 'true'" />
+    <Compile Remove="Platforms/iOS/**" Condition="'$(IsIos)' != 'true'" />
+    <None Include="Platforms/iOS/**" Condition="'$(IsIos)' != 'true'" />
   </ItemGroup>
 
-  <!--
-    Native AOT links the crypto library into the app's library, which exports only the symbols ILC lists: without its
-    JNI callback for certificate checks, every HTTPS request fails.
-  -->
-  <ItemGroup Condition="'$(IsAndroid)' == 'true' And '$(PublishAot)' == 'true'">
-    <IlcArg Include="--export-dynamic-symbol:Java_net_dot_android_crypto_DotnetProxyTrustManager_verifyRemoteCertificate" />
-  </ItemGroup>
-
-  <!--
-    A publish for both ABIs compiles each in its own build and packs them into one APK. Native AOT's last step, copying
-    the app's library to the publish folder, runs in the outer build too, which has no library of its own: it is
-    skipped there, as the library is already in the APK.
-  -->
-  <Target Name="_SkipAbiLessNativeBinary" BeforeTargets="CopyNativeBinary;_CopyAotSymbols" Condition="'$(IsAndroid)' == 'true' And '$(PublishAot)' == 'true' And '$(RuntimeIdentifier)' == ''">
-    <PropertyGroup>
-      <NativeBinary />
-      <CopyOutputSymbolsToPublishDirectory>false</CopyOutputSymbolsToPublishDirectory>
-    </PropertyGroup>
-  </Target>
-
-  <ItemGroup Condition="'$(IsAndroid)' != 'true'">
-    <Compile Remove="Platforms/Android/**" />
-    <None Include="Platforms/Android/**" />
-  </ItemGroup>
-
-  <!-- The iPad app, as on Android (Platforms/iOS), with Bluetooth through the CoreBluetooth code the macOS app uses. -->
-  <PropertyGroup Condition="'$(IsIos)' == 'true'">
-    <OutputType>Exe</OutputType>
-    <!-- Avalonia's Metal renderer. -->
-    <SupportedOSPlatformVersion>15.0</SupportedOSPlatformVersion>
-    <ApplicationId>dev.codyrobibero.SimpleBikeTrainer</ApplicationId>
-    <ApplicationTitle>Simple Bike Trainer</ApplicationTitle>
-    <ApplicationVersion>1</ApplicationVersion>
-    <ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
-    <AppIcon>AppIcon</AppIcon>
-    <!--
-      dotnet publish compiles with native AOT; dotnet build keeps Mono, for the debugger. Not tied to Release, unlike
-      Android: on iOS it also sets the trimming feature switches, which should not differ between builds.
-    -->
-    <PublishAot>true</PublishAot>
-  </PropertyGroup>
-
-  <ItemGroup Condition="'$(IsIos)' == 'true'">
-    <PackageReference Include="Avalonia.iOS" />
-    <Compile Remove="Program.cs" />
-    <None Update="Platforms/iOS/Info.plist" LogicalName="Info.plist" />
-    <!-- As on Android, the global usings would clash with Avalonia's names in the shared code. -->
-    <Using Remove="CoreGraphics" />
-    <Using Remove="Foundation" />
-    <Using Remove="UIKit" />
-    <ImageAsset Include="Platforms/iOS/Assets.xcassets/**" Exclude="Platforms/iOS/Assets.xcassets/**/.*" />
-  </ItemGroup>
-
-  <ItemGroup Condition="'$(IsIos)' != 'true'">
-    <Compile Remove="Platforms/iOS/**" />
-    <None Include="Platforms/iOS/**" />
-  </ItemGroup>
+  <Import Project="Platforms/Android/Android.props" Condition="'$(IsAndroid)' == 'true'" />
+  <Import Project="Platforms/iOS/iOS.props" Condition="'$(IsIos)' == 'true'" />
 
 </Project>
