@@ -48,7 +48,7 @@
         simulates the road with virtual gears (virtual-gears) or with the bike's gears (real-gears)
     [[--chain 34x17]]   the chainring and cog on a single-speed setup   [[--crr 0.004]]   the tires' rolling resistance
 
-Settings are saved in ~/.config/simple-bike-trainer/config.json. INTERVALS_API_KEY overrides the saved key.
+Settings are saved in ~/.config/simple-bike-trainer/config.json, or %APPDATA%\simple-bike-trainer\config.json on Windows. INTERVALS_API_KEY overrides the saved key.
 </value>
     <comment>Spectre.Console markup: keep the [bold] and [grey] tags, and write a literal [ as [[ and ] as ]].</comment>
   </data>

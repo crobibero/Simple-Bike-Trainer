@@ -208,9 +208,12 @@ public sealed class AppConfig
     /// <summary>The folder name used before the app was named; <see cref="Load"/> moves settings and rides out of it.</summary>
     private const string LegacyFolderName = "trainer";
 
+    /// <summary>XDG_CONFIG_HOME, else %APPDATA% on Windows and ~/.config elsewhere.</summary>
     public static string ConfigHome => Environment.GetEnvironmentVariable("XDG_CONFIG_HOME") is { Length: > 0 } xdg
         ? xdg
-        : System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".config");
+        : OperatingSystem.IsWindows()
+            ? Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData)
+            : System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".config");
 
     public static string DefaultPath => System.IO.Path.Combine(ConfigHome, FolderName, "config.json");
 
@@ -236,9 +239,12 @@ public sealed class AppConfig
         }
     }
 
+    /// <summary>XDG_DATA_HOME, else %LOCALAPPDATA% on Windows and ~/.local/share elsewhere.</summary>
     public static string DataHome => Environment.GetEnvironmentVariable("XDG_DATA_HOME") is { Length: > 0 } xdg
         ? xdg
-        : System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".local", "share");
+        : OperatingSystem.IsWindows()
+            ? Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData)
+            : System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".local", "share");
 
     public static string DefaultRidesDirectory => System.IO.Path.Combine(DataHome, FolderName, "rides");
 

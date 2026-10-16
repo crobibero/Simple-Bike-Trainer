@@ -26,11 +26,11 @@ Each release on the repository's Releases page has one download per platform, pl
 
 Get an Intervals.icu API key under Settings > Developer Settings in Intervals.icu, then enter it in the app's Settings.
 
-| What | Where |
-| --- | --- |
-| Settings | `~/.config/simple-bike-trainer/config.json`, mode 0600. `INTERVALS_API_KEY` and `INTERVALS_ATHLETE_ID` override the saved values. |
-| Garmin session tokens | `~/.config/simple-bike-trainer/garmin/garmin_tokens.json`, mode 0600 |
-| Rides | `~/.local/share/simple-bike-trainer/rides/` |
+| What | Where | On Windows |
+| --- | --- | --- |
+| Settings | `~/.config/simple-bike-trainer/config.json`, mode 0600. `INTERVALS_API_KEY` and `INTERVALS_ATHLETE_ID` override the saved values. | `%APPDATA%\simple-bike-trainer\config.json` |
+| Garmin session tokens | `~/.config/simple-bike-trainer/garmin/garmin_tokens.json`, mode 0600 | `%APPDATA%\simple-bike-trainer\garmin\garmin_tokens.json` |
+| Rides | `~/.local/share/simple-bike-trainer/rides/` | `%LOCALAPPDATA%\simple-bike-trainer\rides\` |
 
 ## Devices
 
