@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- The two desktop interfaces KeepAwake asks to keep the screen on. Tmds.DBus.Generator makes the proxy classes from it. -->
+<node>
+  <!-- The freedesktop screensaver: KDE, Xfce, and others. -->
+  <interface name="org.freedesktop.ScreenSaver">
+    <method name="Inhibit">
+      <arg name="application_name" direction="in" type="s"/>
+      <arg name="reason_for_inhibit" direction="in" type="s"/>
+      <arg name="cookie" direction="out" type="u"/>
+    </method>
+    <method name="UnInhibit">
+      <arg name="cookie" direction="in" type="u"/>
+    </method>
+  </interface>
+  <!-- The desktop portal's inhibit, for desktops without the screensaver interface (GNOME). -->
+  <interface name="org.freedesktop.portal.Inhibit">
+    <method name="Inhibit">
+      <arg name="window" direction="in" type="s"/>
+      <arg name="flags" direction="in" type="u"/>
+      <arg name="options" direction="in" type="a{sv}"/>
+      <arg name="handle" direction="out" type="o"/>
+    </method>
+  </interface>
+</node>

@@ -19,10 +19,17 @@
   <ItemGroup>
     <PackageReference Include="AsyncAwaitBestPractices" />
     <PackageReference Include="Garmin.FIT.Sdk" />
-    <PackageReference Include="Linux.Bluetooth" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
     <PackageReference Include="Microsoft.Extensions.Http" />
     <PackageReference Include="Microsoft.Extensions.Http.Resilience" />
+    <PackageReference Include="Tmds.DBus.Protocol" />
+    <PackageReference Include="Tmds.DBus.Generator" PrivateAssets="all" />
+  </ItemGroup>
+
+  <!-- D-Bus proxies for BlueZ and the screensaver, written at build time so trimmed and native AOT builds keep them. -->
+  <ItemGroup>
+    <AdditionalFiles Include="Ble/BlueZ/BlueZ.xml" DBusGeneratorMode="Proxy" Namespace="SimpleBikeTrainer.Ble.BlueZ" />
+    <AdditionalFiles Include="Platform/KeepAwake.xml" DBusGeneratorMode="Proxy" Namespace="SimpleBikeTrainer.Platform" />
   </ItemGroup>
 
 </Project>

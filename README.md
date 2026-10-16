@@ -17,7 +17,7 @@ Each release on the repository's Releases page has one download per platform, pl
 | System | Download |
 | --- | --- |
 | Windows | `simple-bike-trainer-win-x64.exe`, `simple-bike-trainer-win-arm64.exe` |
-| Linux | `simple-bike-trainer-linux-x64`, `simple-bike-trainer-linux-arm64` |
+| Linux | `simple-bike-trainer-linux-x64.tar.gz`, `simple-bike-trainer-linux-arm64.tar.gz`. Unpack it and run `simple-bike-trainer` in the folder; the two `.so` files beside it must stay there. |
 | macOS | `simple-bike-trainer-osx-arm64.zip` (Apple silicon), `simple-bike-trainer-osx-x64.zip` (Intel) |
 | Android 12 or later | `simple-bike-trainer-android.apk` |
 | iPad, iPadOS 15 or later | TODO |

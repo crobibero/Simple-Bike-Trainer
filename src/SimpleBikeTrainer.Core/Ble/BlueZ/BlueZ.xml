@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- The parts of BlueZ's D-Bus API the app uses. Tmds.DBus.Generator makes the proxy classes from it at build time. -->
+<node>
+  <interface name="org.freedesktop.DBus.ObjectManager">
+    <method name="GetManagedObjects">
+      <arg name="objects" direction="out" type="a{oa{sa{sv}}}"/>
+    </method>
+    <signal name="InterfacesAdded">
+      <arg name="object" type="o"/>
+      <arg name="interfaces" type="a{sa{sv}}"/>
+    </signal>
+  </interface>
+  <interface name="org.bluez.Adapter1">
+    <method name="StartDiscovery"/>
+    <method name="StopDiscovery"/>
+    <method name="SetDiscoveryFilter">
+      <arg name="filter" direction="in" type="a{sv}"/>
+    </method>
+    <property name="Powered" type="b" access="readwrite"/>
+  </interface>
+  <interface name="org.bluez.Device1">
+    <method name="Connect"/>
+    <method name="Disconnect"/>
+    <property name="Address" type="s" access="read"/>
+    <property name="Name" type="s" access="read"/>
+    <property name="Alias" type="s" access="readwrite"/>
+    <property name="RSSI" type="n" access="read"/>
+    <property name="UUIDs" type="as" access="read"/>
+    <property name="ManufacturerData" type="a{qv}" access="read"/>
+    <property name="Connected" type="b" access="read"/>
+    <property name="ServicesResolved" type="b" access="read"/>
+  </interface>
+  <interface name="org.bluez.GattCharacteristic1">
+    <method name="ReadValue">
+      <arg name="options" direction="in" type="a{sv}"/>
+      <arg name="value" direction="out" type="ay"/>
+    </method>
+    <method name="WriteValue">
+      <arg name="value" direction="in" type="ay"/>
+      <arg name="options" direction="in" type="a{sv}"/>
+    </method>
+    <method name="StartNotify"/>
+    <method name="StopNotify"/>
+    <property name="UUID" type="s" access="read"/>
+    <property name="Flags" type="as" access="read"/>
+    <property name="Value" type="ay" access="read"/>
+  </interface>
+</node>

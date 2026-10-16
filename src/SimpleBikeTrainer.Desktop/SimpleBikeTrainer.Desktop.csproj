@@ -46,13 +46,10 @@
   </ItemGroup>
 
   <!--
-    Trimmed and native AOT builds. Tmds.DBus, which Linux.Bluetooth and KeepAwake use, makes its D-Bus proxies with
-    Reflection.Emit: trimming them silently breaks the Bluetooth scan, and native AOT cannot run them at all. Rooting the
-    three assemblies keeps a trimmed Linux build working; their remaining trim and AOT warnings stay warnings.
+    Trimmed and native AOT builds keep all of the library. The Windows SDK's WinRT assemblies produce trim warnings of
+    their own, which stay warnings.
   -->
   <ItemGroup>
-    <TrimmerRootAssembly Include="Tmds.DBus" RootMode="All" Condition="'$(IsMobile)' != 'true'" />
-    <TrimmerRootAssembly Include="Linux.Bluetooth" RootMode="All" Condition="'$(IsMobile)' != 'true'" />
     <TrimmerRootAssembly Include="SimpleBikeTrainer.Core" RootMode="All" />
   </ItemGroup>
 

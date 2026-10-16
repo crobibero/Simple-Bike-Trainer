@@ -129,7 +129,8 @@ jobs:
           - { os: macos-latest, rid: osx-arm64 }
           - { os: macos-latest, rid: osx-x64 }
           - { os: ubuntu-latest, rid: linux-x64 }
-          - { os: ubuntu-latest, rid: linux-arm64 }
+          # Native AOT compiles for the machine it runs on.
+          - { os: ubuntu-24.04-arm, rid: linux-arm64 }
     runs-on: ${{ matrix.os }}
     defaults:
       run:
@@ -150,17 +151,21 @@ jobs:
             echo "version=0.0.${GITHUB_RUN_NUMBER}" >> "$GITHUB_OUTPUT"
           fi
 
-      # Windows and Linux: one trimmed, self-contained file, with Skia's native libraries inside it; they unpack to a
-      # cache folder on the first start. Native AOT cannot embed those libraries, so it would ship four files.
-      # macOS: native AOT inside the .app bundle, which holds the libraries anyway.
-      # Linux cannot use native AOT at all: Bluetooth goes through Tmds.DBus, which needs Reflection.Emit (see
-      # SimpleBikeTrainer.Desktop.csproj).
+      # Native AOT links with clang.
+      - name: Install the native AOT tools
+        if: startsWith(matrix.rid, 'linux-')
+        run: sudo apt-get update && sudo apt-get install -y clang zlib1g-dev
+
+      # Windows: one trimmed, self-contained file, with Skia's native libraries inside it; they unpack to a cache folder
+      # on the first start. Native AOT cannot embed those libraries, so it would ship four files.
+      # macOS and Linux: native AOT, with the libraries beside the app: in the .app bundle on macOS, in a tarball on
+      # Linux.
       - name: Publish
         run: |
-          if [[ "${{ matrix.rid }}" == osx-* ]]; then
-            mode="-p:PublishAot=true"
-          else
+          if [[ "${{ matrix.rid }}" == win-* ]]; then
             mode="--self-contained -p:PublishTrimmed=true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:EnableCompressionInSingleFile=true"
+          else
+            mode="-p:PublishAot=true"
           fi
           dotnet publish src/SimpleBikeTrainer.Desktop -c Release -r ${{ matrix.rid }} $mode \
             -p:Version=${{ steps.version.outputs.version }} -p:DebugType=none -o publish
@@ -169,13 +174,15 @@ jobs:
           rm -rf publish/*.dSYM
 
       - name: Name the download
-        if: ${{ !startsWith(matrix.rid, 'osx-') }}
+        if: startsWith(matrix.rid, 'win-')
+        run: cp publish/simple-bike-trainer.exe simple-bike-trainer-${{ matrix.rid }}.exe
+
+      - name: Package for Linux
+        if: startsWith(matrix.rid, 'linux-')
         run: |
-          if [[ "${{ matrix.rid }}" == win-* ]]; then
-            cp publish/simple-bike-trainer.exe simple-bike-trainer-${{ matrix.rid }}.exe
-          else
-            cp publish/simple-bike-trainer simple-bike-trainer-${{ matrix.rid }}
-          fi
+          mkdir simple-bike-trainer
+          cp publish/simple-bike-trainer publish/*.so simple-bike-trainer/
+          tar -czf simple-bike-trainer-${{ matrix.rid }}.tar.gz simple-bike-trainer
 
       # Ad-hoc signed only: macOS asks before the first launch (see the README).
       - name: Package for macOS
