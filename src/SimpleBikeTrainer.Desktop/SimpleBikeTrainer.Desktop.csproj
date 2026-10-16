@@ -46,8 +46,8 @@
   </ItemGroup>
 
   <!--
-    Trimmed and native AOT builds keep all of the library. The Windows SDK's WinRT assemblies produce trim warnings of
-    their own, which stay warnings.
+    Trimmed and native AOT builds keep all of the library. The Windows SDK's WinRT assemblies and Android's Mono.Android
+    produce trim and AOT warnings of their own, which stay warnings.
   -->
   <ItemGroup>
     <TrimmerRootAssembly Include="SimpleBikeTrainer.Core" RootMode="All" />
@@ -77,6 +77,7 @@
     <AndroidManifest>Platforms/Android/AndroidManifest.xml</AndroidManifest>
     <MonoAndroidResourcePrefix>Platforms/Android/Resources</MonoAndroidResourcePrefix>
     <RuntimeIdentifiers>android-arm64;android-x64</RuntimeIdentifiers>
+    <PublishAot Condition="'$(Configuration)' == 'Release'">true</PublishAot>
   </PropertyGroup>
 
   <ItemGroup Condition="'$(IsAndroid)' == 'true'">
@@ -87,6 +88,26 @@
     <Using Remove="Android.Widget" />
     <Using Remove="Android.OS.Bundle" />
   </ItemGroup>
+
+  <!--
+    Native AOT links the crypto library into the app's library, which exports only the symbols ILC lists: without its
+    JNI callback for certificate checks, every HTTPS request fails.
+  -->
+  <ItemGroup Condition="'$(IsAndroid)' == 'true' And '$(PublishAot)' == 'true'">
+    <IlcArg Include="--export-dynamic-symbol:Java_net_dot_android_crypto_DotnetProxyTrustManager_verifyRemoteCertificate" />
+  </ItemGroup>
+
+  <!--
+    A publish for both ABIs compiles each in its own build and packs them into one APK. Native AOT's last step, copying
+    the app's library to the publish folder, runs in the outer build too, which has no library of its own: it is
+    skipped there, as the library is already in the APK.
+  -->
+  <Target Name="_SkipAbiLessNativeBinary" BeforeTargets="CopyNativeBinary;_CopyAotSymbols" Condition="'$(IsAndroid)' == 'true' And '$(PublishAot)' == 'true' And '$(RuntimeIdentifier)' == ''">
+    <PropertyGroup>
+      <NativeBinary />
+      <CopyOutputSymbolsToPublishDirectory>false</CopyOutputSymbolsToPublishDirectory>
+    </PropertyGroup>
+  </Target>
 
   <ItemGroup Condition="'$(IsAndroid)' != 'true'">
     <Compile Remove="Platforms/Android/**" />

@@ -143,7 +143,7 @@ dotnet build src/SimpleBikeTrainer.Desktop -t:Install -f net10.0-android -p:Andr
 dotnet publish src/SimpleBikeTrainer.Desktop -c Release -f net10.0-android -p:AndroidBuild=true -o publish/android
 ```
 
-`-p:AndroidSdkDirectory=...` points at the SDK when it is not found, and `-p:AdbTarget="-s SERIAL"` picks one of several devices. Android's Bluetooth, USB, screen lock, sounds and sharing are in [Platforms/Android](src/SimpleBikeTrainer.Desktop/Platforms/Android). CI signs the APK with the keystore in the `ANDROID_KEYSTORE` secret (base64), with `ANDROID_KEYSTORE_PASSWORD` and the key alias in `ANDROID_KEY_ALIAS`; without them it uses a throwaway debug key, and Android will not install such an APK over one signed with another key.
+The Debug build runs on the Mono runtime. The Release build uses native AOT, which needs the Android NDK r28 (`sdkmanager "ndk;28.2.13676358"`); r29 fails to link. `-p:AndroidNdkDirectory=...` picks the NDK when several are installed, `-p:AndroidSdkDirectory=...` points at the SDK when it is not found, and `-p:AdbTarget="-s SERIAL"` picks one of several devices. Android's Bluetooth, USB, screen lock, sounds and sharing are in [Platforms/Android](src/SimpleBikeTrainer.Desktop/Platforms/Android). CI signs the APK with the keystore in the `ANDROID_KEYSTORE` secret (base64), with `ANDROID_KEYSTORE_PASSWORD` and the key alias in `ANDROID_KEY_ALIAS`; without them it uses a throwaway debug key, and Android will not install such an APK over one signed with another key.
 
 The iPad app is a third target framework, `net10.0-ios`, added by `-p:IosBuild=true`. It builds only on a Mac, with Xcode and `dotnet workload install ios`. To run it in the simulator:
 
@@ -151,10 +151,10 @@ The iPad app is a third target framework, `net10.0-ios`, added by `-p:IosBuild=t
 dotnet build src/SimpleBikeTrainer.Desktop -t:Run -f net10.0-ios -p:IosBuild=true
 ```
 
-An iPad needs a build signed with a provisioning profile for the app's bundle identifier, from an Apple developer account; a free account's profile lasts 7 days. With the profile installed and the iPad connected:
+An iPad needs a build signed with a provisioning profile for the app's bundle identifier, from an Apple developer account; a free account's profile lasts 7 days. With the profile installed and the iPad connected, this installs a Release build, compiled ahead of time:
 
 ```sh
-dotnet build src/SimpleBikeTrainer.Desktop -t:Run -f net10.0-ios -p:IosBuild=true -p:RuntimeIdentifier=ios-arm64 \
+dotnet build src/SimpleBikeTrainer.Desktop -t:Run -c Release -f net10.0-ios -p:IosBuild=true -p:RuntimeIdentifier=ios-arm64 \
   -p:ApplicationId=YOUR.BUNDLE.ID -p:_DeviceName=IPAD-UDID
 ```
 

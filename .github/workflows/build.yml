@@ -60,6 +60,15 @@ jobs:
       - name: Install the Android workload
         run: dotnet workload install android
 
+      # Native AOT links with the NDK. r28: r29's libunwind clashes with the runtime's own (see
+      # SimpleBikeTrainer.Desktop.csproj).
+      - name: Install the Android NDK
+        id: ndk
+        run: |
+          version=28.2.13676358
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "ndk;$version" > /dev/null
+          echo "dir=$ANDROID_HOME/ndk/$version" >> "$GITHUB_OUTPUT"
+
       # As for the desktop app, plus Android's version code, which has to grow from release to release: 1.2.3 is 10203.
       - name: Version
         id: version
@@ -91,6 +100,7 @@ jobs:
           ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
         run: |
           dotnet publish src/SimpleBikeTrainer.Desktop -c Release -f net10.0-android -p:AndroidBuild=true \
+            -p:AndroidNdkDirectory=${{ steps.ndk.outputs.dir }} \
             -p:Version=${{ steps.version.outputs.version }} \
             -p:ApplicationDisplayVersion=${{ steps.version.outputs.version }} \
             -p:ApplicationVersion=${{ steps.version.outputs.code }} \

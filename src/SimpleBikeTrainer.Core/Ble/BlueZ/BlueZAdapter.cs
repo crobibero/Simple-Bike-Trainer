@@ -219,7 +219,6 @@ internal sealed class BlueZPeripheral(Device1 device) : BlePeripheral
             .Select(o => o.Path)
             .FirstOrDefault();
 
-    /// <summary>The objects below <paramref name="parent"/> in BlueZ's tree that have <paramref name="iface"/>.</summary>
     private static IEnumerable<(string Path, Dictionary<string, Dictionary<string, VariantValue>> Interfaces)> Children(
         Dictionary<ObjectPath, Dictionary<string, Dictionary<string, VariantValue>>> objects, string parent, string iface) =>
         objects.Select(o => (Path: o.Key.ToString(), Interfaces: o.Value))
@@ -253,9 +252,9 @@ internal sealed class BlueZCharacteristic(GattCharacteristic1 characteristic, st
     public override Task WriteAsync(byte[] value, bool withResponse) =>
         characteristic.WriteValueAsync(value, new Dictionary<string, VariantValue> { ["type"] = withResponse ? "request" : "command" });
 
-    /// <summary>Watches the Value property before starting notifications, so the first one is not missed.</summary>
     public override async Task<IDisposable> SubscribeAsync(Action<byte[]> onValue)
     {
+        // Watch before StartNotify, or the first notification can arrive unseen.
         var watcher = await characteristic.WatchPropertiesChangedAsync(
             changes =>
             {

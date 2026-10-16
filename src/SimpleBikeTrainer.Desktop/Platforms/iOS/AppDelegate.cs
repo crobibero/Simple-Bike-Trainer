@@ -16,7 +16,7 @@ public sealed class AppDelegate : AvaloniaAppDelegate<App>
 {
     protected override AppBuilder CustomizeAppBuilder(AppBuilder builder)
     {
-        // Before the app loads its settings.
+        // Before AppConfig.Load reads XDG_CONFIG_HOME.
         IosApp.UseAppFolders();
 
         // iPadOS gives apps no USB access, so there is never an ANT+ stick to find.

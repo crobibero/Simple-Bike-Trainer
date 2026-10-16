@@ -7,10 +7,7 @@ namespace SimpleBikeTrainer.Desktop.Platforms;
 
 internal static class IosApp
 {
-    /// <summary>
-    /// The settings and Garmin tokens go in Application Support, which only the app sees. The rides go in Documents,
-    /// which the Files app shows under On My iPad.
-    /// </summary>
+    /// <summary>Settings and Garmin tokens go in Application Support, which only the app sees; rides go in Documents, which the Files app shows.</summary>
     public static void UseAppFolders()
     {
         if (Folder(NSSearchPathDirectory.ApplicationSupportDirectory) is { } support)
@@ -34,7 +31,6 @@ internal static class IosApp
         Dispatcher.UIThread.Post(() => UIApplication.SharedApplication.OpenUrl(target, new UIApplicationOpenUrlOptions(), null));
     }
 
-    /// <summary>The share sheet, pointing at the middle of the screen, as there is no button to point at from here.</summary>
     public static void ShareFile(string path) => Dispatcher.UIThread.Post(() =>
     {
         if (TopController() is not { View: { } view } presenter)

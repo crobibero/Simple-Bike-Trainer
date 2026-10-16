@@ -16,7 +16,6 @@ internal static class IosSounds
         {
             if (Players.Count == 0)
             {
-                // A missed beep is not worth interrupting a ride for, so a refusal is not checked.
                 AVAudioSession.SharedInstance().SetCategory(AVAudioSessionCategory.Playback, AVAudioSessionCategoryOptions.MixWithOthers);
             }
 

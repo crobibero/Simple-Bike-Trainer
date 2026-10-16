@@ -3,10 +3,7 @@ using UIKit;
 
 namespace SimpleBikeTrainer.Desktop.Platforms;
 
-/// <summary>
-/// iPadOS's KeepAwake: the screen stays on while a ride runs. Behind another app, iPadOS keeps the Bluetooth devices
-/// connected (the bluetooth-central background mode in Info.plist) but runs the app only as their data arrives.
-/// </summary>
+/// <summary>iPadOS's KeepAwake: the screen stays on; Info.plist's bluetooth-central mode keeps the devices connected behind another app.</summary>
 internal sealed class RideLock : IAsyncDisposable
 {
     private static int _held;
