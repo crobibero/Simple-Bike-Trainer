@@ -12,7 +12,15 @@ Simple Bike Trainer rides Intervals.icu workouts on a Wahoo KICKR or any other B
 
 ## Install
 
-See [Releases](https://github.com/crobibero/Simple-Bike-Trainer/releases/)
+Each release on the [Releases](https://github.com/crobibero/Simple-Bike-Trainer/releases/) page has one download per platform, plus `SHA256SUMS`. Each file name ends in the release's version, such as `1.2.0`.
+
+| System | Download |
+| --- | --- |
+| Windows | `simple-bike-trainer-win-x64-<version>.exe`, or `simple-bike-trainer-win-arm64-<version>.exe` for Arm PCs |
+| Linux | `simple-bike-trainer-linux-x64-<version>`, `simple-bike-trainer-linux-arm64-<version>`. A browser download is not executable: make it so with `chmod +x`, then run it. It needs fontconfig, which desktop distributions include. |
+| macOS | `simple-bike-trainer-osx-arm64-<version>.zip` (Apple silicon), `simple-bike-trainer-osx-x64-<version>.zip` (Intel). The app is not notarized, so macOS blocks the first launch: open System Settings > Privacy & Security and choose Open Anyway, or run `xattr -dr com.apple.quarantine "Simple Bike Trainer.app"`. |
+| Android 12 or later | `simple-bike-trainer-android-arm64-<version>.apk` for most tablets, `simple-bike-trainer-android-x64-<version>.apk` for x86 tablets and the emulator |
+| iPad, iPadOS 15 or later | No download: an iPad installs only an app signed for it, so build and sign your own (see [Development](#development)). |
 
 ## Setup
 
@@ -50,7 +58,7 @@ ANT+ works with Garmin and Dynastream ANTUSB2 and ANTUSB-m sticks, through [libu
 | --- | --- |
 | Linux | libusb comes with most distributions. Give your user the stick with `/etc/udev/rules.d/70-ant-stick.rules` holding `SUBSYSTEM=="usb", ATTR{idVendor}=="0fcf", ATTR{idProduct}=="100[89]", TAG+="uaccess"`, run `sudo udevadm control --reload`, and plug the stick in again. |
 | macOS | `brew install libusb` |
-| Windows | Put `libusb-1.0.dll` (64-bit, from the libusb releases) next to `simple-bike-trainer.exe`, and give the stick the WinUSB driver with [Zadig](https://zadig.akeo.ie). Other ANT+ apps on the PC may then not see the stick. |
+| Windows | Put `libusb-1.0.dll` (64-bit, from the libusb releases) next to the app's `.exe`, and give the stick the WinUSB driver with [Zadig](https://zadig.akeo.ie). Other ANT+ apps on the PC may then not see the stick. |
 | Android | Plug the stick into the tablet's USB-C port through an OTG adapter. No libusb, and no ANT Radio Service or ANT USB Service app: Android asks once whether the app may use the stick, either when it is plugged in or at the first scan. If the ANT USB Service is installed, tell Android not to open it for the stick. |
 | iPad | Not supported: iPadOS gives apps no access to USB devices. |
 

@@ -44,14 +44,45 @@ jobs:
           path: screenshots
           if-no-files-found: ignore
 
+  # A v* tag sets the version; other builds are 0.0.<run number>. A called workflow sees the caller's tag.
+  # Android's version code is major * 10000 + minor * 100 + patch, so a tag with minor or patch above 99, or not in
+  # vMAJOR.MINOR.PATCH[-PRERELEASE] form, fails here. The check also keeps shell syntax out of the version.
+  version:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      code: ${{ steps.version.outputs.code }}
+      args: ${{ steps.version.outputs.args }}
+    steps:
+      - name: Version
+        id: version
+        run: |
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
+            if [[ ! "$GITHUB_REF_NAME" =~ ^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]?)\.(0|[1-9][0-9]?)(-[0-9A-Za-z.-]+)?$ ]]; then
+              echo "::error::Tag $GITHUB_REF_NAME is not vMAJOR.MINOR.PATCH[-PRERELEASE] with MINOR and PATCH below 100"
+              exit 1
+            fi
+            version="${GITHUB_REF_NAME#v}"
+            code=$((BASH_REMATCH[1] * 10000 + BASH_REMATCH[2] * 100 + BASH_REMATCH[3]))
+            echo "args=-p:ReleaseBuild=true" >> "$GITHUB_OUTPUT"
+          else
+            version="0.0.${GITHUB_RUN_NUMBER}"
+            code="${GITHUB_RUN_NUMBER}"
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "code=$code" >> "$GITHUB_OUTPUT"
+
   # The Android tablet app: an APK each for arm64 and x64 tablets, as one APK for both is twice the size.
   android:
-    needs: test
+    needs: [test, version]
     strategy:
       fail-fast: false
       matrix:
         rid: [android-arm64, android-x64]
     runs-on: ubuntu-latest
+    env:
+      APP_VERSION: ${{ needs.version.outputs.version }}
+      DOWNLOAD_NAME: simple-bike-trainer-${{ matrix.rid }}-${{ needs.version.outputs.version }}
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-dotnet@v6
@@ -71,19 +102,6 @@ jobs:
           yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "ndk;$version" > /dev/null
           echo "dir=$ANDROID_HOME/ndk/$version" >> "$GITHUB_OUTPUT"
 
-      - name: Version
-        id: version
-        run: |
-          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
-            version="${GITHUB_REF_NAME#v}"
-            echo "args=-p:ReleaseBuild=true" >> "$GITHUB_OUTPUT"
-          else
-            version="0.0.${GITHUB_RUN_NUMBER}"
-          fi
-          IFS=. read -r major minor patch <<< "${version%%-*}"
-          echo "version=$version" >> "$GITHUB_OUTPUT"
-          echo "code=$((major * 10000 + minor * 100 + patch))" >> "$GITHUB_OUTPUT"
-
       - name: Signing key
         id: signing
         env:
@@ -101,16 +119,15 @@ jobs:
         run: |
           dotnet publish src/SimpleBikeTrainer.Desktop -c Release -f net10.0-android -r ${{ matrix.rid }} -p:AndroidBuild=true \
             -p:AndroidNdkDirectory=${{ steps.ndk.outputs.dir }} \
-            -p:Version=${{ steps.version.outputs.version }} \
-            -p:ApplicationDisplayVersion=${{ steps.version.outputs.version }} \
-            -p:ApplicationVersion=${{ steps.version.outputs.code }} \
-            ${{ steps.version.outputs.args }} ${{ steps.signing.outputs.args }} -o publish
-          cp publish/*-Signed.apk simple-bike-trainer-${{ matrix.rid }}-${{ steps.version.outputs.version }}.apk
+            -p:Version="$APP_VERSION" -p:ApplicationDisplayVersion="$APP_VERSION" \
+            -p:ApplicationVersion=${{ needs.version.outputs.code }} \
+            ${{ needs.version.outputs.args }} ${{ steps.signing.outputs.args }} -o publish
+          cp publish/*-Signed.apk "$DOWNLOAD_NAME.apk"
 
       - uses: actions/upload-artifact@v7
         with:
           name: simple-bike-trainer-${{ matrix.rid }}
-          path: simple-bike-trainer-${{ matrix.rid }}-${{ steps.version.outputs.version }}.apk
+          path: ${{ env.DOWNLOAD_NAME }}.apk
           if-no-files-found: error
 
   # The iPad app: a check that it compiles with native AOT, unsigned, as no signing certificate is at hand. There is no
@@ -131,7 +148,7 @@ jobs:
             -p:EnableCodeSigning=false -p:CodesignRequireProvisioningProfile=false -p:BuildIpa=false
 
   publish:
-    needs: test
+    needs: [test, version]
     strategy:
       fail-fast: false
       matrix:
@@ -144,6 +161,9 @@ jobs:
           # Native AOT compiles for the machine it runs on.
           - { os: ubuntu-24.04-arm, rid: linux-arm64 }
     runs-on: ${{ matrix.os }}
+    env:
+      APP_VERSION: ${{ needs.version.outputs.version }}
+      DOWNLOAD_NAME: simple-bike-trainer-${{ matrix.rid }}-${{ needs.version.outputs.version }}
     defaults:
       run:
         shell: bash
@@ -152,16 +172,6 @@ jobs:
       - uses: actions/setup-dotnet@v6
         with:
           dotnet-version: 10.0.x
-
-      # A v* tag sets the version; other builds are 0.0.<run number>. A called workflow sees the caller's tag.
-      - name: Version
-        id: version
-        run: |
-          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
-            echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
-          else
-            echo "version=0.0.${GITHUB_RUN_NUMBER}" >> "$GITHUB_OUTPUT"
-          fi
 
       # Native AOT links with clang; StaticLink.Avalonia switches the linker to lld and links fontconfig.
       - name: Install the native AOT tools
@@ -173,19 +183,19 @@ jobs:
       - name: Publish
         run: |
           dotnet publish src/SimpleBikeTrainer.Desktop -c Release -r ${{ matrix.rid }} -p:PublishAot=true \
-            -p:Version=${{ steps.version.outputs.version }} -p:DebugType=none -o publish
+            -p:Version="$APP_VERSION" -p:DebugType=none -o publish
           # SkiaSharp's packages drop their native .pdb files next to the app.
           rm -f publish/*.pdb publish/*.dbg
           rm -rf publish/*.dSYM
 
       - name: Name the download
         if: startsWith(matrix.rid, 'win-')
-        run: cp publish/simple-bike-trainer.exe simple-bike-trainer-${{ matrix.rid }}-${{ steps.version.outputs.version }}.exe
+        run: cp publish/simple-bike-trainer.exe "$DOWNLOAD_NAME.exe"
 
       # One file, like the Windows .exe. A browser download drops its executable bit (see the README).
       - name: Name the download for Linux
         if: startsWith(matrix.rid, 'linux-')
-        run: cp publish/simple-bike-trainer simple-bike-trainer-${{ matrix.rid }}-${{ steps.version.outputs.version }}
+        run: cp publish/simple-bike-trainer "$DOWNLOAD_NAME"
 
       # Ad-hoc signed only: macOS asks before the first launch (see the README).
       - name: Package for macOS
@@ -194,7 +204,7 @@ jobs:
           app="Simple Bike Trainer.app"
           mkdir -p "$app/Contents/MacOS" "$app/Contents/Resources"
           cp -R publish/ "$app/Contents/MacOS/"
-          sed "s/VERSION/${{ steps.version.outputs.version }}/g" packaging/macos/Info.plist > "$app/Contents/Info.plist"
+          sed "s/VERSION/$APP_VERSION/g" packaging/macos/Info.plist > "$app/Contents/Info.plist"
           iconset=icon.iconset
           mkdir $iconset
           for size in 16 32 128 256 512; do
@@ -203,10 +213,10 @@ jobs:
           done
           iconutil -c icns $iconset -o "$app/Contents/Resources/icon.icns"
           codesign --force --deep --sign - "$app"
-          ditto -c -k --keepParent "$app" simple-bike-trainer-${{ matrix.rid }}-${{ steps.version.outputs.version }}.zip
+          ditto -c -k --keepParent "$app" "$DOWNLOAD_NAME.zip"
 
       - uses: actions/upload-artifact@v7
         with:
           name: simple-bike-trainer-${{ matrix.rid }}
-          path: simple-bike-trainer-${{ matrix.rid }}*
+          path: ${{ env.DOWNLOAD_NAME }}*
           if-no-files-found: error
