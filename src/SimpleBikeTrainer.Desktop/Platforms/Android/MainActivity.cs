@@ -13,7 +13,6 @@ namespace SimpleBikeTrainer.Desktop.Platforms;
 
 /// <summary>Handles its own rotation and size changes, so turning the tablet keeps the ride on screen.</summary>
 [Activity(
-    Label = "Simple Bike Trainer",
     Theme = "@style/AppTheme",
     Icon = "@mipmap/ic_launcher",
     MainLauncher = true,

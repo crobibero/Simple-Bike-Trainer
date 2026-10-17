@@ -3,6 +3,8 @@
   <PropertyGroup>
     <SupportedOSPlatformVersion>31</SupportedOSPlatformVersion>
     <ApplicationId>dev.codyrobibero.simplebiketrainer</ApplicationId>
+    <ApplicationId Condition="'$(ReleaseBuild)' != 'true'">$(ApplicationId).debug</ApplicationId>
+    <ApplicationTitle Condition="'$(ReleaseBuild)' != 'true'">$(ApplicationTitle) (Debug)</ApplicationTitle>
     <AndroidPackageFormat>apk</AndroidPackageFormat>
     <AndroidManifest>Platforms/Android/AndroidManifest.xml</AndroidManifest>
     <MonoAndroidResourcePrefix>Platforms/Android/Resources</MonoAndroidResourcePrefix>

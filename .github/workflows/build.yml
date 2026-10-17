@@ -72,6 +72,7 @@ jobs:
         run: |
           if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
             version="${GITHUB_REF_NAME#v}"
+            echo "args=-p:ReleaseBuild=true" >> "$GITHUB_OUTPUT"
           else
             version="0.0.${GITHUB_RUN_NUMBER}"
           fi
@@ -99,7 +100,7 @@ jobs:
             -p:Version=${{ steps.version.outputs.version }} \
             -p:ApplicationDisplayVersion=${{ steps.version.outputs.version }} \
             -p:ApplicationVersion=${{ steps.version.outputs.code }} \
-            ${{ steps.signing.outputs.args }} -o publish
+            ${{ steps.version.outputs.args }} ${{ steps.signing.outputs.args }} -o publish
           cp publish/*-Signed.apk simple-bike-trainer-android.apk
 
       - uses: actions/upload-artifact@v7
