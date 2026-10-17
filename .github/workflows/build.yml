@@ -105,12 +105,12 @@ jobs:
             -p:ApplicationDisplayVersion=${{ steps.version.outputs.version }} \
             -p:ApplicationVersion=${{ steps.version.outputs.code }} \
             ${{ steps.version.outputs.args }} ${{ steps.signing.outputs.args }} -o publish
-          cp publish/*-Signed.apk simple-bike-trainer-${{ matrix.rid }}.apk
+          cp publish/*-Signed.apk simple-bike-trainer-${{ matrix.rid }}-${{ steps.version.outputs.version }}.apk
 
       - uses: actions/upload-artifact@v7
         with:
           name: simple-bike-trainer-${{ matrix.rid }}
-          path: simple-bike-trainer-${{ matrix.rid }}.apk
+          path: simple-bike-trainer-${{ matrix.rid }}-${{ steps.version.outputs.version }}.apk
           if-no-files-found: error
 
   # The iPad app: a check that it compiles with native AOT, unsigned, as no signing certificate is at hand. There is no
@@ -180,12 +180,12 @@ jobs:
 
       - name: Name the download
         if: startsWith(matrix.rid, 'win-')
-        run: cp publish/simple-bike-trainer.exe simple-bike-trainer-${{ matrix.rid }}.exe
+        run: cp publish/simple-bike-trainer.exe simple-bike-trainer-${{ matrix.rid }}-${{ steps.version.outputs.version }}.exe
 
       # One file, like the Windows .exe. A browser download drops its executable bit (see the README).
       - name: Name the download for Linux
         if: startsWith(matrix.rid, 'linux-')
-        run: cp publish/simple-bike-trainer simple-bike-trainer-${{ matrix.rid }}
+        run: cp publish/simple-bike-trainer simple-bike-trainer-${{ matrix.rid }}-${{ steps.version.outputs.version }}
 
       # Ad-hoc signed only: macOS asks before the first launch (see the README).
       - name: Package for macOS
@@ -203,7 +203,7 @@ jobs:
           done
           iconutil -c icns $iconset -o "$app/Contents/Resources/icon.icns"
           codesign --force --deep --sign - "$app"
-          ditto -c -k --keepParent "$app" simple-bike-trainer-${{ matrix.rid }}.zip
+          ditto -c -k --keepParent "$app" simple-bike-trainer-${{ matrix.rid }}-${{ steps.version.outputs.version }}.zip
 
       - uses: actions/upload-artifact@v7
         with:

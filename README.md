@@ -12,15 +12,7 @@ Simple Bike Trainer rides Intervals.icu workouts on a Wahoo KICKR or any other B
 
 ## Install
 
-Each release on the repository's Releases page has one download per platform, plus `SHA256SUMS`.
-
-| System | Download |
-| --- | --- |
-| Windows | `simple-bike-trainer-win-x64.exe`, `simple-bike-trainer-win-arm64.exe` |
-| Linux | `simple-bike-trainer-linux-x64`, `simple-bike-trainer-linux-arm64`. Make it executable with `chmod +x` and run it. It needs fontconfig, which desktop distributions include. |
-| macOS | `simple-bike-trainer-osx-arm64.zip` (Apple silicon), `simple-bike-trainer-osx-x64.zip` (Intel) |
-| Android 12 or later | `simple-bike-trainer-android-arm64.apk`, `simple-bike-trainer-android-x64.apk` |
-| iPad, iPadOS 15 or later | TODO |
+See [Releases](https://github.com/crobibero/Simple-Bike-Trainer/releases/)
 
 ## Setup
 
