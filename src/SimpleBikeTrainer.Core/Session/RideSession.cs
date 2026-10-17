@@ -204,14 +204,15 @@ public sealed class RideSession
                 await Task.WhenAny(tick, command);
 
                 // Commands first: one sent before this second ended (such as Finish) applies before the second is recorded.
+                // Drained even when the wait has not completed, since the channel wakes it on the thread pool after the write.
+                while (_commands.Reader.TryRead(out var c))
+                {
+                    Handle(c);
+                }
+
                 if (command.IsCompleted)
                 {
                     await command;
-                    while (_commands.Reader.TryRead(out var c))
-                    {
-                        Handle(c);
-                    }
-
                     command = _commands.Reader.WaitToReadAsync(cancellationToken).AsTask();
                 }
 
