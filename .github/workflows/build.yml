@@ -1,6 +1,6 @@
 # Tests every push and pull request, then builds the downloads: one file per desktop platform, and an Android APK per
 # processor. It also checks that the iPad app builds.
-# release.yml calls this workflow for v* tags and attaches the downloads to the release.
+# release.yml calls this workflow with a version and attaches the downloads to a draft release.
 name: Build
 
 on:
@@ -9,6 +9,15 @@ on:
   pull_request:
   workflow_dispatch:
   workflow_call:
+    inputs:
+      version:
+        description: Release version, such as 1.2.0
+        type: string
+        default: ""
+    outputs:
+      version:
+        description: The version the downloads carry
+        value: ${{ jobs.version.outputs.version }}
 
 permissions:
   contents: read
@@ -44,9 +53,9 @@ jobs:
           path: screenshots
           if-no-files-found: ignore
 
-  # A v* tag sets the version; other builds are 0.0.<run number>. A called workflow sees the caller's tag.
-  # Android's version code is major * 10000 + minor * 100 + patch, so a tag with minor or patch above 99, or not in
-  # vMAJOR.MINOR.PATCH[-PRERELEASE] form, fails here. The check also keeps shell syntax out of the version.
+  # release.yml passes the version; other builds are 0.0.<run number>. A leading v is dropped.
+  # Android's version code is major * 10000 + minor * 100 + patch, so a version with minor or patch above 99, or not in
+  # MAJOR.MINOR.PATCH[-PRERELEASE] form, fails here. The check also keeps shell syntax out of the version.
   version:
     runs-on: ubuntu-latest
     outputs:
@@ -56,13 +65,15 @@ jobs:
     steps:
       - name: Version
         id: version
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
         run: |
-          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
-            if [[ ! "$GITHUB_REF_NAME" =~ ^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]?)\.(0|[1-9][0-9]?)(-[0-9A-Za-z.-]+)?$ ]]; then
-              echo "::error::Tag $GITHUB_REF_NAME is not vMAJOR.MINOR.PATCH[-PRERELEASE] with MINOR and PATCH below 100"
+          if [[ -n "$INPUT_VERSION" ]]; then
+            version="${INPUT_VERSION#v}"
+            if [[ ! "$version" =~ ^(0|[1-9][0-9]*)\.(0|[1-9][0-9]?)\.(0|[1-9][0-9]?)(-[0-9A-Za-z.-]+)?$ ]]; then
+              echo "::error::Version $INPUT_VERSION is not MAJOR.MINOR.PATCH[-PRERELEASE] with MINOR and PATCH below 100"
               exit 1
             fi
-            version="${GITHUB_REF_NAME#v}"
             code=$((BASH_REMATCH[1] * 10000 + BASH_REMATCH[2] * 100 + BASH_REMATCH[3]))
             echo "args=-p:ReleaseBuild=true" >> "$GITHUB_OUTPUT"
           else
