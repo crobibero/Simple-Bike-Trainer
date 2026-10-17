@@ -1,5 +1,5 @@
-# Tests every push and pull request, then builds the downloads: one file per desktop platform, and an Android APK. It
-# also checks that the iPad app builds.
+# Tests every push and pull request, then builds the downloads: one file per desktop platform, and an Android APK per
+# processor. It also checks that the iPad app builds.
 # release.yml calls this workflow for v* tags and attaches the downloads to the release.
 name: Build
 
@@ -44,9 +44,13 @@ jobs:
           path: screenshots
           if-no-files-found: ignore
 
-  # The Android tablet app: one APK for arm64 and x64 tablets.
+  # The Android tablet app: an APK each for arm64 and x64 tablets, as one APK for both is twice the size.
   android:
     needs: test
+    strategy:
+      fail-fast: false
+      matrix:
+        rid: [android-arm64, android-x64]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -95,18 +99,18 @@ jobs:
         env:
           ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
         run: |
-          dotnet publish src/SimpleBikeTrainer.Desktop -c Release -f net10.0-android -p:AndroidBuild=true \
+          dotnet publish src/SimpleBikeTrainer.Desktop -c Release -f net10.0-android -r ${{ matrix.rid }} -p:AndroidBuild=true \
             -p:AndroidNdkDirectory=${{ steps.ndk.outputs.dir }} \
             -p:Version=${{ steps.version.outputs.version }} \
             -p:ApplicationDisplayVersion=${{ steps.version.outputs.version }} \
             -p:ApplicationVersion=${{ steps.version.outputs.code }} \
             ${{ steps.version.outputs.args }} ${{ steps.signing.outputs.args }} -o publish
-          cp publish/*-Signed.apk simple-bike-trainer-android.apk
+          cp publish/*-Signed.apk simple-bike-trainer-${{ matrix.rid }}.apk
 
       - uses: actions/upload-artifact@v7
         with:
-          name: simple-bike-trainer-android
-          path: simple-bike-trainer-android.apk
+          name: simple-bike-trainer-${{ matrix.rid }}
+          path: simple-bike-trainer-${{ matrix.rid }}.apk
           if-no-files-found: error
 
   # The iPad app: a check that it compiles with native AOT, unsigned, as no signing certificate is at hand. There is no

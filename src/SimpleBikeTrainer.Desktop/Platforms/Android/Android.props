@@ -8,7 +8,6 @@
     <AndroidPackageFormat>apk</AndroidPackageFormat>
     <AndroidManifest>Platforms/Android/AndroidManifest.xml</AndroidManifest>
     <MonoAndroidResourcePrefix>Platforms/Android/Resources</MonoAndroidResourcePrefix>
-    <RuntimeIdentifiers>android-arm64;android-x64</RuntimeIdentifiers>
     <PublishAot Condition="'$(Configuration)' == 'Release'">true</PublishAot>
   </PropertyGroup>
 

@@ -19,7 +19,7 @@ Each release on the repository's Releases page has one download per platform, pl
 | Windows | `simple-bike-trainer-win-x64.exe`, `simple-bike-trainer-win-arm64.exe` |
 | Linux | `simple-bike-trainer-linux-x64`, `simple-bike-trainer-linux-arm64`. Make it executable with `chmod +x` and run it. It needs fontconfig, which desktop distributions include. |
 | macOS | `simple-bike-trainer-osx-arm64.zip` (Apple silicon), `simple-bike-trainer-osx-x64.zip` (Intel) |
-| Android 12 or later | `simple-bike-trainer-android.apk` |
+| Android 12 or later | `simple-bike-trainer-android-arm64.apk`, `simple-bike-trainer-android-x64.apk` |
 | iPad, iPadOS 15 or later | TODO |
 
 ## Setup
@@ -148,7 +148,7 @@ The Android app is a second target framework of the desktop project, `net10.0-an
 
 ```sh
 dotnet build src/SimpleBikeTrainer.Desktop -t:Install -f net10.0-android -p:AndroidBuild=true
-dotnet publish src/SimpleBikeTrainer.Desktop -c Release -f net10.0-android -p:AndroidBuild=true -o publish/android
+dotnet publish src/SimpleBikeTrainer.Desktop -c Release -f net10.0-android -r android-arm64 -p:AndroidBuild=true -o publish/android
 ```
 
 The Debug build runs on the Mono runtime. The Release build uses native AOT, which needs the Android NDK r28 (`sdkmanager "ndk;28.2.13676358"`); r29 fails to link. `-p:AndroidNdkDirectory=...` picks the NDK when several are installed, `-p:AndroidSdkDirectory=...` points at the SDK when it is not found, and `-p:AdbTarget="-s SERIAL"` picks one of several devices. Android's Bluetooth, USB, screen lock, sounds and sharing are in [Platforms/Android](src/SimpleBikeTrainer.Desktop/Platforms/Android). CI signs the APK with the keystore in the `ANDROID_KEYSTORE` secret (base64), with `ANDROID_KEYSTORE_PASSWORD` and the key alias in `ANDROID_KEY_ALIAS`; without them it uses a throwaway debug key, and Android will not install such an APK over one signed with another key.
