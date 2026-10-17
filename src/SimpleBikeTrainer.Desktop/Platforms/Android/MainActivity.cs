@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Android.App;
 using Android.Content;
 using Android.Content.PM;
@@ -5,6 +6,8 @@ using Android.Hardware.Usb;
 using Android.OS;
 using Android.Views;
 using Avalonia.Android;
+using Avalonia.Controls;
+using Avalonia.Rendering.Composition;
 
 namespace SimpleBikeTrainer.Desktop.Platforms;
 
@@ -24,10 +27,59 @@ namespace SimpleBikeTrainer.Desktop.Platforms;
 [MetaData(UsbManager.ActionUsbDeviceAttached, Resource = "@xml/ant_usb")]
 public sealed class MainActivity : AvaloniaMainActivity
 {
+    /// <summary>Past this, the splash screen goes even without a frame, so a renderer that never starts can't hide the app behind it.</summary>
+    private static readonly TimeSpan SplashLimit = TimeSpan.FromSeconds(2);
+
     protected override void OnCreate(Bundle? savedInstanceState)
     {
         AndroidApp.Activity = this;
         base.OnCreate(savedInstanceState);
+        HoldSplashUntilFirstFrame();
+    }
+
+    /// <summary>
+    /// Android takes the splash screen down at the window's first draw, but Avalonia draws into a surface behind the window,
+    /// through a hole the window leaves for it. Until that surface has a frame, the hole shows the home screen.
+    /// </summary>
+    private void HoldSplashUntilFirstFrame()
+    {
+        if (FindViewById(global::Android.Resource.Id.Content) is not { ViewTreeObserver: { } observer } content
+            || Content is not Control view)
+        {
+            return;
+        }
+
+        Task? firstFrame = null;
+        var start = Stopwatch.GetTimestamp();
+        view.SizeChanged += OnSizeChanged;
+        observer.AddOnPreDrawListener(new DrawGate(content, () => firstFrame?.IsCompleted == true || Stopwatch.GetElapsedTime(start) > SplashLimit));
+
+        // Until the surface exists the view is laid out at its 1×1 pixel placeholder, so a real size means the next frame lands on screen.
+        void OnSizeChanged(object? sender, SizeChangedEventArgs e)
+        {
+            if (e.NewSize.Width <= 1 || e.NewSize.Height <= 1)
+            {
+                return;
+            }
+
+            view.SizeChanged -= OnSizeChanged;
+            firstFrame = ElementComposition.GetElementVisual(view)?.Compositor.RequestCompositionBatchCommitAsync().Rendered;
+        }
+    }
+
+    /// <summary>Cancels the window's draws, which keeps the splash screen up, until <paramref name="ready"/> says otherwise.</summary>
+    private sealed class DrawGate(View content, Func<bool> ready) : Java.Lang.Object, ViewTreeObserver.IOnPreDrawListener
+    {
+        public bool OnPreDraw()
+        {
+            if (!ready())
+            {
+                return false;
+            }
+
+            content.ViewTreeObserver?.RemoveOnPreDrawListener(this);
+            return true;
+        }
     }
 
     protected override void OnResume()
