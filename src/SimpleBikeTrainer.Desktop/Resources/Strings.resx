@@ -93,41 +93,8 @@
   <data name="Common_Devices" xml:space="preserve">
     <value>DEVICES</value>
   </data>
-  <data name="Home_PickerHint" xml:space="preserve">
-    <value>Select one trainer, plus a heart rate monitor and Zwift Click controllers if you use them. If a device is missing, close other apps connected to it, such as Zwift or the Wahoo app, and pedal to wake the KICKR.</value>
-  </data>
-  <data name="Devices_Add" xml:space="preserve">
-    <value>Add device…</value>
-  </data>
-  <data name="Devices_AddTip" xml:space="preserve">
-    <value>Scan for another device; the connected ones stay connected</value>
-  </data>
-  <data name="Devices_ScanningToAdd" xml:space="preserve">
-    <value>Scanning. Select the devices to add; the connected ones stay connected. A new trainer or heart rate monitor replaces the current one.</value>
-  </data>
   <data name="Device_Saved" xml:space="preserve">
-    <value>saved, not connected</value>
-  </data>
-  <data name="Home_ChooseDevices" xml:space="preserve">
-    <value>Choose devices…</value>
-  </data>
-  <data name="Home_ChooseDevicesTip" xml:space="preserve">
-    <value>Scan for devices and pick different ones</value>
-  </data>
-  <data name="Home_ConnectSelected" xml:space="preserve">
-    <value>Connect selected</value>
-  </data>
-  <data name="Home_Disconnect" xml:space="preserve">
-    <value>Disconnect</value>
-  </data>
-  <data name="Home_CalibrateTip" xml:space="preserve">
-    <value>Spin-down calibration</value>
-  </data>
-  <data name="Home_Calibrate" xml:space="preserve">
-    <value>Calibrate</value>
-  </data>
-  <data name="Home_Simulate" xml:space="preserve">
-    <value>Simulate (no hardware)</value>
+    <value>paired, not connected</value>
   </data>
   <data name="Home_StartRide" xml:space="preserve">
     <value>Start ride</value>
@@ -633,9 +600,6 @@
   <data name="Settings_ConfirmForgetAll" xml:space="preserve">
     <value>Click again to forget all</value>
   </data>
-  <data name="Settings_DevicesHint" xml:space="preserve">
-    <value>Rename a device to tell it apart; an empty name goes back to the one it advertises. Forget one so Connect stops looking for it.</value>
-  </data>
   <data name="Settings_ForgetDevices" xml:space="preserve">
     <value>Forget all</value>
   </data>
@@ -807,9 +771,6 @@
   <data name="Settings_NotSignedIn" xml:space="preserve">
     <value>Not signed in</value>
   </data>
-  <data name="Settings_NoDevices" xml:space="preserve">
-    <value>None saved. The next Connect scans for devices and lets you pick.</value>
-  </data>
   <data name="Settings_RiderWeight" xml:space="preserve">
     <value>Rider ({0})</value>
   </data>
@@ -960,20 +921,11 @@
   <data name="Devices_NotConnected" xml:space="preserve">
     <value>Not connected</value>
   </data>
-  <data name="Devices_Connect" xml:space="preserve">
-    <value>Connect</value>
-  </data>
-  <data name="Devices_Find" xml:space="preserve">
-    <value>Find devices…</value>
-  </data>
   <data name="Devices_Simulated" xml:space="preserve">
     <value>Connected (simulated)</value>
   </data>
   <data name="Devices_Scanning" xml:space="preserve">
-    <value>Scanning. Pedal to wake the KICKR, then select the devices to use.</value>
-  </data>
-  <data name="Devices_PickTrainer" xml:space="preserve">
-    <value>Select a trainer first.</value>
+    <value>Scanning for devices…</value>
   </data>
   <data name="Devices_Canceled" xml:space="preserve">
     <value>Canceled</value>
@@ -1308,5 +1260,176 @@
   </data>
   <data name="Android_RideNotification" xml:space="preserve">
     <value>Keeps the trainer and sensors connected. Tap to go back to the ride.</value>
+  </data>
+  <data name="Settings_ManageDevices" xml:space="preserve">
+    <value>Devices…</value>
+  </data>
+  <data name="Home_Devices" xml:space="preserve">
+    <value>Devices</value>
+  </data>
+  <data name="Home_DevicesTip" xml:space="preserve">
+    <value>Pair, connect and calibrate</value>
+  </data>
+  <data name="Device_PowerMeter" xml:space="preserve">
+    <value>Power meter</value>
+  </data>
+  <data name="Device_CadenceSensor" xml:space="preserve">
+    <value>Cadence sensor</value>
+  </data>
+  <data name="Device_Watts" xml:space="preserve">
+    <value>{0} W</value>
+  </data>
+  <data name="Device_Rpm" xml:space="preserve">
+    <value>{0} rpm</value>
+  </data>
+  <data name="Device_Bpm" xml:space="preserve">
+    <value>{0} bpm</value>
+  </data>
+  <data name="Devices_PairOne" xml:space="preserve">
+    <value>Pair</value>
+  </data>
+  <data name="Devices_ConnectOne" xml:space="preserve">
+    <value>Connect</value>
+  </data>
+  <data name="Devices_Paired" xml:space="preserve">
+    <value>Paired {0}.</value>
+  </data>
+  <data name="Devices_PairTip" xml:space="preserve">
+    <value>Connect and save it. Replaces the paired device of its type, except controllers.</value>
+  </data>
+  <data name="Devices_PairHintHeartRate" xml:space="preserve">
+    <value>Wet the strap's contacts to wake it. Most straps take one Bluetooth connection, so disconnect it from your watch, phone or Zwift, or use ANT+.</value>
+  </data>
+  <data name="Devices_PairHintTrainer" xml:space="preserve">
+    <value>Pedal to wake it, and close Zwift, the Wahoo app or any other app using it.</value>
+  </data>
+  <data name="Devices_PairHintController" xml:space="preserve">
+    <value>Press a button to wake it, and close Zwift, which can hold a Click V2's left puck.</value>
+  </data>
+  <data name="Devices_PairHintSensor" xml:space="preserve">
+    <value>Turn the crank to wake it, and close other apps using it.</value>
+  </data>
+  <data name="Devices_Title" xml:space="preserve">
+    <value>Devices</value>
+  </data>
+  <data name="Devices_Subtitle" xml:space="preserve">
+    <value>Pair a trainer and any sensors or controllers.</value>
+  </data>
+  <data name="Devices_PairedSection" xml:space="preserve">
+    <value>Paired devices</value>
+  </data>
+  <data name="Devices_NonePaired" xml:space="preserve">
+    <value>Nothing paired. Pair a trainer to ride.</value>
+  </data>
+  <data name="Devices_PairedHint" xml:space="preserve">
+    <value>Type a name to rename a device; clear it to use the device's own name.</value>
+  </data>
+  <data name="Devices_NotConnectedRow" xml:space="preserve">
+    <value>not connected</value>
+  </data>
+  <data name="Devices_ConnectAll" xml:space="preserve">
+    <value>Connect all</value>
+  </data>
+  <data name="Devices_SourcesSection" xml:space="preserve">
+    <value>Readings</value>
+  </data>
+  <data name="Devices_SourcesNote" xml:space="preserve">
+    <value>Auto uses a power meter or sensor when one is sending, and the trainer otherwise. ERG still uses the trainer's own power reading.</value>
+  </data>
+  <data name="Devices_Power" xml:space="preserve">
+    <value>Power</value>
+  </data>
+  <data name="Devices_Cadence" xml:space="preserve">
+    <value>Cadence</value>
+  </data>
+  <data name="Devices_HeartRate" xml:space="preserve">
+    <value>Heart rate</value>
+  </data>
+  <data name="Devices_SourceAuto" xml:space="preserve">
+    <value>Auto</value>
+  </data>
+  <data name="Devices_SourceMonitor" xml:space="preserve">
+    <value>Heart rate monitor</value>
+  </data>
+  <data name="Devices_SourceOff" xml:space="preserve">
+    <value>Off</value>
+  </data>
+  <data name="Devices_From" xml:space="preserve">
+    <value>{0}: {1}</value>
+  </data>
+  <data name="Devices_NoReading" xml:space="preserve">
+    <value>No reading yet</value>
+  </data>
+  <data name="Devices_NotRecorded" xml:space="preserve">
+    <value>Not recorded</value>
+  </data>
+  <data name="Devices_NearbySection" xml:space="preserve">
+    <value>Nearby</value>
+  </data>
+  <data name="Devices_Scan" xml:space="preserve">
+    <value>Scan</value>
+  </data>
+  <data name="Devices_StopScan" xml:space="preserve">
+    <value>Stop scanning</value>
+  </data>
+  <data name="Devices_ScanningNote" xml:space="preserve">
+    <value>Scanning…</value>
+  </data>
+  <data name="Devices_NotScanningNote" xml:space="preserve">
+    <value>Scan to find devices.</value>
+  </data>
+  <data name="Devices_NothingFound" xml:space="preserve">
+    <value>Nothing found yet.</value>
+  </data>
+  <data name="Devices_NearbyHint" xml:space="preserve">
+    <value>Missing a device? Wake it, and close other apps using it.</value>
+  </data>
+  <data name="Devices_ColKind" xml:space="preserve">
+    <value>Type</value>
+  </data>
+  <data name="Devices_ColName" xml:space="preserve">
+    <value>Name</value>
+  </data>
+  <data name="Devices_ColConnection" xml:space="preserve">
+    <value>Connection</value>
+  </data>
+  <data name="Devices_ColAddress" xml:space="preserve">
+    <value>Address</value>
+  </data>
+  <data name="Devices_ColSignal" xml:space="preserve">
+    <value>Signal</value>
+  </data>
+  <data name="Devices_Disconnect" xml:space="preserve">
+    <value>Disconnect</value>
+  </data>
+  <data name="Devices_Calibrate" xml:space="preserve">
+    <value>Calibrate</value>
+  </data>
+  <data name="Devices_CalibrateTip" xml:space="preserve">
+    <value>Spin-down calibration</value>
+  </data>
+  <data name="Devices_Simulate" xml:space="preserve">
+    <value>Simulate (no hardware)</value>
+  </data>
+  <data name="Home_NoDevices" xml:space="preserve">
+    <value>No devices connected.</value>
+  </data>
+  <data name="Settings_DevicesNote" xml:space="preserve">
+    <value>Pairing and readings are on the Devices page.</value>
+  </data>
+  <data name="Devices_ConnectedOne" xml:space="preserve">
+    <value>Connected {0}.</value>
+  </data>
+  <data name="Devices_DisconnectedOne" xml:space="preserve">
+    <value>Disconnected {0}.</value>
+  </data>
+  <data name="Devices_LookingFor" xml:space="preserve">
+    <value>Looking for {0}…</value>
+  </data>
+  <data name="Devices_NotFound" xml:space="preserve">
+    <value>{0} was not found. {1}</value>
+  </data>
+  <data name="Devices_DisconnectAll" xml:space="preserve">
+    <value>Disconnect all</value>
   </data>
 </root>

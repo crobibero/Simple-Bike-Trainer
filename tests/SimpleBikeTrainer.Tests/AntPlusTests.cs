@@ -108,7 +108,7 @@ public sealed class AntPlusTests : IDisposable
     }
 
     [Fact]
-    public async Task AScanListsTrainersAndStrapsAndLeavesOtherDevicesOut()
+    public async Task AScanListsTheDevicesTheAppUsesAndLeavesOtherDevicesOut()
     {
         var stick = Plug();
         await using (var scanner = await AntScanner.CreateAsync(TestContext.Current.CancellationToken))
@@ -120,13 +120,17 @@ public sealed class AntPlusTests : IDisposable
             stick.Broadcast(0, [0x19, 0, 0, 0, 0, 0, 0, 0], number: 12345, type: 17, rssi: -55);
             stick.Broadcast(0, [0x04, 0, 0, 0, 0, 0, 0, 120], number: 777, type: 120 | 0x80);
             stick.Broadcast(0, [0x10, 0, 0, 0, 0, 0, 0, 0], number: 4242, type: 11);
-            await Until(() => scanner.Found.Count == 2);
+
+            // A speed-only sensor: nothing the app reads.
+            stick.Broadcast(0, [0x00, 0, 0, 0, 0, 0, 0, 0], number: 5151, type: 123);
+            await Until(() => scanner.Found.Count == 3);
 
             var trainer = Assert.Single(scanner.Found, d => d.Kind == DeviceKind.Trainer);
             Assert.Equal(DeviceId.AntPlus(12345), trainer.Id);
             Assert.Equal("ANT+ 12345", trainer.Id.ToString());
             Assert.Equal((short)-55, trainer.Rssi);
             Assert.Equal(DeviceId.AntPlus(777), Assert.Single(scanner.Found, d => d.Kind == DeviceKind.HeartRate).Id);
+            Assert.Equal(DeviceId.AntPlus(4242), Assert.Single(scanner.Found, d => d.Kind == DeviceKind.PowerMeter).Id);
         }
 
         // The last user resets the stick and lets it go.
@@ -171,11 +175,59 @@ public sealed class AntPlusTests : IDisposable
         var stick = Plug();
         var strap = new AntDeviceLink(777, 120, 1).Open(Found(DeviceKind.HeartRate));
 
-        // The connect waits 20 s for data; cancelling stands in for the wait running out.
+        // The connect waits 30 s for data; cancelling stands in for the wait running out.
         using var cancel = new CancellationTokenSource(TimeSpan.FromMilliseconds(500));
         await Assert.ThrowsAnyAsync<OperationCanceledException>(() => strap.ConnectAsync(cancel.Token));
 
         Assert.True(stick.Disposed);
+    }
+
+    [Fact]
+    public async Task APowerMeterConnectsOnItsDataWithPowerAndCadence()
+    {
+        var stick = Plug();
+        stick.Stream = [0x10, 1, 0xFF, 88, 0, 0, 0xFA, 0];
+        await using var meter = (AntPowerMeter)new AntDeviceLink(4242, AntPlusPages.BikePowerType, 5).Open(Found(DeviceKind.PowerMeter));
+        var readings = new ConcurrentQueue<SensorReading>();
+        meter.ReadingReceived += readings.Enqueue;
+
+        await meter.ConnectAsync(TestContext.Current.CancellationToken);
+
+        Assert.Contains(stick.Sent, f => f.Id == AntMessage.ChannelPeriod && f.Data is [0, 0xF6, 0x1F]);
+        await Until(() => !readings.IsEmpty);
+        Assert.Equal(new SensorReading(250, 88), readings.First());
+    }
+
+    [Fact]
+    public async Task AStrapLeftToConnectInTheBackgroundJoinsOnceItSends()
+    {
+        var stick = Plug();
+        var strap = new AntDeviceLink(777, AntPlusPages.HeartRateType, 1).Open(Found(DeviceKind.HeartRate));
+
+        strap.ConnectInBackground();
+        await Until(() => stick.Sent.Any(f => f.Id == AntMessage.OpenChannel));
+        Assert.False(strap.IsConnected);
+
+        stick.Stream = [0x04, 0, 0, 0, 0, 0, 7, 120];
+        await Until(() => strap.IsConnected);
+
+        await strap.DisposeAsync();
+        Assert.True(stick.Disposed);
+    }
+
+    [Fact]
+    public async Task AStrapLeftToConnectInTheBackgroundWaitsForTheStickToBePluggedIn()
+    {
+        AntStick.OpenTransport = () => null;
+        await using var strap = new AntDeviceLink(777, AntPlusPages.HeartRateType, 1).Open(Found(DeviceKind.HeartRate));
+
+        strap.ConnectInBackground();
+        var connecting = strap.Status;
+        await Until(() => strap.Status != connecting);
+
+        var stick = Plug();
+        stick.Stream = [0x04, 0, 0, 0, 0, 0, 7, 120];
+        await Until(() => strap.IsConnected);
     }
 
     [Fact]

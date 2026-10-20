@@ -1,0 +1,392 @@
+﻿<UserControl x:Class="SimpleBikeTrainer.Desktop.Views.DevicesView"
+             xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:c="using:SimpleBikeTrainer.Desktop.Controls"
+             xmlns:r="using:SimpleBikeTrainer.Desktop.Resources"
+             xmlns:s="using:SimpleBikeTrainer.Desktop.Services"
+             xmlns:shadui="clr-namespace:ShadUI;assembly=ShadUI"
+             xmlns:vm="using:SimpleBikeTrainer.Desktop.ViewModels"
+             x:DataType="vm:DevicesViewModel">
+    <DockPanel Margin="24">
+        <Grid Margin="0,0,0,16"
+              ColumnDefinitions="*,Auto"
+              DockPanel.Dock="Top">
+            <StackPanel Spacing="4">
+                <StackPanel Orientation="Horizontal"
+                            Spacing="12">
+                    <Path Width="34"
+                          Height="34"
+                          Classes="bike" />
+                    <TextBlock Classes="h1"
+                               Text="{x:Static r:Strings.Devices_Title}" />
+                </StackPanel>
+                <TextBlock Classes="muted"
+                           Text="{x:Static r:Strings.Devices_Subtitle}"
+                           TextWrapping="Wrap" />
+            </StackPanel>
+            <StackPanel Grid.Column="1"
+                        VerticalAlignment="Center"
+                        Orientation="Horizontal"
+                        Spacing="10">
+                <Button Classes="Outline"
+                        Command="{Binding CancelCommand}"
+                        Content="{x:Static r:Strings.Common_Cancel}" />
+                <Button Classes="Primary"
+                        Command="{Binding SaveCommand}"
+                        Content="{x:Static r:Strings.Common_Save}" />
+            </StackPanel>
+        </Grid>
+
+        <StackPanel Margin="0,0,0,12"
+                    DockPanel.Dock="Top"
+                    Orientation="Horizontal"
+                    Spacing="10">
+            <shadui:Loading Width="20"
+                            Height="20"
+                            IsVisible="{Binding Devices.IsConnecting}" />
+            <TextBlock MaxWidth="1300"
+                       VerticalAlignment="Center"
+                       Text="{Binding Devices.Status}"
+                       TextWrapping="Wrap" />
+        </StackPanel>
+
+        <ScrollViewer HorizontalScrollBarVisibility="Disabled">
+            <Grid MaxWidth="1400"
+                  HorizontalAlignment="Stretch"
+                  ColumnDefinitions="*,24,*">
+
+                <!--  Left: the paired devices, and which of them each reading comes from.  -->
+                <StackPanel Spacing="16">
+                    <TextBlock Classes="section"
+                               Text="{x:Static r:Strings.Devices_PairedSection}" />
+                    <Border Classes="card">
+                        <StackPanel Spacing="8">
+                            <TextBlock IsVisible="{Binding !HasPaired}"
+                                       Text="{x:Static r:Strings.Devices_NonePaired}"
+                                       TextWrapping="Wrap" />
+                            <TextBlock Classes="muted"
+                                       FontSize="12"
+                                       IsVisible="{Binding HasPaired}"
+                                       Text="{x:Static r:Strings.Devices_PairedHint}"
+                                       TextWrapping="Wrap" />
+
+                            <ItemsControl ItemsSource="{Binding Paired}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:DataType="vm:PairedDeviceRow">
+                                        <Grid Margin="0,4"
+                                              ColumnDefinitions="20,110,*,Auto"
+                                              RowDefinitions="Auto,Auto">
+                                            <Panel VerticalAlignment="Center">
+                                                <Ellipse Width="10"
+                                                         Height="10"
+                                                         Fill="{DynamicResource GoodBrush}"
+                                                         IsVisible="{Binding IsLinked}" />
+                                                <Ellipse Width="10"
+                                                         Height="10"
+                                                         Fill="{DynamicResource BadBrush}"
+                                                         IsVisible="{Binding IsTrying}" />
+                                                <Ellipse Width="10"
+                                                         Height="10"
+                                                         IsVisible="{Binding !IsConnected}"
+                                                         Stroke="{DynamicResource MutedColor}"
+                                                         StrokeThickness="1.5" />
+                                            </Panel>
+                                            <TextBlock Grid.Column="1"
+                                                       VerticalAlignment="Center"
+                                                       Classes="muted"
+                                                       Text="{Binding Kind}" />
+                                            <TextBox Grid.Column="2"
+                                                     VerticalAlignment="Center"
+                                                     PlaceholderText="{Binding AdvertisedName}"
+                                                     Text="{Binding Name}" />
+                                            <StackPanel Grid.Column="3"
+                                                        Margin="8,0,0,0"
+                                                        VerticalAlignment="Center"
+                                                        Orientation="Horizontal"
+                                                        Spacing="8">
+                                                <Button Classes="Outline"
+                                                        Command="{Binding $parent[UserControl].((vm:DevicesViewModel)DataContext).ConnectDeviceCommand}"
+                                                        CommandParameter="{Binding}"
+                                                        Content="{x:Static r:Strings.Devices_ConnectOne}"
+                                                        IsEnabled="{Binding !$parent[UserControl].((vm:DevicesViewModel)DataContext).Devices.IsConnecting}"
+                                                        IsVisible="{Binding CanConnect}" />
+                                                <shadui:Loading Width="24"
+                                                                Height="24"
+                                                                IsVisible="{Binding IsConnecting}" />
+                                                <Button Classes="Outline"
+                                                        Command="{Binding $parent[UserControl].((vm:DevicesViewModel)DataContext).DisconnectDeviceCommand}"
+                                                        CommandParameter="{Binding}"
+                                                        Content="{x:Static r:Strings.Devices_Disconnect}"
+                                                        IsEnabled="{Binding !$parent[UserControl].((vm:DevicesViewModel)DataContext).Devices.IsConnecting}"
+                                                        IsVisible="{Binding IsConnected}" />
+                                                <Button Classes.Destructive="{Binding ConfirmForget}"
+                                                        Classes.Outline="{Binding !ConfirmForget}"
+                                                        Command="{Binding $parent[UserControl].((vm:DevicesViewModel)DataContext).ForgetDeviceCommand}"
+                                                        CommandParameter="{Binding}"
+                                                        Content="{Binding ForgetLabel}" />
+                                                <Button Classes="Outline"
+                                                        Command="{Binding $parent[UserControl].((vm:DevicesViewModel)DataContext).KeepDeviceCommand}"
+                                                        CommandParameter="{Binding}"
+                                                        Content="{x:Static r:Strings.Common_Cancel}"
+                                                        IsVisible="{Binding ConfirmForget}" />
+                                            </StackPanel>
+                                            <!--  How it connects: one trainer can be paired over Bluetooth and over Wi-Fi or ANT+.  -->
+                                            <StackPanel Grid.Row="1"
+                                                        Grid.Column="2"
+                                                        Margin="0,2,0,0"
+                                                        Orientation="Horizontal"
+                                                        Spacing="8">
+                                                <TextBlock FontSize="12"
+                                                           FontWeight="SemiBold"
+                                                           Text="{Binding Id.TransportLabel}" />
+                                                <TextBlock Classes="muted"
+                                                           FontSize="12"
+                                                           Text="{Binding Id.Address}" />
+                                                <TextBlock Classes="muted"
+                                                           FontSize="12"
+                                                           IsVisible="{Binding IsConnected}"
+                                                           Text="{Binding Live.Detail, FallbackValue=''}" />
+                                                <TextBlock Classes="muted"
+                                                           FontSize="12"
+                                                           IsVisible="{Binding !IsConnected}"
+                                                           Text="{x:Static r:Strings.Devices_NotConnectedRow}" />
+                                            </StackPanel>
+                                        </Grid>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+
+                            <WrapPanel Margin="0,4,0,0"
+                                       ItemSpacing="8"
+                                       LineSpacing="8">
+                                <Button Classes="Outline"
+                                        Command="{Binding ConnectAllCommand}"
+                                        Content="{x:Static r:Strings.Devices_ConnectAll}"
+                                        IsVisible="{Binding CanConnectAll}" />
+                                <Button Classes="Outline"
+                                        Command="{Binding CancelConnectCommand}"
+                                        Content="{x:Static r:Strings.Common_Cancel}"
+                                        IsVisible="{Binding Devices.IsConnecting}" />
+                                <Button Classes="Outline"
+                                        Command="{Binding DisconnectCommand}"
+                                        Content="{x:Static r:Strings.Devices_DisconnectAll}"
+                                        IsVisible="{Binding Devices.CanDisconnect}" />
+                                <Button Classes="Outline"
+                                        Command="{Binding CalibrateCommand}"
+                                        IsVisible="{Binding Devices.IsConnected}"
+                                        ToolTip.Tip="{x:Static r:Strings.Devices_CalibrateTip}">
+                                    <c:IconLabel Symbol="Options"
+                                                 Text="{x:Static r:Strings.Devices_Calibrate}" />
+                                </Button>
+                                <Button Classes.Destructive="{Binding ConfirmForgetAll}"
+                                        Classes.Outline="{Binding !ConfirmForgetAll}"
+                                        Command="{Binding ForgetAllCommand}"
+                                        Content="{Binding ForgetAllLabel}"
+                                        IsVisible="{Binding HasPaired}" />
+                                <Button Classes="Outline"
+                                        Command="{Binding KeepAllCommand}"
+                                        Content="{x:Static r:Strings.Common_Cancel}"
+                                        IsVisible="{Binding ConfirmForgetAll}" />
+                            </WrapPanel>
+
+                            <!--  Only in test mode: a pretend trainer and heart rate monitor, for trying the app without hardware.  -->
+                            <CheckBox Content="{x:Static r:Strings.Devices_Simulate}"
+                                      IsChecked="{Binding Devices.Simulate}"
+                                      IsEnabled="{Binding !Devices.IsConnecting}"
+                                      IsVisible="{Binding Devices.CanSimulate}" />
+                        </StackPanel>
+                    </Border>
+
+                    <TextBlock Classes="section"
+                               Text="{x:Static r:Strings.Devices_SourcesSection}" />
+                    <Border Classes="card">
+                        <StackPanel Spacing="10">
+                            <TextBlock Classes="muted"
+                                       Text="{x:Static r:Strings.Devices_SourcesNote}"
+                                       TextWrapping="Wrap" />
+
+                            <ItemsControl ItemsSource="{Binding Metrics}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:DataType="vm:MetricChoice">
+                                        <Grid Margin="0,3"
+                                              ColumnDefinitions="110,220,*">
+                                            <TextBlock VerticalAlignment="Center"
+                                                       Text="{Binding Label}" />
+                                            <ComboBox Grid.Column="1"
+                                                      HorizontalAlignment="Stretch"
+                                                      AutomationProperties.Name="{Binding Label}"
+                                                      ItemsSource="{Binding Options}"
+                                                      SelectedItem="{Binding Selected}">
+                                                <ComboBox.ItemTemplate>
+                                                    <DataTemplate x:DataType="vm:SourceOption">
+                                                        <TextBlock Text="{Binding Label}" />
+                                                    </DataTemplate>
+                                                </ComboBox.ItemTemplate>
+                                            </ComboBox>
+                                            <TextBlock Grid.Column="2"
+                                                       Margin="12,0,0,0"
+                                                       VerticalAlignment="Center"
+                                                       Classes="muted"
+                                                       Text="{Binding Now}"
+                                                       TextTrimming="CharacterEllipsis" />
+                                        </Grid>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+
+                <!--  Right: what the scan finds, to pair one at a time.  -->
+                <StackPanel Grid.Column="2"
+                            Spacing="16">
+                    <TextBlock Classes="section"
+                               Text="{x:Static r:Strings.Devices_NearbySection}" />
+                    <Border Classes="card">
+                        <StackPanel Spacing="8">
+                            <Grid ColumnDefinitions="*,Auto">
+                                <TextBlock VerticalAlignment="Center"
+                                           Classes="muted"
+                                           IsVisible="{Binding Devices.IsScanning}"
+                                           Text="{x:Static r:Strings.Devices_ScanningNote}"
+                                           TextWrapping="Wrap" />
+                                <TextBlock VerticalAlignment="Center"
+                                           Classes="muted"
+                                           IsVisible="{Binding !Devices.IsScanning}"
+                                           Text="{x:Static r:Strings.Devices_NotScanningNote}"
+                                           TextWrapping="Wrap" />
+                                <Button Grid.Column="1"
+                                        Margin="8,0,0,0"
+                                        Classes="Outline"
+                                        Command="{Binding ScanCommand}"
+                                        Content="{Binding ScanLabel}"
+                                        IsEnabled="{Binding !Devices.IsConnecting}" />
+                            </Grid>
+
+                            <TextBlock Margin="0,8"
+                                       HorizontalAlignment="Center"
+                                       Classes="muted"
+                                       IsVisible="{Binding !Devices.Candidates.Count}"
+                                       Text="{x:Static r:Strings.Devices_NothingFound}" />
+
+                            <!--  A table: the shared column widths line each column up across the rows, whatever the names' lengths.  -->
+                            <StackPanel Grid.IsSharedSizeScope="True"
+                                        IsVisible="{Binding !!Devices.Candidates.Count}">
+                                <Grid Margin="0,0,0,4">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="120" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto"
+                                                          SharedSizeGroup="Connection" />
+                                        <ColumnDefinition Width="Auto"
+                                                          SharedSizeGroup="Address" />
+                                        <ColumnDefinition Width="Auto"
+                                                          SharedSizeGroup="Signal" />
+                                        <ColumnDefinition Width="Auto"
+                                                          SharedSizeGroup="Action" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Classes="muted"
+                                               FontSize="12"
+                                               FontWeight="SemiBold"
+                                               Text="{x:Static r:Strings.Devices_ColKind}" />
+                                    <TextBlock Grid.Column="1"
+                                               Classes="muted"
+                                               FontSize="12"
+                                               FontWeight="SemiBold"
+                                               Text="{x:Static r:Strings.Devices_ColName}" />
+                                    <TextBlock Grid.Column="2"
+                                               Margin="12,0,0,0"
+                                               Classes="muted"
+                                               FontSize="12"
+                                               FontWeight="SemiBold"
+                                               Text="{x:Static r:Strings.Devices_ColConnection}" />
+                                    <TextBlock Grid.Column="3"
+                                               Margin="12,0,0,0"
+                                               Classes="muted"
+                                               FontSize="12"
+                                               FontWeight="SemiBold"
+                                               Text="{x:Static r:Strings.Devices_ColAddress}" />
+                                    <TextBlock Grid.Column="4"
+                                               Margin="12,0,0,0"
+                                               Classes="muted"
+                                               FontSize="12"
+                                               FontWeight="SemiBold"
+                                               Text="{x:Static r:Strings.Devices_ColSignal}" />
+                                </Grid>
+                                <Border Height="1"
+                                        Margin="0,0,0,4"
+                                        Background="{DynamicResource BorderColor}" />
+                                <ItemsControl ItemsSource="{Binding Devices.Candidates}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate x:DataType="s:CandidateRow">
+                                            <Grid Margin="0,3">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="120" />
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="Auto"
+                                                                      SharedSizeGroup="Connection" />
+                                                    <ColumnDefinition Width="Auto"
+                                                                      SharedSizeGroup="Address" />
+                                                    <ColumnDefinition Width="Auto"
+                                                                      SharedSizeGroup="Signal" />
+                                                    <ColumnDefinition Width="Auto"
+                                                                      SharedSizeGroup="Action" />
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock VerticalAlignment="Center"
+                                                           Classes="muted"
+                                                           Text="{Binding KindLabel}" />
+                                                <TextBlock Grid.Column="1"
+                                                           VerticalAlignment="Center"
+                                                           FontWeight="SemiBold"
+                                                           Text="{Binding Name}"
+                                                           TextTrimming="CharacterEllipsis" />
+                                                <!--  A trainer can show up over Bluetooth and Wi-Fi, or Bluetooth and ANT+: this tells them apart.  -->
+                                                <TextBlock Grid.Column="2"
+                                                           Margin="12,0,0,0"
+                                                           VerticalAlignment="Center"
+                                                           FontSize="12"
+                                                           FontWeight="SemiBold"
+                                                           Text="{Binding Id.TransportLabel}" />
+                                                <TextBlock Grid.Column="3"
+                                                           Margin="12,0,0,0"
+                                                           VerticalAlignment="Center"
+                                                           Classes="muted"
+                                                           FontSize="12"
+                                                           Text="{Binding Id.Address}" />
+                                                <TextBlock Grid.Column="4"
+                                                           Margin="12,0,0,0"
+                                                           VerticalAlignment="Center"
+                                                           Classes="muted"
+                                                           FontSize="12"
+                                                           Text="{Binding Signal}" />
+                                                <Panel Grid.Column="5"
+                                                       Margin="12,0,0,0">
+                                                    <Button MinWidth="88"
+                                                            Classes="Outline"
+                                                            Command="{Binding $parent[UserControl].((vm:DevicesViewModel)DataContext).PairCommand}"
+                                                            CommandParameter="{Binding}"
+                                                            Content="{Binding PairLabel}"
+                                                            IsEnabled="{Binding !$parent[UserControl].((vm:DevicesViewModel)DataContext).Devices.IsConnecting}"
+                                                            IsVisible="{Binding !IsPairing}"
+                                                            ToolTip.Tip="{x:Static r:Strings.Devices_PairTip}" />
+                                                    <shadui:Loading Width="24"
+                                                                    Height="24"
+                                                                    IsVisible="{Binding IsPairing}" />
+                                                </Panel>
+                                            </Grid>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+
+                            <TextBlock Classes="muted"
+                                       FontSize="12"
+                                       Text="{x:Static r:Strings.Devices_NearbyHint}"
+                                       TextWrapping="Wrap" />
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </Grid>
+        </ScrollViewer>
+    </DockPanel>
+</UserControl>

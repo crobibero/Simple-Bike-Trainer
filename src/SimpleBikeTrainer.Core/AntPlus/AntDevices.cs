@@ -18,6 +18,8 @@ public sealed class AntDeviceLink(int deviceNumber, byte deviceType, byte transm
     {
         DeviceKind.Trainer => new AntFecTrainer(this, found.Name, found.Id),
         DeviceKind.HeartRate => new AntHeartRateMonitor(this, found.Name, found.Id),
+        DeviceKind.PowerMeter => new AntPowerMeter(this, found.Name, found.Id),
+        DeviceKind.CadenceSensor => new AntCadenceSensor(this, found.Name, found.Id),
         _ => throw new ArgumentOutOfRangeException(nameof(found)),
     };
 }
@@ -25,14 +27,17 @@ public sealed class AntDeviceLink(int deviceNumber, byte deviceType, byte transm
 /// <summary>ANT+ has no connection as such: the device counts as connected while data arrives.</summary>
 public abstract class AntConnection : DeviceConnection
 {
-    private static readonly TimeSpan ConnectTimeout = TimeSpan.FromSeconds(20);
+    private static readonly TimeSpan ConnectTimeout = TimeSpan.FromSeconds(30);
 
     /// <summary>No data this long counts as disconnected, as does no data yet (a <c>_lastData</c> of 0).</summary>
     private static readonly long QuietMs = 3000;
 
     private readonly TaskCompletionSource _firstData = new(TaskCreationOptions.RunContinuationsAsynchronously);
+    private readonly CancellationTokenSource _cts = new();
     private AntStick? _stick;
     private AntChannel? _channel;
+    private Task? _opening;
+    private volatile string? _openError;
     private long _lastData;
     private volatile bool _lost;
 
@@ -45,6 +50,7 @@ public abstract class AntConnection : DeviceConnection
     public override bool IsConnected => _channel is not null && Environment.TickCount64 - Interlocked.Read(ref _lastData) < QuietMs;
 
     public override string? Status => IsConnected ? null
+        : _openError is { } error ? error
         : _stick is { IsAvailable: false } ? CoreStrings.Ant_StickLost
         : _firstData.Task.IsCompleted ? CoreStrings.Ble_Disconnected
         : CoreStrings.Ble_Connecting;
@@ -55,37 +61,54 @@ public abstract class AntConnection : DeviceConnection
 
     public override async Task ConnectAsync(CancellationToken cancellationToken)
     {
-        _stick = await AntStick.AcquireAsync(cancellationToken) ?? throw new InvalidOperationException(CoreStrings.Ant_NoStick);
-        _stick.Available += OnStickAvailable;
+        await OpenAsync(cancellationToken);
         try
         {
-            _channel = await _stick.OpenChannelAsync(new AntChannelConfig(Link.DeviceNumber, Link.DeviceType, Link.TransmissionType, Period), cancellationToken);
-            _channel.DataReceived += OnData;
-            _channel.SignalLost += OnSignalLost;
-            try
-            {
-                await _firstData.Task.WaitAsync(ConnectTimeout, cancellationToken);
-            }
-            catch (TimeoutException)
+            await _firstData.Task.WaitAsync(ConnectTimeout, cancellationToken);
+        }
+        catch (Exception e)
+        {
+            await CloseAsync();
+            if (e is TimeoutException)
             {
                 throw new InvalidOperationException(Loc.Format(CoreStrings.Ant_NoData, Name));
             }
-        }
-        catch
-        {
-            await CloseAsync();
+
             throw;
+        }
+    }
+
+    /// <inheritdoc/>
+    public override void ConnectInBackground()
+    {
+        // The channel searches for the device with no time limit, so it only needs to be open.
+        if (_channel is null && _opening is not { IsCompleted: false })
+        {
+            _opening = Task.Run(KeepOpeningAsync);
         }
     }
 
     public override async ValueTask DisposeAsync()
     {
+        await _cts.CancelAsync();
+        if (_opening is { } opening)
+        {
+            try
+            {
+                await opening;
+            }
+            catch (OperationCanceledException)
+            {
+            }
+        }
+
         if (IsConnected)
         {
             await TryStopAsync();
         }
 
         await CloseAsync();
+        _cts.Dispose();
         GC.SuppressFinalize(this);
     }
 
@@ -99,6 +122,43 @@ public abstract class AntConnection : DeviceConnection
     /// <summary>Sends a page as acknowledged data. False when the device did not acknowledge it.</summary>
     protected Task<bool> SendAsync(byte[] page, CancellationToken cancellationToken) =>
         _channel is { } channel ? channel.SendAcknowledgedAsync(page, cancellationToken) : Task.FromResult(false);
+
+    private async Task OpenAsync(CancellationToken cancellationToken)
+    {
+        _stick = await AntStick.AcquireAsync(cancellationToken) ?? throw new InvalidOperationException(CoreStrings.Ant_NoStick);
+        _stick.Available += OnStickAvailable;
+        try
+        {
+            _channel = await _stick.OpenChannelAsync(new AntChannelConfig(Link.DeviceNumber, Link.DeviceType, Link.TransmissionType, Period), cancellationToken);
+            _channel.DataReceived += OnData;
+            _channel.SignalLost += OnSignalLost;
+        }
+        catch
+        {
+            await CloseAsync();
+            throw;
+        }
+    }
+
+    /// <summary>Tries again while the stick is missing or will not open, e.g. until it is plugged back in.</summary>
+    private async Task KeepOpeningAsync()
+    {
+        while (true)
+        {
+            try
+            {
+                await OpenAsync(_cts.Token);
+                _openError = null;
+                return;
+            }
+            catch (Exception e) when (e is not OperationCanceledException)
+            {
+                _openError = e.Message;
+            }
+
+            await Task.Delay(AntStick.RetryDelay, _cts.Token);
+        }
+    }
 
     private void OnData(AntReceived received)
     {
@@ -281,5 +341,49 @@ public sealed class AntHeartRateMonitor(AntDeviceLink link, string name, DeviceI
         {
             HeartRateReceived?.Invoke(bpm);
         }
+    }
+}
+
+/// <summary>A power meter on the Bicycle Power profile: power and, when it measures it, cadence, from page 16.</summary>
+public sealed class AntPowerMeter(AntDeviceLink link, string name, DeviceId id) : AntConnection(link, name, id), ICyclingSensor
+{
+    public event Action<SensorReading>? ReadingReceived;
+
+    protected override ushort Period => AntPlusPages.BikePowerPeriod;
+
+    protected override void OnPage(byte[] page)
+    {
+        if (AntPlusPages.BikePower(page) is { } reading)
+        {
+            ReadingReceived?.Invoke(new SensorReading(reading.Power, reading.Cadence));
+        }
+    }
+}
+
+/// <summary>A cadence sensor, or a combined speed and cadence sensor, of which only the cadence is used.</summary>
+public sealed class AntCadenceSensor(AntDeviceLink link, string name, DeviceId id) : AntConnection(link, name, id), ICyclingSensor
+{
+    private readonly CrankCadence _cadence = new();
+
+    public event Action<SensorReading>? ReadingReceived;
+
+    private bool Combined => Link.DeviceType == AntPlusPages.BikeSpeedCadenceType;
+
+    protected override ushort Period => Combined ? AntPlusPages.BikeSpeedCadencePeriod : AntPlusPages.BikeCadencePeriod;
+
+    protected override void OnPage(byte[] page)
+    {
+        if (AntPlusPages.Crank(page, Combined) is not { } crank)
+        {
+            return;
+        }
+
+        double? cadence;
+        lock (_cadence)
+        {
+            cadence = _cadence.Update(crank, Environment.TickCount64);
+        }
+
+        ReadingReceived?.Invoke(new SensorReading(null, cadence));
     }
 }

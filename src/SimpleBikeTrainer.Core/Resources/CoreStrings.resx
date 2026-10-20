@@ -171,16 +171,13 @@
     <value>No trainer found. Check that the KICKR is on and not connected to another app.</value>
   </data>
   <data name="Connect_SavedMissing" xml:space="preserve">
-    <value>Trainer {0} was not found. Scan again to pick another trainer.</value>
+    <value>Trainer {0} was not found. Pedal to wake it, or pair another trainer.</value>
   </data>
   <data name="Connect_Connecting" xml:space="preserve">
     <value>Connecting to {0}…</value>
   </data>
   <data name="Connect_ConnectingAt" xml:space="preserve">
     <value>Connecting to {0} ({1})…</value>
-  </data>
-  <data name="Connect_HrFailed" xml:space="preserve">
-    <value>Heart rate monitor {0} did not connect: {1}</value>
   </data>
   <data name="Connect_DeviceFailed" xml:space="preserve">
     <value>{0} ({1}) did not connect: {2}</value>
@@ -391,5 +388,23 @@
   </data>
   <data name="Transport_Wifi" xml:space="preserve">
     <value>Wi-Fi</value>
+  </data>
+  <data name="Connect_NotFound" xml:space="preserve">
+    <value>{0} was not found. Wake it, then connect again.</value>
+  </data>
+  <data name="Connect_StillTrying" xml:space="preserve">
+    <value>{0} ({1}) did not connect ({2}); still trying in the background.</value>
+  </data>
+  <data name="Connect_NotInRange" xml:space="preserve">
+    <value>{0} ({1}) is not in range; it joins the ride once it is.</value>
+  </data>
+  <data name="Connect_Retrying" xml:space="preserve">
+    <value>{0} did not connect ({1}). Trying again…</value>
+  </data>
+  <data name="Ant_PowerName" xml:space="preserve">
+    <value>ANT+ power meter {0}</value>
+  </data>
+  <data name="Ant_CadenceName" xml:space="preserve">
+    <value>ANT+ cadence sensor {0}</value>
   </data>
 </root>

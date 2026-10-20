@@ -1,5 +1,6 @@
 using System.Text.Json.Serialization;
 using SimpleBikeTrainer.Ble;
+using SimpleBikeTrainer.Devices;
 using System.Text.Json;
 
 namespace SimpleBikeTrainer;
@@ -51,9 +52,47 @@ public sealed class SavedDevice
     public DeviceId Id => new(Transport, Address);
 }
 
+/// <summary>Where a ride takes power, cadence and heart rate from.</summary>
+public sealed class MetricsConfig
+{
+    public MetricSource Power { get; set; }
+
+    public MetricSource Cadence { get; set; }
+
+    public MetricSource HeartRate { get; set; }
+
+    public MetricSource this[Metric metric]
+    {
+        get => metric switch
+        {
+            Metric.Power => Power,
+            Metric.Cadence => Cadence,
+            _ => HeartRate,
+        };
+        set
+        {
+            switch (metric)
+            {
+                case Metric.Power:
+                    Power = value;
+                    break;
+                case Metric.Cadence:
+                    Cadence = value;
+                    break;
+                default:
+                    HeartRate = value;
+                    break;
+            }
+        }
+    }
+}
+
 public sealed class DevicesConfig
 {
-    /// <summary>At most one trainer and one heart rate monitor; with none saved, Connect takes any in range.</summary>
+    /// <summary>
+    /// At most one of each kind, but controllers. With no trainer saved Connect takes any in range, and with no heart
+    /// rate monitor saved any monitor too; power meters and cadence sensors connect only once paired.
+    /// </summary>
     public List<SavedDevice> Saved { get; set; } = [];
 
     /// <summary>True once the rider picked devices from a scan; an empty heart rate or shifter slot then means none.</summary>
@@ -65,18 +104,29 @@ public sealed class DevicesConfig
     /// <summary>Wi-Fi trainers at a fixed address, "host" or "host:port", for networks where the scan cannot find them by mDNS.</summary>
     public List<string> WifiTrainers { get; set; } = [];
 
-    [JsonIgnore]
-    public DeviceId? Trainer => Saved.FirstOrDefault(d => d.Kind == DeviceKind.Trainer)?.Id;
+    public MetricsConfig Metrics { get; set; } = new();
 
     [JsonIgnore]
-    public DeviceId? HeartRate => Saved.FirstOrDefault(d => d.Kind == DeviceKind.HeartRate)?.Id;
+    public DeviceId? Trainer => Of(DeviceKind.Trainer);
+
+    [JsonIgnore]
+    public DeviceId? HeartRate => Of(DeviceKind.HeartRate);
+
+    [JsonIgnore]
+    public DeviceId? PowerMeter => Of(DeviceKind.PowerMeter);
+
+    [JsonIgnore]
+    public DeviceId? CadenceSensor => Of(DeviceKind.CadenceSensor);
 
     [JsonIgnore]
     public IReadOnlyList<DeviceId> Shifters => [.. Saved.Where(d => d.Kind == DeviceKind.Shifter).Select(d => d.Id)];
 
+    /// <summary>The saved device of a kind other than controllers, of which there can be several.</summary>
+    public DeviceId? Of(DeviceKind kind) => Saved.FirstOrDefault(d => d.Kind == kind)?.Id;
+
     public SavedDevice? Find(DeviceId id) => Saved.FirstOrDefault(d => d.Id == id);
 
-    /// <summary>A trainer or heart rate monitor replaces the saved one; controllers add up. A device saved already keeps its alias.</summary>
+    /// <summary>A device replaces the saved one of its kind, but controllers add up. A device saved already keeps its alias.</summary>
     public void Pick(DeviceKind kind, DeviceId id, string name)
     {
         var existing = Find(id);
@@ -124,6 +174,9 @@ public sealed class DevicesConfig
     public string Describe(DeviceId id) => NameOf(id) is var name && name != id.Address ? $"{name} ({id})" : id.ToString();
 
     public void Forget(DeviceId id) => Saved.RemoveAll(d => d.Id == id);
+
+    /// <summary>Forgets every device, keeping the adapter, the Wi-Fi addresses and where readings come from.</summary>
+    public DevicesConfig WithoutDevices() => new() { Adapter = Adapter, WifiTrainers = WifiTrainers, Metrics = Metrics };
 }
 
 /// <summary>How the trainer is held off ERG steps: in free rides, on routes, and with ERG switched off.</summary>

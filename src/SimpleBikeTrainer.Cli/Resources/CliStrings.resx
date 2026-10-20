@@ -73,6 +73,9 @@ Settings are saved in ~/.config/simple-bike-trainer/config.json, or %APPDATA%\si
   <data name="Cli_Connected" xml:space="preserve">
     <value>Connected</value>
   </data>
+  <data name="Cli_StillConnecting" xml:space="preserve">
+    <value>Still connecting</value>
+  </data>
   <data name="Cli_NoClick" xml:space="preserve">
     <value>No Zwift Click connected; shift with the keyboard (+/-).</value>
   </data>
@@ -170,6 +173,9 @@ Settings are saved in ~/.config/simple-bike-trainer/config.json, or %APPDATA%\si
   </data>
   <data name="Cli_Network" xml:space="preserve">
     <value>network</value>
+  </data>
+  <data name="Cli_InRange" xml:space="preserve">
+    <value>in range</value>
   </data>
   <data name="Cli_PickTrainer" xml:space="preserve">
     <value>Trainer to use:</value>
@@ -601,5 +607,32 @@ Settings are saved in ~/.config/simple-bike-trainer/config.json, or %APPDATA%\si
   </data>
   <data name="Cli_MustBePositive" xml:space="preserve">
     <value>{0} must be more than 0.</value>
+  </data>
+  <data name="Cli_PickPowerMeter" xml:space="preserve">
+    <value>Power meter:</value>
+  </data>
+  <data name="Cli_PickCadence" xml:space="preserve">
+    <value>Cadence sensor:</value>
+  </data>
+  <data name="Cli_None" xml:space="preserve">
+    <value>(none)</value>
+  </data>
+  <data name="Cli_NoDevice" xml:space="preserve">
+    <value>none</value>
+  </data>
+  <data name="Cli_RowPowerMeter" xml:space="preserve">
+    <value>Power meter</value>
+  </data>
+  <data name="Cli_RowCadence" xml:space="preserve">
+    <value>Cadence sensor</value>
+  </data>
+  <data name="Cli_RowReadings" xml:space="preserve">
+    <value>Readings from</value>
+  </data>
+  <data name="Cli_ReadingsValue" xml:space="preserve">
+    <value>power {0}, cadence {1}, heart rate {2}</value>
+  </data>
+  <data name="Cli_BadSource" xml:space="preserve">
+    <value>Unknown source "{0}" for {1}: use {2}.</value>
   </data>
 </root>

@@ -125,7 +125,7 @@ internal sealed class RideCliCommand(IHttpClientFactory http) : TrainerCommand<R
             ? Simulate(clock, !settings.NoHeartRate)
             : await ConnectAsync(config, !settings.NoHeartRate, !settings.NoClick, ct);
 
-        var session = new RideSession(workout, options, devices.Trainer, devices.HeartRate, devices.Shifters, clock);
+        var session = new RideSession(workout, options, devices, clock);
 
         // Keep the screen on for the ride; the desktop releases it when this process ends.
         await using var awake = await KeepAwake.AcquireAsync(Loc.Format(CliStrings.Cli_AwakeReason, workout.Name));
@@ -167,9 +167,12 @@ internal sealed class RideCliCommand(IHttpClientFactory http) : TrainerCommand<R
             }, ct);
         });
 
+        // A sensor that did not answer yet keeps trying, and joins the ride once it does.
         foreach (var device in devices!.All)
         {
-            AnsiConsole.MarkupLine($"[green]{Markup.Escape(CliStrings.Cli_Connected)}[/] {Markup.Escape(device.Name)}");
+            AnsiConsole.MarkupLine(device.IsConnected
+                ? $"[green]{Markup.Escape(CliStrings.Cli_Connected)}[/] {Markup.Escape(device.Name)}"
+                : $"[yellow]{Markup.Escape(CliStrings.Cli_StillConnecting)}[/] {Markup.Escape(device.Name)}");
         }
 
         if (click && devices.Shifters.Count == 0)

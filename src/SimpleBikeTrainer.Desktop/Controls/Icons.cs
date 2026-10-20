@@ -5,6 +5,7 @@ using FluentUIIconsLike;
     FluentIconSymbol.ArchiveArrowBack,
     FluentIconSymbol.ArrowClockwise,
     FluentIconSymbol.ArrowLeft,
+    FluentIconSymbol.Bluetooth,
     FluentIconSymbol.CheckmarkCircle,
     FluentIconSymbol.CloudCheckmark,
     FluentIconSymbol.CloudOff,

@@ -10,6 +10,7 @@ using SimpleBikeTrainer.Desktop.Views;
 using SimpleBikeTrainer.Desktop;
 using SimpleBikeTrainer.Devices;
 using SimpleBikeTrainer.Intervals;
+using SimpleBikeTrainer.Resources;
 using SimpleBikeTrainer.Session;
 using SimpleBikeTrainer.Workouts;
 
@@ -28,6 +29,13 @@ public static class HeadlessApp
 
     public static IHttpClientFactory Http { get; } =
         new ServiceCollection().AddTrainerHttpClients().BuildServiceProvider().GetRequiredService<IHttpClientFactory>();
+
+    /// <summary>Takes the place of the speakers, so the simulated rides' cues never play out loud.</summary>
+    public static readonly Action<string> Silent = _ => { };
+
+    /// <summary>Runs as the test assembly loads, before any test can start a ride.</summary>
+    [System.Runtime.CompilerServices.ModuleInitializer]
+    internal static void Mute() => Services.Sounds.Played = Silent;
 }
 
 /// <summary>The desktop test rides in real time, so it has its own project and process, apart from the other ride tests.</summary>
@@ -89,37 +97,71 @@ public sealed class DesktopTests(HeadlessSession headless) : IDisposable
             main.Home.AddBuiltIns();
             main.Home.Selected = main.Home.Cards[0];
 
-            // First connect: a picker, with no automatic connect. Selecting a second trainer clears the first.
+            // Nothing paired or connected: home says so, and its one device button opens the Devices page, which scans.
             Assert.False(main.Devices.HasSaved);
-            Assert.Equal("Find devices…", main.Devices.ConnectLabel);
-            main.Devices.IsScanning = true;
-            main.Devices.AddCandidate(Found(DeviceId.Bluetooth("CE:D1:96:5E:7A:BB"), "KICKR CORE 6107", DeviceKind.Trainer, -58), config.Devices);
-            main.Devices.AddCandidate(Found(DeviceId.Bluetooth("C8:A3:BD:AE:3B:B6"), "Zwift Click", DeviceKind.Shifter, -64), config.Devices);
-            main.Devices.AddCandidate(Found(DeviceId.Bluetooth("E1:22:33:44:55:66"), "HRM-Pro:123456", DeviceKind.HeartRate, -71), config.Devices);
-            main.Devices.AddCandidate(Found(DeviceId.Bluetooth("D4:00:00:00:00:01"), "KICKR BIKE 0001", DeviceKind.Trainer, null), config.Devices);
-            Assert.Equal(["Trainer", "Trainer", "Heart rate", "Controller"], main.Devices.Candidates.Select(c => c.KindLabel));
-            Assert.False(main.Devices.HasTrainerPicked);
-            main.Devices.Candidates[0].Selected = true;
-            main.Devices.Candidates[1].Selected = true;
-            Assert.False(main.Devices.Candidates[0].Selected);
-            main.Devices.Candidates[0].Selected = true;
-            main.Devices.Candidates[2].Selected = true;
-            main.Devices.Candidates[3].Selected = true;
-            Assert.True(main.Devices.HasTrainerPicked);
-            Assert.Equal("not in range", main.Devices.Candidates[1].Signal);
+            Assert.False(main.Devices.HasConnected);
+            var radio = new FakeScanner();
+            main.Devices.OpenScanner = _ => Task.FromResult<IDeviceScanner>(radio);
+            main.Home.ShowDevicesCommand.Execute(null);
+            var pairing = Assert.IsType<DevicesViewModel>(main.Current);
+            await Until(() => main.Devices.IsScanning, TimeSpan.FromSeconds(5));
+            var link = new FakeLink();
+            radio.Find(Found(DeviceId.Bluetooth("CE:D1:96:5E:7A:BB"), "KICKR CORE 6107", DeviceKind.Trainer, -58, link));
+            radio.Find(Found(DeviceId.Bluetooth("C8:A3:BD:AE:3B:B6"), "Zwift Click", DeviceKind.Shifter, -64, link));
+            radio.Find(Found(DeviceId.Bluetooth("E1:22:33:44:55:66"), "HRM-Pro:123456", DeviceKind.HeartRate, -71, link));
+            radio.Find(Found(DeviceId.Bluetooth("D4:00:00:00:00:01"), "KICKR BIKE 0001", DeviceKind.Trainer, null, link));
+            radio.Find(Found(DeviceId.Bluetooth("F0:11:22:33:44:55"), "4iiii PRECISION", DeviceKind.PowerMeter, -66, link));
+            radio.Find(Found(DeviceId.AntPlus(5151), "ANT+ cadence sensor 5151", DeviceKind.CadenceSensor, null, link));
 
             // The same trainer over Wi-Fi, and a strap over ANT+: the transport column tells them apart.
-            main.Devices.AddCandidate(Found(DeviceId.Wifi("DC:06:75:B6:E8:20"), "KICKR CORE 6107", DeviceKind.Trainer, null), config.Devices);
-            main.Devices.AddCandidate(Found(DeviceId.AntPlus(12345), "HRM-Dual", DeviceKind.HeartRate, null), config.Devices);
-            Assert.Equal(["Bluetooth", "Bluetooth", "Wi-Fi", "Bluetooth", "ANT+", "Bluetooth"], main.Devices.Candidates.Select(c => c.Id.TransportLabel));
+            radio.Find(Found(DeviceId.Wifi("DC:06:75:B6:E8:20"), "KICKR CORE 6107", DeviceKind.Trainer, null, link));
+            radio.Find(Found(DeviceId.AntPlus(12345), "HRM-Dual", DeviceKind.HeartRate, null, link));
+            Dispatcher.UIThread.RunJobs();
+            Assert.Equal(
+                ["Trainer", "Trainer", "Trainer", "Power meter", "Cadence sensor", "Heart rate", "Heart rate", "Controller"],
+                main.Devices.Candidates.Select(c => c.KindLabel));
+            Assert.Equal(["Bluetooth", "Bluetooth", "Wi-Fi", "Bluetooth", "ANT+", "Bluetooth", "ANT+", "Bluetooth"], main.Devices.Candidates.Select(c => c.Id.TransportLabel));
+            Assert.Equal("not in range", main.Devices.Candidates[1].Signal);
             Assert.Equal("on the network", main.Devices.Candidates[2].Signal);
             Assert.Equal("DC:06:75:B6:E8:20", main.Devices.Candidates[2].Id.Address);
-            Assert.Equal("12345", main.Devices.Candidates[4].Id.Address);
-            Assert.Equal("in range", main.Devices.Candidates[4].Signal);
-            await ShootBoth(window, "0-picker");
-            await main.Devices.CancelAsync();
-            Assert.False(main.Devices.IsScanning);
+            Assert.Equal("in range", main.Devices.Candidates[6].Signal);
+            Assert.All(main.Devices.Candidates, c => Assert.Equal("Pair", c.PairLabel));
+
+            // Pairing the strap connects and saves it, with no trainer yet, and its row shows what it reads.
+            await pairing.PairCommand.ExecuteAsync(main.Devices.Candidates.Single(c => c.Name == "HRM-Pro:123456"));
+            Assert.Equal("Paired HRM-Pro:123456.", main.Devices.Status);
+            Assert.Equal(DeviceId.Bluetooth("E1:22:33:44:55:66"), AppConfig.Load(config.Path).Devices.HeartRate);
+            Assert.False(main.Devices.IsConnected);
+            Assert.True(main.Devices.IsScanning);
+            Assert.DoesNotContain(main.Devices.Candidates, c => c.Name == "HRM-Pro:123456");
+            var paired = Assert.Single(pairing.Paired);
+            Assert.True(paired.IsConnected);
+
+            // The scan goes on and Disconnect shows; Connect all does not, with no trainer paired.
+            Assert.True(main.Devices.CanDisconnect);
+            Assert.False(pairing.CanConnectAll);
+            link.Opened.Single().Beat(72);
+            paired.Live!.Refresh();
+            Assert.Equal("72 bpm", paired.Live.Detail);
+
+            // A strap that will not answer is not saved, and the page says what to try.
+            link.Fails.Add(DeviceId.AntPlus(12345));
+            await pairing.PairCommand.ExecuteAsync(main.Devices.Candidates.Single(c => c.Name == "HRM-Dual"));
+            Assert.Contains(Strings.Devices_PairHintHeartRate, main.Devices.Status, StringComparison.Ordinal);
+            Assert.Contains("HRM-Dual (ANT+ 12345) did not connect", main.Devices.Status, StringComparison.Ordinal);
+            Assert.Equal(DeviceId.Bluetooth("E1:22:33:44:55:66"), AppConfig.Load(config.Path).Devices.HeartRate);
+            Assert.True(link.Opened[^1].Disposed);
+            await ShootBoth(window, "0-devices");
+
+            // Save goes back home and stops the scan; the strap stays connected until it is forgotten.
+            pairing.SaveCommand.Execute(null);
+            Assert.Same(main.Home, main.Current);
+            await Until(() => !main.Devices.IsScanning, TimeSpan.FromSeconds(5));
             Assert.Empty(main.Devices.Candidates);
+            Assert.Equal(["HRM-Pro:123456"], main.Devices.Rows.Select(r => r.Name));
+            await main.Devices.ForgetAllAsync();
+            Assert.Empty(main.Devices.Rows);
+            Assert.True(link.Opened[0].Disposed);
 
             Assert.Equal("Simple Bike Trainer", window.Title);
             Assert.Equal(3, main.Home.PlannedCards.Count);
@@ -335,9 +377,12 @@ public sealed class DesktopTests(HeadlessSession headless) : IDisposable
             await past.DoneCommand.ExecuteAsync(null);
             Assert.Same(history, main.Current);
 
-            // Calibration, on the simulated trainer, which plays a spin-down.
+            // Calibration, from the Devices page, on the simulated trainer, which plays a spin-down.
             ((SimulatedTrainer)main.Devices.Devices!.Trainer).SpinDownStepTime = TimeSpan.FromMilliseconds(300);
-            main.ShowCalibration();
+            main.Home.ShowDevicesCommand.Execute(null);
+            var devicesPage = (DevicesViewModel)main.Current;
+            Assert.True(devicesPage.Devices.IsConnected);
+            devicesPage.CalibrateCommand.Execute(null);
             var calibration = (CalibrationViewModel)main.Current;
             Assert.True(calibration.IsSupported);
             await calibration.StartCommand.ExecuteAsync(null);
@@ -346,6 +391,10 @@ public sealed class DesktopTests(HeadlessSession headless) : IDisposable
             await ShootBoth(window, "10-calibrate");
             await Until(() => calibration.Succeeded == true, TimeSpan.FromSeconds(5));
             calibration.BackCommand.Execute(null);
+            Assert.Same(devicesPage, main.Current);
+            Assert.Equal(["Simulated trainer", "Simulated heart rate"], devicesPage.Devices.Rows.Select(r => r.Name));
+            devicesPage.CancelCommand.Execute(null);
+            Assert.Same(main.Home, main.Current);
 
             // A ride cut off mid-way: the home page offers its checkpoint, and saving it opens its summary.
             var cut = Path.Combine(config.RidesDirectory, "2026-10-13-0600-cut-short.fit");
@@ -366,7 +415,7 @@ public sealed class DesktopTests(HeadlessSession headless) : IDisposable
                 await r.StopAsync();
             }
 
-            SimpleBikeTrainer.Desktop.Services.Sounds.Played = null;
+            SimpleBikeTrainer.Desktop.Services.Sounds.Played = HeadlessApp.Silent;
             await main.Devices.DisposeAsync();
             window.Close();
         }
@@ -434,37 +483,36 @@ public sealed class DesktopTests(HeadlessSession headless) : IDisposable
             };
             var main = new MainWindowViewModel(config, HeadlessApp.Http) { Athlete = Athlete.FromConfig(config) };
             var devices = main.Devices;
-            var before = (devices.Saved.Select(r => $"{r.Kind}: {r.Name}").ToList(), devices.ScanLabel, devices.CanScan);
+            var before = (devices.Saved.Select(r => $"{r.Kind}: {r.Name}").ToList(), devices.HasSaved, devices.HasConnected);
 
             // Simulated devices have no addresses, so every saved one still shows as not connected.
             devices.Simulate = true;
             await devices.ConnectAsync(config);
             devices.Simulate = false;
-            var connected = (devices.ScanLabel, devices.CanScan, devices.Saved.Count);
+            var connected = (devices.IsConnected, devices.HasConnected, devices.Saved.Count);
 
-            // Adding while connected: a saved monitor that was not found starts ticked, and no trainer is needed.
-            devices.IsScanning = true;
+            // A paired monitor the scan finds only needs connecting.
             devices.AddCandidate(Found(DeviceId.Bluetooth("E1:22:33:44:55:66"), "COOSPO H6", DeviceKind.HeartRate, -60), config.Devices);
-            var picked = (devices.Candidates.Single().Selected, devices.CanConnectPicked);
-            await devices.CancelAsync();
+            var listed = (devices.Candidates.Single().IsPaired, devices.Candidates.Single().PairLabel);
+            await devices.StopScanAsync();
 
-            devices.Forget(DeviceId.Bluetooth("E1:22:33:44:55:66"));
+            await devices.ForgetAsync(DeviceId.Bluetooth("E1:22:33:44:55:66"));
             var after = (devices.Saved.Select(r => r.Name).ToList(), AppConfig.Load(config.Path).Devices.HeartRate?.ToString() ?? string.Empty);
             await main.DisposeAsync();
-            return (before, connected, picked, after);
+            return (before, connected, listed, after);
         }, TestContext.Current.CancellationToken);
 
         Assert.Equal(["Trainer: KICKR CORE 6107", "Heart rate: COOSPO H6", "Controller: C8:A3:BD:AE:3B:B6"], result.before.Item1);
-        Assert.Equal(Strings.Home_ChooseDevices, result.before.ScanLabel);
-        Assert.True(result.before.CanScan);
-        Assert.Equal((Strings.Devices_Add, true, 3), result.connected);
-        Assert.Equal((true, true), result.picked);
+        Assert.True(result.before.HasSaved);
+        Assert.False(result.before.HasConnected);
+        Assert.Equal((true, true, 3), result.connected);
+        Assert.Equal((true, Strings.Devices_ConnectOne), result.listed);
         Assert.Equal(["KICKR CORE 6107", "C8:A3:BD:AE:3B:B6"], result.after.Item1);
         Assert.Equal(string.Empty, result.after.Item2);
     }
 
     [Fact]
-    public async Task SettingsRenamesDevicesAndForgetsThemOnlyWhenAskedTwice()
+    public async Task TheDevicesPageRenamesDevicesAndForgetsThemOnlyWhenAskedTwice()
     {
         var result = await headless.Session.Dispatch(async () =>
         {
@@ -477,68 +525,120 @@ public sealed class DesktopTests(HeadlessSession headless) : IDisposable
                     new() { Kind = DeviceKind.Trainer, Transport = DeviceTransport.Wifi, Address = "DC:06:75:B6:E8:20", Name = "KICKR CORE 6107" },
                     new() { Kind = DeviceKind.HeartRate, Transport = DeviceTransport.AntPlus, Address = "12345", Name = "COOSPO H6" },
                     new() { Kind = DeviceKind.Shifter, Address = "C8:A3:BD:AE:3B:B6" },
+                    new() { Kind = DeviceKind.PowerMeter, Address = "F0:11:22:33:44:55", Name = "4iiii PRECISION" },
                 ],
                 Picked = true,
                 WifiTrainers = ["192.168.1.40"],
             };
             var main = new MainWindowViewModel(config, HeadlessApp.Http) { Athlete = Athlete.FromConfig(config) };
+            var radio = new FakeScanner();
+            main.Devices.OpenScanner = _ => Task.FromResult<IDeviceScanner>(radio);
             var window = new MainWindow { DataContext = main, Width = 1440, Height = 900 };
             window.Show();
             main.ShowSettings();
             var settings = (SettingsViewModel)main.Current;
-            var listed = settings.SavedDevices.Select(d => $"{d.Kind}: {d.Name} ({d.Id.TransportLabel} {d.Id.Address})").ToList();
 
-            // The devices card is at the bottom of the page.
-            Dispatcher.UIThread.RunJobs();
-            foreach (var scroller in window.GetVisualDescendants().OfType<Avalonia.Controls.ScrollViewer>())
-            {
-                scroller.ScrollToEnd();
-            }
+            settings.ManageDevicesCommand.Execute(null);
+            var page = (DevicesViewModel)main.Current;
+            var listed = page.Paired.Select(d => $"{d.Kind}: {d.Name} ({d.Id.TransportLabel} {d.Id.Address})").ToList();
+            Shoot(window, "4a-devices.png");
 
-            Shoot(window, "4a-settings-devices.png");
+            // A rename that is canceled is dropped.
+            page.Paired[0].Name = "Dropped";
+            page.CancelCommand.Execute(null);
+            var canceled = (main.Current == settings, main.Devices.Saved[0].Name, config.Devices.NameOf(DeviceId.Wifi("DC:06:75:B6:E8:20")));
+            settings.ManageDevicesCommand.Execute(null);
+            page = (DevicesViewModel)main.Current;
+            var reopened = page.Paired[0].Name;
 
-            // Rename the trainer; Save shows the new name on the home page too.
-            settings.SavedDevices[0].Name = "Garage KICKR";
-            await settings.SaveCommand.ExecuteAsync(null);
+            // Rename the trainer: Save keeps it and goes back to the same Settings page, and home shows the new name.
+            page.Paired[0].Name = "Garage KICKR";
+            page.SaveCommand.Execute(null);
+            var back = main.Current == settings;
             var home = main.Devices.Saved[0].Name;
             var alias = AppConfig.Load(config.Path).Devices.NameOf(DeviceId.Wifi("DC:06:75:B6:E8:20"));
+            settings.ManageDevicesCommand.Execute(null);
+            page = (DevicesViewModel)main.Current;
+            var renamed = page.Paired[0].Name;
+            var connectAll = (main.Devices.IsScanning, page.CanConnectAll);
+
+            // Connect one paired device, the strap, which the scan has not found: with no answer, the page says what to try.
+            var monitor = page.Paired.Single(d => d.DeviceKind == DeviceKind.HeartRate);
+            main.Devices.LookTime = TimeSpan.FromMilliseconds(300);
+            await page.ConnectDeviceCommand.ExecuteAsync(monitor);
+            var missing = (monitor.IsConnected, main.Devices.Status);
+
+            // Found this time: it connects on its own, with no trainer, and disconnects on its own, still paired.
+            main.Devices.LookTime = TimeSpan.FromSeconds(10);
+            var link = new FakeLink();
+            var connecting = page.ConnectDeviceCommand.ExecuteAsync(monitor);
+            Assert.True(monitor.IsConnecting);
+            radio.Find(Found(DeviceId.AntPlus(12345), "COOSPO H6", DeviceKind.HeartRate, null, link));
+            await connecting;
+            var joined = (monitor.IsConnected, monitor.IsConnecting, main.Devices.Status, main.Devices.IsConnected);
+            await page.DisconnectDeviceCommand.ExecuteAsync(monitor);
+            var left = (monitor.IsConnected, main.Devices.HasConnected, link.Opened.Single().Disposed, AppConfig.Load(config.Path).Devices.HeartRate?.ToString());
 
             // Forget asks first, and Cancel keeps the device.
-            main.ShowSettings();
-            settings = (SettingsViewModel)main.Current;
-            var monitor = settings.SavedDevices[1];
-            settings.ForgetDeviceCommand.Execute(monitor);
-            var asked = (settings.SavedDevices.Count, monitor.ForgetLabel, AppConfig.Load(config.Path).Devices.HeartRate?.ToString() ?? string.Empty);
-            settings.KeepDeviceCommand.Execute(monitor);
+            await page.ForgetDeviceCommand.ExecuteAsync(monitor);
+            var asked = (page.Paired.Count, monitor.ForgetLabel, AppConfig.Load(config.Path).Devices.HeartRate?.ToString() ?? string.Empty);
+            page.KeepDeviceCommand.Execute(monitor);
             var kept = monitor.ConfirmForget;
-            settings.ForgetDeviceCommand.Execute(monitor);
-            settings.ForgetDeviceCommand.Execute(monitor);
-            var forgot = (settings.SavedDevices.Count, AppConfig.Load(config.Path).Devices.HeartRate?.ToString() ?? string.Empty, main.Devices.Saved.Count);
+            await page.ForgetDeviceCommand.ExecuteAsync(monitor);
+            await page.ForgetDeviceCommand.ExecuteAsync(monitor);
+            var forgot = (page.Paired.Count, AppConfig.Load(config.Path).Devices.HeartRate?.ToString() ?? string.Empty, main.Devices.Saved.Count);
 
-            settings.ForgetDevicesCommand.Execute(null);
-            var allAsked = settings.SavedDevices.Count;
-            settings.ForgetDevicesCommand.Execute(null);
-            var allGone = (settings.HasDevices, main.Devices.Saved.Count, AppConfig.Load(config.Path).Devices.Trainer?.ToString() ?? string.Empty);
-            var wifiKept = AppConfig.Load(config.Path).Devices.WifiTrainers;
+            // Heart rate from the trainer only: shown at once, saved by Save.
+            var heartRate = page.Metrics.Single(m => m.Metric == Metric.HeartRate);
+            Assert.Equal(MetricSource.Auto, heartRate.Selected.Source);
+            heartRate.Selected = heartRate.Options.Single(o => o.Source == MetricSource.Trainer);
+            var source = (AppConfig.Load(config.Path).Devices.Metrics.HeartRate, heartRate.Now);
+            page.SaveCommand.Execute(null);
+            settings.ManageDevicesCommand.Execute(null);
+            page = (DevicesViewModel)main.Current;
+            var sourceSaved = (AppConfig.Load(config.Path).Devices.Metrics.HeartRate, page.Metrics.Single(m => m.Metric == Metric.HeartRate).Selected.Source);
+
+            await page.ForgetAllCommand.ExecuteAsync(null);
+            var allAsked = page.Paired.Count;
+            await page.ForgetAllCommand.ExecuteAsync(null);
+            var allGone = (page.HasPaired, main.Devices.Saved.Count, AppConfig.Load(config.Path).Devices.Trainer?.ToString() ?? string.Empty);
+            var kept2 = AppConfig.Load(config.Path).Devices;
+            page.CancelCommand.Execute(null);
             settings.CancelCommand.Execute(null);
             window.Close();
             await main.DisposeAsync();
-            return (listed, home, alias, asked, kept, forgot, allAsked, allGone, wifiKept);
+            return (listed, canceled, reopened, back, home, alias, renamed, connectAll, missing, joined, left, asked, kept, forgot, source, sourceSaved, allAsked, allGone, wifiKept: kept2.WifiTrainers, metricKept: kept2.Metrics.HeartRate);
         }, TestContext.Current.CancellationToken);
 
         Assert.Equal(
-            ["Trainer: KICKR CORE 6107 (Wi-Fi DC:06:75:B6:E8:20)", "Heart rate: COOSPO H6 (ANT+ 12345)", "Controller: C8:A3:BD:AE:3B:B6 (Bluetooth C8:A3:BD:AE:3B:B6)"],
+            [
+                "Trainer: KICKR CORE 6107 (Wi-Fi DC:06:75:B6:E8:20)",
+                "Power meter: 4iiii PRECISION (Bluetooth F0:11:22:33:44:55)",
+                "Heart rate: COOSPO H6 (ANT+ 12345)",
+                "Controller: C8:A3:BD:AE:3B:B6 (Bluetooth C8:A3:BD:AE:3B:B6)",
+            ],
             result.listed);
+        Assert.Equal((true, "KICKR CORE 6107", "KICKR CORE 6107"), result.canceled);
+        Assert.Equal("KICKR CORE 6107", result.reopened);
+        Assert.True(result.back);
         Assert.Equal("Garage KICKR", result.home);
         Assert.Equal("Garage KICKR", result.alias);
-        Assert.Equal((3, Strings.Settings_ConfirmForget, "ANT+ 12345"), result.asked);
+        Assert.Equal("Garage KICKR", result.renamed);
+        Assert.Equal((true, true), result.connectAll);
+        Assert.Equal((false, Loc.Format(Strings.Devices_NotFound, "COOSPO H6", Strings.Devices_PairHintHeartRate)), result.missing);
+        Assert.Equal((true, false, "Connected COOSPO H6.", false), result.joined);
+        Assert.Equal((false, false, true, "ANT+ 12345"), result.left);
+        Assert.Equal((4, Strings.Settings_ConfirmForget, "ANT+ 12345"), result.asked);
         Assert.False(result.kept);
-        Assert.Equal((2, string.Empty, 2), result.forgot);
-        Assert.Equal(2, result.allAsked);
+        Assert.Equal((3, string.Empty, 3), result.forgot);
+        Assert.Equal((MetricSource.Auto, Strings.Devices_NoReading), result.source);
+        Assert.Equal((MetricSource.Trainer, MetricSource.Trainer), result.sourceSaved);
+        Assert.Equal(3, result.allAsked);
         Assert.Equal((false, 0, string.Empty), result.allGone);
 
-        // Forgetting the devices keeps the Wi-Fi addresses typed in, as it keeps the Bluetooth adapter.
+        // Forgetting the devices keeps the Wi-Fi addresses typed in, as it keeps the Bluetooth adapter, and the readings' sources.
         Assert.Equal(["192.168.1.40"], result.wifiKept);
+        Assert.Equal(MetricSource.Trainer, result.metricKept);
     }
 
     [Fact]
@@ -735,8 +835,8 @@ public sealed class DesktopTests(HeadlessSession headless) : IDisposable
         return ride;
     }
 
-    private static DiscoveredDevice Found(DeviceId id, string name, DeviceKind kind, short? rssi) =>
-        new(null!, id, name, kind, rssi);
+    private static DiscoveredDevice Found(DeviceId id, string name, DeviceKind kind, short? rssi, IDeviceLink? link = null) =>
+        new(link!, id, name, kind, rssi);
 
     private static PlannedRide Planned(long id, DateOnly date, string name, string text) =>
         new(id, date, "VirtualRide", (text.Length == 0 ? new Workout(name, []) : WorkoutTextParser.Parse(text, name)) with { EventId = id, Ftp = 240 });
@@ -784,34 +884,152 @@ public sealed class DesktopTests(HeadlessSession headless) : IDisposable
     }
 
     [Fact]
-    public void DeviceRowsShowTheBatteryOfAnyDeviceThatReportsIt()
+    public void DeviceRowsShowWhatADeviceReportsAndItsBattery()
     {
-        var strap = new Services.DeviceRow { Kind = Strings.Device_HeartRate, Device = new Strap { Battery = 64 } };
-        var unknown = new Services.DeviceRow { Kind = Strings.Device_HeartRate, Device = new Strap() };
-        var gone = new Services.DeviceRow { Kind = Strings.Device_HeartRate, Device = new Strap { Battery = 64, IsConnected = false } };
+        var device = new Strap { Battery = 64 };
+        var strap = new Services.DeviceRow(DeviceKind.HeartRate, device);
+        var unknown = new Services.DeviceRow(DeviceKind.HeartRate, new Strap());
+        var gone = new Services.DeviceRow(DeviceKind.HeartRate, new Strap { Battery = 64, IsConnected = false });
 
         strap.Refresh();
         unknown.Refresh();
         gone.Refresh();
-
         Assert.Equal("battery 64%", strap.Detail);
         Assert.Equal(Strings.Device_Connected, unknown.Detail);
         Assert.Equal(Strings.Device_Disconnected, gone.Detail);
+        Assert.Equal(Strings.Device_HeartRate, strap.Kind);
+
+        device.Beat(142);
+        strap.Refresh();
+        Assert.Equal("142 bpm  ·  battery 64%", strap.Detail);
+        Assert.Equal(142, strap.Value(Metric.HeartRate));
+        Assert.Null(strap.Value(Metric.Power));
+
+        strap.Detach();
+        device.Beat(150);
+        Assert.Equal(142, strap.Value(Metric.HeartRate));
     }
 
-    private sealed class Strap : IHeartRateMonitor
+    [Fact]
+    public async Task AScanStartedWhileTheLastOneStopsKeepsScanningWithItsFinds()
     {
-        public event Action<int>? HeartRateReceived { add { } remove { } }
+        var result = await headless.Session.Dispatch(async () =>
+        {
+            var config = AppConfig.Load(Path.Combine(_dir, "config.json"));
+            config.RidesDirectory = Path.Combine(_dir, "rides");
+            var main = new MainWindowViewModel(config, HeadlessApp.Http) { Athlete = Athlete.FromConfig(config) };
+            var devices = main.Devices;
+            var disposing = new TaskCompletionSource();
+            var radio = new FakeScanner();
+            devices.OpenScanner = _ => Task.FromResult<IDeviceScanner>(new GatedScanner(disposing.Task));
+            await devices.ScanAsync(config);
 
-        public string Name => "COOSPO H6";
+            // Leaving the Devices page and coming straight back.
+            devices.OpenScanner = _ => Task.FromResult<IDeviceScanner>(radio);
+            var stop = devices.StopScanAsync();
+            var scan = devices.ScanAsync(config);
+            disposing.SetResult();
+            await stop;
+            await scan;
+            radio.Find(Found(DeviceId.Bluetooth("CE:D1:96:5E:7A:BB"), "KICKR CORE 6107", DeviceKind.Trainer, -58));
+            Dispatcher.UIThread.RunJobs();
+            var after = (devices.IsScanning, devices.Candidates.Count);
+            await main.DisposeAsync();
+            return after;
+        }, TestContext.Current.CancellationToken);
 
-        public bool IsConnected { get; init; } = true;
+        Assert.Equal((true, 1), result);
+    }
+
+    /// <summary>A scan whose dispose waits on the test.</summary>
+    private sealed class GatedScanner(Task disposed) : IDeviceScanner
+    {
+        public event Action<DiscoveredDevice>? DeviceFound { add { } remove { } }
+
+        public IReadOnlyList<DiscoveredDevice> Found => [];
+
+        public Task StartAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
+
+        public Task StopAsync() => Task.CompletedTask;
+
+        public async ValueTask DisposeAsync() => await disposed;
+    }
+
+    /// <summary>A scan whose finds the test makes up.</summary>
+    private sealed class FakeScanner : IDeviceScanner
+    {
+        private readonly List<DiscoveredDevice> _found = [];
+
+        public event Action<DiscoveredDevice>? DeviceFound;
+
+        public IReadOnlyList<DiscoveredDevice> Found => [.. _found];
+
+        public void Find(DiscoveredDevice device)
+        {
+            _found.Add(device);
+            DeviceFound?.Invoke(device);
+        }
+
+        public Task StartAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
+
+        public Task StopAsync() => Task.CompletedTask;
+
+        public ValueTask DisposeAsync() => ValueTask.CompletedTask;
+    }
+
+    /// <summary>Opens straps that connect at once, but for those in <see cref="Fails"/>, which time out.</summary>
+    private sealed class FakeLink : IDeviceLink
+    {
+        public HashSet<DeviceId> Fails { get; } = [];
+
+        public List<Strap> Opened { get; } = [];
+
+        public IConnectableDevice Open(DiscoveredDevice found)
+        {
+            var strap = new Strap(found.Name, found.Id, Fails.Contains(found.Id)) { IsConnected = false };
+            Opened.Add(strap);
+            return strap;
+        }
+    }
+
+    private sealed class Strap(string name = "COOSPO H6", DeviceId? id = null, bool fails = false) : IHeartRateMonitor, IConnectableDevice
+    {
+        public event Action<int>? HeartRateReceived;
+
+        public string Name => name;
+
+        public DeviceId? Id => id;
+
+        public bool Disposed { get; private set; }
+
+        public void Beat(int bpm) => HeartRateReceived?.Invoke(bpm);
+
+        public Task ConnectAsync(CancellationToken cancellationToken)
+        {
+            if (fails)
+            {
+                return Task.FromException(new TimeoutException("The operation has timed out."));
+            }
+
+            IsConnected = true;
+            return Task.CompletedTask;
+        }
+
+        public void ConnectInBackground()
+        {
+        }
+
+        public bool IsConnected { get; set; } = true;
 
         public string? Status => null;
 
         public int? Battery { get; init; }
 
-        public ValueTask DisposeAsync() => ValueTask.CompletedTask;
+        public ValueTask DisposeAsync()
+        {
+            Disposed = true;
+            return ValueTask.CompletedTask;
+        }
     }
 
     [Theory]

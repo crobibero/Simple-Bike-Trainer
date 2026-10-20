@@ -75,6 +75,8 @@ public abstract class BlePeripheral : IDeviceLink
     {
         DeviceKind.Trainer => new FtmsTrainer(this, found.Name, found.Id),
         DeviceKind.HeartRate => new BleHeartRateMonitor(this, found.Name, found.Id),
+        DeviceKind.PowerMeter => new BlePowerMeter(this, found.Name, found.Id),
+        DeviceKind.CadenceSensor => new BleCadenceSensor(this, found.Name, found.Id),
         DeviceKind.Shifter => new ZwiftClick(this, found.Name, found.Id),
         _ => throw new ArgumentOutOfRangeException(nameof(found)),
     };

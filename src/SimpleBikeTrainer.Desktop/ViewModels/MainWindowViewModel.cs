@@ -68,7 +68,7 @@ public sealed partial class MainWindowViewModel : ViewModelBase, IAsyncDisposabl
     {
         var devices = Devices.Devices ?? throw new InvalidOperationException("Connect the trainer first.");
         var options = Athlete.Options(Config, workout);
-        var session = new RideSession(workout, options, devices.Trainer, devices.HeartRate, devices.Shifters);
+        var session = new RideSession(workout, options, devices);
         var ride = new RideViewModel(this, session, options.Ftp, Devices);
         Current = ride;
         ride.Start();
@@ -84,11 +84,15 @@ public sealed partial class MainWindowViewModel : ViewModelBase, IAsyncDisposabl
         history.LoadCommand.Execute(null);
     }
 
-    public void ShowCalibration() => Current = new CalibrationViewModel(this);
+    /// <summary>Spin-down calibration; Back goes to <paramref name="back"/>.</summary>
+    public void ShowCalibration(ViewModelBase back) => Current = new CalibrationViewModel(this, back);
 
     public void ShowHome() => Current = Home;
 
     public void ShowSettings() => Current = new SettingsViewModel(this);
+
+    /// <summary>The pairing page; Save and Cancel go back to <paramref name="back"/>, as it was left.</summary>
+    public void ShowDevices(ViewModelBase back) => Current = new DevicesViewModel(this, back);
 
     /// <summary>Escape closes the help; otherwise the page on screen gets the key.</summary>
     public override bool HandleKey(Key key)
@@ -131,7 +135,11 @@ public sealed partial class MainWindowViewModel : ViewModelBase, IAsyncDisposabl
     }
 
     // Null on the constructor's first page.
-    partial void OnCurrentChanged(ViewModelBase oldValue, ViewModelBase newValue) => oldValue?.OnLeaving();
+    partial void OnCurrentChanged(ViewModelBase oldValue, ViewModelBase newValue)
+    {
+        oldValue?.OnLeaving();
+        newValue.OnShown();
+    }
 
     /// <summary>Whether the app can show the rides folder in a file manager; Android and iPadOS cannot.</summary>
     public static bool CanOpenFolder => !OperatingSystem.IsAndroid() && !OperatingSystem.IsIOS();

@@ -45,6 +45,7 @@ public sealed record Athlete(int Ftp, int WPrime, double WeightKg, double BikeWe
         {
             Resistance = config.Trainer.Resistance,
             ChainRatio = (double)config.Trainer.ChainringTeeth / Math.Max(1, config.Trainer.CogTeeth),
+            Metrics = config.Devices.Metrics,
         };
     }
 

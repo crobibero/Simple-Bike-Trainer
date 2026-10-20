@@ -67,7 +67,11 @@ public sealed class BleScanner : IDeviceScanner
             return DeviceKind.Shifter;
         }
 
-        return ids.Contains(GattUuids.HeartRate) ? DeviceKind.HeartRate : DeviceKind.Other;
+        // A trainer without FTMS that offers Cycling Power lands here too: it can still give power, if not take control.
+        return ids.Contains(GattUuids.HeartRate) ? DeviceKind.HeartRate
+            : ids.Contains(GattUuids.CyclingPower) ? DeviceKind.PowerMeter
+            : ids.Contains(GattUuids.CyclingSpeedCadence) ? DeviceKind.CadenceSensor
+            : DeviceKind.Other;
     }
 
     private void OnAdvertised(BleAdvertisement ad)

@@ -42,6 +42,9 @@ public sealed record RideOptions(
 
     /// <summary>Chainring over cog of the chain's real gear, for simulation with virtual gears.</summary>
     public double ChainRatio { get; init; } = 2;
+
+    /// <summary>Which device power, cadence and heart rate come from.</summary>
+    public MetricsConfig Metrics { get; init; } = new();
 }
 
 public sealed record RideResult(
@@ -101,6 +104,8 @@ public sealed class RideSession
     private readonly TimeProvider _time;
     private readonly ITrainer _trainer;
     private readonly IHeartRateMonitor? _heartRate;
+    private readonly ICyclingSensor? _powerMeter;
+    private readonly ICyclingSensor? _cadenceSensor;
     private readonly IReadOnlyList<IShifter> _shifters;
     private readonly Channel<RideCommand> _commands = Channel.CreateUnbounded<RideCommand>();
     private readonly WorkoutPlayer _player;
@@ -109,14 +114,16 @@ public sealed class RideSession
     private readonly Lock _sensorLock = new();
     private readonly SemaphoreSlim _targetChanged = new(0);
 
-    // Sensor values, written by BLE callbacks.
-    private int _power;
-    private double? _cadence;
-    private int? _hr;
-    private int? _trainerHr;
+    // Sensor values, written by device callbacks. Each device keeps its own, for the rider's choice to pick from.
+    private readonly Dictionary<MetricSource, Reading> _readings = new()
+    {
+        [MetricSource.Trainer] = new(),
+        [MetricSource.PowerMeter] = new(),
+        [MetricSource.CadenceSensor] = new(),
+        [MetricSource.HeartRateMonitor] = new(),
+    };
+
     private double _speedKmh;
-    private long _trainerSeen;
-    private long _hrSeen;
 
     // Ride state, touched only by the ride loop.
     private FitRecorder? _recorder;
@@ -143,14 +150,29 @@ public sealed class RideSession
     private TrainerCommand? _send;
     private bool _toldNoSimulation;
 
+    public RideSession(Workout workout, RideOptions options, Ble.ConnectedDevices devices, TimeProvider? timeProvider = null)
+        : this(workout, options, devices.Trainer, devices.HeartRate, devices.Shifters, timeProvider, devices.PowerMeter, devices.CadenceSensor)
+    {
+    }
+
     /// <param name="timeProvider">The ride's tick and recorded times. Sensor timeouts and trainer re-sends stay on real time.</param>
-    public RideSession(Workout workout, RideOptions options, ITrainer trainer, IHeartRateMonitor? heartRate, IEnumerable<IShifter> shifters, TimeProvider? timeProvider = null)
+    public RideSession(
+        Workout workout,
+        RideOptions options,
+        ITrainer trainer,
+        IHeartRateMonitor? heartRate,
+        IEnumerable<IShifter> shifters,
+        TimeProvider? timeProvider = null,
+        ICyclingSensor? powerMeter = null,
+        ICyclingSensor? cadenceSensor = null)
     {
         _workout = workout;
         _options = options;
         _time = timeProvider ?? TimeProvider.System;
         _trainer = trainer;
         _heartRate = heartRate;
+        _powerMeter = powerMeter;
+        _cadenceSensor = cadenceSensor;
         _player = new WorkoutPlayer(workout);
         _gearbox = new Gearbox(options.StartGear);
         _metrics = new RideMetrics(options.Ftp, options.WPrime, options.PowerZones, options.HrZones);
@@ -165,6 +187,16 @@ public sealed class RideSession
         if (heartRate is not null)
         {
             heartRate.HeartRateReceived += OnHeartRate;
+        }
+
+        if (powerMeter is not null)
+        {
+            powerMeter.ReadingReceived += OnPowerMeter;
+        }
+
+        if (cadenceSensor is not null)
+        {
+            cadenceSensor.ReadingReceived += OnCadenceSensor;
         }
 
         _shifters = [.. shifters];
@@ -628,20 +660,32 @@ public sealed class RideSession
             _heartRate.HeartRateReceived -= OnHeartRate;
         }
 
+        if (_powerMeter is not null)
+        {
+            _powerMeter.ReadingReceived -= OnPowerMeter;
+        }
+
+        if (_cadenceSensor is not null)
+        {
+            _cadenceSensor.ReadingReceived -= OnCadenceSensor;
+        }
+
         foreach (var shifter in _shifters)
         {
             shifter.ButtonsPressed -= OnButtons;
         }
     }
 
+    /// <summary>Each reading from the device the rider chose, or under Auto the first with a fresh one. No power reads as 0.</summary>
     private (int Power, int? Cadence, int? HeartRate) ReadSensors()
     {
         lock (_sensorLock)
         {
-            var trainerFresh = _trainerSeen != 0 && Stopwatch.GetElapsedTime(_trainerSeen) < SensorTimeout;
-            var hrFresh = _hrSeen != 0 && Stopwatch.GetElapsedTime(_hrSeen) < SensorTimeout;
-            int? cadence = trainerFresh && _cadence is { } c ? (int)Math.Round(c) : null;
-            return (trainerFresh ? _power : 0, cadence, hrFresh ? _hr : trainerFresh ? _trainerHr : null);
+            var metrics = _options.Metrics;
+            var power = MetricSources.Resolve(Metric.Power, metrics.Power, s => _readings[s].Fresh ? _readings[s].Power : null)?.Value;
+            var cadence = MetricSources.Resolve(Metric.Cadence, metrics.Cadence, s => _readings[s].Fresh ? _readings[s].Cadence : null)?.Value;
+            var hr = MetricSources.Resolve(Metric.HeartRate, metrics.HeartRate, s => _readings[s].Fresh ? _readings[s].HeartRate : null)?.Value;
+            return (power ?? 0, cadence is { } c ? (int)Math.Round(c) : null, hr);
         }
     }
 
@@ -649,21 +693,22 @@ public sealed class RideSession
     {
         lock (_sensorLock)
         {
-            _trainerSeen = Stopwatch.GetTimestamp();
+            var trainer = _readings[MetricSource.Trainer];
+            trainer.Seen = Stopwatch.GetTimestamp();
             if (data.PowerWatts is { } p)
             {
-                _power = Math.Max(0, p);
+                trainer.Power = Math.Max(0, p);
             }
 
             if (data.CadenceRpm is { } c)
             {
                 // Light smoothing: the trainer sends about 4 readings a second.
-                _cadence = _cadence is { } prev && c > 0 ? (prev * 0.5) + (c * 0.5) : c;
+                trainer.Cadence = trainer.Cadence is { } prev && c > 0 ? (prev * 0.5) + (c * 0.5) : c;
             }
 
             if (data.HeartRate is > 0)
             {
-                _trainerHr = data.HeartRate;
+                trainer.HeartRate = data.HeartRate;
             }
 
             if (data.SpeedKmh is { } speed)
@@ -677,8 +722,31 @@ public sealed class RideSession
     {
         lock (_sensorLock)
         {
-            _hr = bpm;
-            _hrSeen = Stopwatch.GetTimestamp();
+            var monitor = _readings[MetricSource.HeartRateMonitor];
+            monitor.HeartRate = bpm;
+            monitor.Seen = Stopwatch.GetTimestamp();
+        }
+    }
+
+    private void OnPowerMeter(SensorReading reading) => OnSensor(MetricSource.PowerMeter, reading);
+
+    private void OnCadenceSensor(SensorReading reading) => OnSensor(MetricSource.CadenceSensor, reading);
+
+    private void OnSensor(MetricSource source, SensorReading reading)
+    {
+        lock (_sensorLock)
+        {
+            var sensor = _readings[source];
+            sensor.Seen = Stopwatch.GetTimestamp();
+            if (reading.PowerWatts is { } p)
+            {
+                sensor.Power = Math.Max(0, p);
+            }
+
+            if (reading.CadenceRpm is { } c)
+            {
+                sensor.Cadence = c;
+            }
         }
     }
 
@@ -742,4 +810,18 @@ public sealed class RideSession
     }
 
     private sealed record TrainerCommand(int? Watts, RoadSimulation? Road);
+
+    /// <summary>The last values one device sent, and when it last sent anything.</summary>
+    private sealed class Reading
+    {
+        public long Seen { get; set; }
+
+        public int? Power { get; set; }
+
+        public double? Cadence { get; set; }
+
+        public int? HeartRate { get; set; }
+
+        public bool Fresh => Seen != 0 && Stopwatch.GetElapsedTime(Seen) < SensorTimeout;
+    }
 }

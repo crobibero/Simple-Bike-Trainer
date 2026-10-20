@@ -14,4 +14,9 @@ public abstract class ViewModelBase : ObservableObject
     public virtual void OnLeaving()
     {
     }
+
+    /// <summary>Runs when the page comes on screen, including when the rider comes back to it.</summary>
+    public virtual void OnShown()
+    {
+    }
 }

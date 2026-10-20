@@ -23,6 +23,12 @@ public interface ISensorDevice : IAsyncDisposable
 public interface IConnectableDevice : ISensorDevice
 {
     Task ConnectAsync(CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Returns at once and keeps trying to connect, as the device does after losing a connection, until it is disposed.
+    /// For a device that would not connect yet, such as a strap that is still asleep.
+    /// </summary>
+    void ConnectInBackground();
 }
 
 /// <summary><paramref name="WindResistance"/> is 0.5 × air density × CdA, in kg/m.</summary>
@@ -62,6 +68,15 @@ public interface ITrainer : ISensorDevice
 public interface IHeartRateMonitor : ISensorDevice
 {
     event Action<int>? HeartRateReceived;
+}
+
+/// <summary>One message from a power meter or cadence sensor. A field is null when the message did not carry it.</summary>
+public readonly record struct SensorReading(int? PowerWatts, double? CadenceRpm);
+
+/// <summary>A power meter or a cadence sensor.</summary>
+public interface ICyclingSensor : ISensorDevice
+{
+    event Action<SensorReading>? ReadingReceived;
 }
 
 /// <summary>A shifter such as a Zwift Click. Raises the buttons that went down.</summary>

@@ -80,6 +80,8 @@ public sealed class AntScanner : IDeviceScanner
         {
             AntPlusPages.FitnessEquipmentType => (DeviceKind.Trainer, CoreStrings.Ant_TrainerName),
             AntPlusPages.HeartRateType => (DeviceKind.HeartRate, CoreStrings.Ant_HeartRateName),
+            AntPlusPages.BikePowerType => (DeviceKind.PowerMeter, CoreStrings.Ant_PowerName),
+            AntPlusPages.BikeCadenceType or AntPlusPages.BikeSpeedCadenceType => (DeviceKind.CadenceSensor, CoreStrings.Ant_CadenceName),
             _ => (DeviceKind.Other, string.Empty),
         };
 

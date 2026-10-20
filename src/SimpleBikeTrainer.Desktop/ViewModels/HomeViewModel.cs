@@ -316,19 +316,7 @@ public sealed partial class HomeViewModel : ViewModelBase, IRecipient<PropertyCh
     }
 
     [RelayCommand]
-    private Task ConnectAsync() => Devices.ConnectAsync(main.Config);
-
-    [RelayCommand]
-    private Task ScanAsync() => Devices.ScanAsync(main.Config);
-
-    [RelayCommand]
-    private Task ConnectChosenAsync() => Devices.ConnectChosenAsync(main.Config);
-
-    [RelayCommand]
-    private Task CancelDevicesAsync() => Devices.CancelAsync();
-
-    [RelayCommand]
-    private Task DisconnectAsync() => Devices.DisconnectAsync();
+    private void ShowDevices() => main.ShowDevices(this);
 
     [RelayCommand(CanExecute = nameof(CanStart))]
     private void Start()
@@ -346,9 +334,6 @@ public sealed partial class HomeViewModel : ViewModelBase, IRecipient<PropertyCh
 
     [RelayCommand]
     private void History() => main.ShowHistory();
-
-    [RelayCommand]
-    private void Calibrate() => main.ShowCalibration();
 
     internal async Task FindInterruptedAsync()
     {

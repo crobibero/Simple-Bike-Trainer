@@ -9,13 +9,18 @@ namespace SimpleBikeTrainer.Ble;
 /// </summary>
 public abstract class BleConnection : DeviceConnection
 {
-    private static readonly TimeSpan ConnectTimeout = TimeSpan.FromSeconds(20);
+    // Longer than Linux's own 20 s for an LE connection, so a slow strap gets BlueZ's error rather than ours.
+    private static readonly TimeSpan ConnectTimeout = TimeSpan.FromSeconds(30);
     private static readonly TimeSpan RetryDelay = TimeSpan.FromSeconds(3);
 
     private readonly CancellationTokenSource _cts = new();
     private readonly List<IDisposable> _watchers = [];
     private Task? _reconnect;
+    private bool _watching;
     private volatile bool _connected;
+
+    // Set once connected, or once asked to keep trying: until then a dropped connection is the caller's failed attempt.
+    private volatile bool _keepTrying;
     private volatile string? _status = CoreStrings.Ble_Connecting;
 
     protected BleConnection(BlePeripheral peripheral, string name, DeviceId id)
@@ -35,14 +40,28 @@ public abstract class BleConnection : DeviceConnection
 
     public override async Task ConnectAsync(CancellationToken cancellationToken)
     {
-        Peripheral.Disconnected += OnDisconnected;
+        Watch();
         await ConnectOnceAsync(cancellationToken);
+    }
+
+    public override void ConnectInBackground()
+    {
+        Watch();
+        _keepTrying = true;
+        if (!_connected && _reconnect is not { IsCompleted: false })
+        {
+            _reconnect = Task.Run(ReconnectLoopAsync);
+        }
     }
 
     public override async ValueTask DisposeAsync()
     {
         await _cts.CancelAsync();
-        Peripheral.Disconnected -= OnDisconnected;
+        if (_watching)
+        {
+            Peripheral.Disconnected -= OnDisconnected;
+        }
+
         if (_reconnect is { } reconnect)
         {
             // A reconnect part way through could subscribe after the watchers below are gone, so it stops first.
@@ -108,13 +127,42 @@ public abstract class BleConnection : DeviceConnection
     protected static Task WriteAsync(BleCharacteristic characteristic, byte[] value, bool withResponse) =>
         characteristic.WriteAsync(value, withResponse);
 
+    private void Watch()
+    {
+        if (!_watching)
+        {
+            _watching = true;
+            Peripheral.Disconnected += OnDisconnected;
+        }
+    }
+
     private async Task ConnectOnceAsync(CancellationToken cancellationToken)
     {
         _status = CoreStrings.Ble_Connecting;
         DisposeWatchers();
-        await Peripheral.ConnectAsync(ConnectTimeout, cancellationToken);
-        await SetupAsync(cancellationToken);
+        try
+        {
+            await Peripheral.ConnectAsync(ConnectTimeout, cancellationToken);
+            await SetupAsync(cancellationToken);
+        }
+        catch
+        {
+            // A half-open link, with its services never resolved, keeps the device from advertising to the next attempt.
+            DisposeWatchers();
+            try
+            {
+                await Peripheral.DisconnectAsync().WaitAsync(TimeSpan.FromSeconds(5), CancellationToken.None);
+            }
+            catch
+            {
+                // It never connected.
+            }
+
+            throw;
+        }
+
         await WatchBatteryAsync();
+        _keepTrying = true;
         _connected = true;
         _status = null;
     }
@@ -153,7 +201,7 @@ public abstract class BleConnection : DeviceConnection
     {
         _connected = false;
         _status = CoreStrings.Ble_Disconnected;
-        if (!_cts.IsCancellationRequested && _reconnect is not { IsCompleted: false })
+        if (_keepTrying && !_cts.IsCancellationRequested && _reconnect is not { IsCompleted: false })
         {
             _reconnect = Task.Run(ReconnectLoopAsync);
         }

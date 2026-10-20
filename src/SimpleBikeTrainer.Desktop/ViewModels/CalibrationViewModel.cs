@@ -14,14 +14,16 @@ namespace SimpleBikeTrainer.Desktop.ViewModels;
 public sealed partial class CalibrationViewModel : ViewModelBase
 {
     private readonly MainWindowViewModel _main;
+    private readonly ViewModelBase _back;
     private readonly ITrainer? _trainer;
     private readonly UnitSystem _units;
     private double? _low;
     private double? _high;
 
-    public CalibrationViewModel(MainWindowViewModel main)
+    public CalibrationViewModel(MainWindowViewModel main, ViewModelBase back)
     {
         _main = main;
+        _back = back;
         _trainer = main.Devices.Devices?.Trainer;
         _units = main.Config.Units;
         TrainerName = _trainer?.Name ?? Strings.Cal_NoTrainer;
@@ -93,7 +95,7 @@ public sealed partial class CalibrationViewModel : ViewModelBase
     }
 
     [RelayCommand]
-    private void Back() => _main.ShowHome();
+    private void Back() => _main.Current = _back;
 
     private void OnData(IndoorBikeData data)
     {

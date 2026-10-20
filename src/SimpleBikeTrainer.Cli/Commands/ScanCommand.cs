@@ -6,7 +6,7 @@ using SimpleBikeTrainer.Resources;
 
 namespace SimpleBikeTrainer.Commands;
 
-/// <summary><c>scan</c>: lists trainers, heart rate monitors and Zwift controllers, and saves the rider's picks.</summary>
+/// <summary><c>scan</c>: lists trainers, sensors, heart rate monitors and Zwift controllers, and saves the rider's picks.</summary>
 internal sealed class ScanCommand : TrainerCommand<ScanCommand.Settings>
 {
     internal sealed class Settings : TrainerSettings
@@ -46,7 +46,12 @@ internal sealed class ScanCommand : TrainerCommand<ScanCommand.Settings>
         foreach (var d in found)
         {
             var signal = d.Rssi?.ToString(CultureInfo.CurrentCulture)
-                ?? $"[grey]{Markup.Escape(d.Id.Transport == DeviceTransport.Wifi ? CliStrings.Cli_Network : CliStrings.Cli_Cached)}[/]";
+                ?? $"[grey]{Markup.Escape(d.Id.Transport switch
+                {
+                    DeviceTransport.Wifi => CliStrings.Cli_Network,
+                    DeviceTransport.AntPlus => CliStrings.Cli_InRange,
+                    _ => CliStrings.Cli_Cached,
+                })}[/]";
             table.AddRow(d.Kind.ToString(), Markup.Escape(d.Name), $"[bold]{Markup.Escape(d.Id.TransportLabel)}[/]", Markup.Escape(d.Id.Address), signal);
         }
 
@@ -56,8 +61,10 @@ internal sealed class ScanCommand : TrainerCommand<ScanCommand.Settings>
             return 0;
         }
 
-        // Choices are found devices, plus null for "any", which the prompts cannot hold: so each choice is its index.
-        string Choice(int i) => i < 0
+        // A choice is an index into found, or -1 for "any" and -2 for "none".
+        string Choice(int i) => i == -2
+            ? Markup.Escape(CliStrings.Cli_None)
+            : i < 0
             ? Markup.Escape(CliStrings.Cli_Any)
             : $"{Markup.Escape(found[i].Name)} [grey]({Markup.Escape(found[i].Id.TransportLabel)} {Markup.Escape(found[i].Id.Address)})[/]";
         List<int> Of(DeviceKind kind) => [.. found.Index().Where(f => f.Item.Kind == kind).Select(f => f.Index)];
@@ -75,6 +82,17 @@ internal sealed class ScanCommand : TrainerCommand<ScanCommand.Settings>
             var pick = await AnsiConsole.PromptAsync(new SelectionPrompt<int>().Title(Markup.Escape(CliStrings.Cli_PickTrainer))
                 .UseConverter(Choice).AddChoices([.. trainers, -1]), ct);
             Save(DeviceKind.Trainer, pick < 0 ? [] : [pick]);
+        }
+
+        // A power meter or cadence sensor connects only once picked, so there is no "any".
+        foreach (var (kind, title) in new[] { (DeviceKind.PowerMeter, CliStrings.Cli_PickPowerMeter), (DeviceKind.CadenceSensor, CliStrings.Cli_PickCadence) })
+        {
+            if (Of(kind) is { Count: > 0 } sensors)
+            {
+                var pick = await AnsiConsole.PromptAsync(new SelectionPrompt<int>().Title(Markup.Escape(title))
+                    .UseConverter(Choice).AddChoices([.. sensors, -2]), ct);
+                Save(kind, pick < 0 ? [] : [pick]);
+            }
         }
 
         if (Of(DeviceKind.HeartRate) is { Count: > 0 } hrs)

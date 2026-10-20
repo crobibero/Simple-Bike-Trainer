@@ -14,6 +14,7 @@ public sealed class ViewLocator : IDataTemplate
         RideViewModel => new RideView(),
         SummaryViewModel => new SummaryView(),
         SettingsViewModel => new SettingsView(),
+        DevicesViewModel => new DevicesView(),
         HistoryViewModel => new HistoryView(),
         CalibrationViewModel => new CalibrationView(),
         _ => new TextBlock { Text = $"No view for {param?.GetType().Name}" },

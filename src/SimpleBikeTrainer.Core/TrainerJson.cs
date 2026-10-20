@@ -21,6 +21,7 @@ namespace SimpleBikeTrainer;
         typeof(CamelCaseEnumConverter<ResistanceMode>),
         typeof(CamelCaseEnumConverter<DeviceKind>),
         typeof(CamelCaseEnumConverter<DeviceTransport>),
+        typeof(CamelCaseEnumConverter<Devices.MetricSource>),
     ])]
 [JsonSerializable(typeof(AppConfig))]
 internal sealed partial class ConfigJsonContext : JsonSerializerContext;

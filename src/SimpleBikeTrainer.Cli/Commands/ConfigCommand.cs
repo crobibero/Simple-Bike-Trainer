@@ -1,6 +1,7 @@
 using System.Globalization;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using SimpleBikeTrainer.Devices;
 using SimpleBikeTrainer.Resources;
 using SimpleBikeTrainer.Uploads;
 
@@ -15,6 +16,17 @@ internal sealed class ConfigCommand : TrainerCommand<ConfigCommand.Settings>
         [ResistanceMode.Power] = "power",
         [ResistanceMode.SimulationVirtualGears] = "virtual-gears",
         [ResistanceMode.SimulationRealGears] = "real-gears",
+    };
+
+    /// <summary>The <c>--power-from</c>, <c>--cadence-from</c> and <c>--hr-from</c> names.</summary>
+    private static readonly Dictionary<MetricSource, string> SourceNames = new()
+    {
+        [MetricSource.Auto] = "auto",
+        [MetricSource.Trainer] = "trainer",
+        [MetricSource.PowerMeter] = "power-meter",
+        [MetricSource.CadenceSensor] = "cadence-sensor",
+        [MetricSource.HeartRateMonitor] = "monitor",
+        [MetricSource.Off] = "off",
     };
 
     internal sealed class Settings : TrainerSettings
@@ -64,6 +76,18 @@ internal sealed class ConfigCommand : TrainerCommand<ConfigCommand.Settings>
         [CommandOption("--forget-devices")]
         public bool ForgetDevices { get; set; }
 
+        [CommandOption("--power-from <SOURCE>")]
+        public string? PowerFrom { get; set; }
+
+        [CommandOption("--cadence-from <SOURCE>")]
+        public string? CadenceFrom { get; set; }
+
+        [CommandOption("--hr-from <SOURCE>")]
+        public string? HeartRateFrom { get; set; }
+
+        /// <summary>The sources given, checked against what each reading can come from.</summary>
+        public Dictionary<Metric, MetricSource> Sources { get; } = [];
+
         public IReadOnlyList<UploadTarget>? UploadTargets { get; private set; }
 
         public ResistanceMode? ResistanceMode { get; private set; }
@@ -105,6 +129,22 @@ internal sealed class ConfigCommand : TrainerCommand<ConfigCommand.Settings>
                 }
 
                 ChainTeeth = (chainring, cog);
+            }
+
+            foreach (var (metric, option, name) in new[] { (Metric.Power, PowerFrom, "--power-from"), (Metric.Cadence, CadenceFrom, "--cadence-from"), (Metric.HeartRate, HeartRateFrom, "--hr-from") })
+            {
+                if (option is null)
+                {
+                    continue;
+                }
+
+                var choices = MetricSources.Choices(metric);
+                if (!choices.Any(c => string.Equals(SourceNames[c], option, StringComparison.OrdinalIgnoreCase)))
+                {
+                    return ValidationResult.Error(Loc.Format(CliStrings.Cli_BadSource, option, name, string.Join(", ", choices.Select(c => SourceNames[c]))));
+                }
+
+                Sources[metric] = choices.First(c => string.Equals(SourceNames[c], option, StringComparison.OrdinalIgnoreCase));
             }
 
             return ValidationResult.Success();
@@ -196,7 +236,13 @@ internal sealed class ConfigCommand : TrainerCommand<ConfigCommand.Settings>
 
         if (settings.ForgetDevices)
         {
-            config.Devices = new DevicesConfig { Adapter = config.Devices.Adapter, WifiTrainers = config.Devices.WifiTrainers };
+            config.Devices = config.Devices.WithoutDevices();
+            changed = true;
+        }
+
+        foreach (var (metric, source) in settings.Sources)
+        {
+            config.Devices.Metrics[metric] = source;
             changed = true;
         }
 
@@ -215,6 +261,10 @@ internal sealed class ConfigCommand : TrainerCommand<ConfigCommand.Settings>
         grid.AddRow(CliStrings.Cli_RowWeights, $"{config.Units.FormatWeight(config.Rider.WeightKg)} + {config.Units.FormatWeight(config.Rider.BikeWeightKg)}");
         grid.AddRow(CliStrings.Cli_RowTrainer, Markup.Escape(config.Devices.Trainer is { } trainer ? config.Devices.Describe(trainer) : CliStrings.Cli_AnyDevice));
         grid.AddRow(CliStrings.Cli_RowHr, Markup.Escape(config.Devices.HeartRate is { } heartRate ? config.Devices.Describe(heartRate) : CliStrings.Cli_AnyDevice));
+        grid.AddRow(CliStrings.Cli_RowPowerMeter, Markup.Escape(config.Devices.PowerMeter is { } meter ? config.Devices.Describe(meter) : CliStrings.Cli_NoDevice));
+        grid.AddRow(CliStrings.Cli_RowCadence, Markup.Escape(config.Devices.CadenceSensor is { } sensor ? config.Devices.Describe(sensor) : CliStrings.Cli_NoDevice));
+        var metrics = config.Devices.Metrics;
+        grid.AddRow(CliStrings.Cli_RowReadings, Loc.Format(CliStrings.Cli_ReadingsValue, SourceNames[metrics.Power], SourceNames[metrics.Cadence], SourceNames[metrics.HeartRate]));
         grid.AddRow(CliStrings.Cli_RowShifters, Markup.Escape(config.Devices.Shifters.Count > 0 ? string.Join(", ", config.Devices.Shifters.Select(config.Devices.Describe)) : CliStrings.Cli_AnyDevice));
         grid.AddRow(CliStrings.Cli_RowWifi, Markup.Escape(config.Devices.WifiTrainers.Count > 0 ? string.Join(", ", config.Devices.WifiTrainers) : CliStrings.Cli_WifiByMdns));
         grid.AddRow(CliStrings.Cli_RowRides, Markup.Escape(config.RidesDirectory));

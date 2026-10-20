@@ -34,13 +34,27 @@ Get an Intervals.icu API key under Settings > Developer Settings in Intervals.ic
 
 ## Devices
 
-Connect scans Bluetooth, the local network for Wi-Fi trainers and, when an ANT+ USB stick is plugged in, ANT+ at the same time. Any one is enough.
+Scans cover Bluetooth, the local network for Wi-Fi trainers and, when an ANT+ USB stick is plugged in, ANT+ at the same time. Any one is enough.
 
 | Device | Bluetooth | ANT+ |
 | --- | --- | --- |
 | Trainer | FTMS (KICKR and most smart trainers): ERG, road simulation, spin-down | FE-C: ERG, road simulation |
+| Power meter | Cycling Power Service: power, and cadence when it sends crank revolutions | Bicycle Power: power and cadence |
+| Cadence sensor | Cycling Speed and Cadence Service | Bike Cadence, and Bike Speed and Cadence |
 | Heart rate | Heart Rate Service, including watches that broadcast it | Heart rate straps and watches that broadcast it |
 | Zwift Click, Play, Ride | Yes | No such devices |
+
+### Pairing
+
+Everything about devices is on the Devices page: Settings > Pair and manage devices, or Devices on the home page, which only lists the connected devices. It scans while it is open and lists what it finds. Pair connects one device and saves it, in place of the paired device of its kind; Zwift controllers add up. A paired device can be renamed or forgotten there, and its row shows what it reads, such as `72 bpm`, so a strap can be checked before a ride. A trainer is needed to ride; the other devices are optional.
+
+Connect all on the Devices page connects the paired devices that are not connected, and each paired device has its own Connect and Disconnect; Disconnect all and spin-down calibration are there too. A device is renamed in its box on the same page. Connect all scans for up to 20 seconds for a device to advertise. A heart rate monitor or sensor that is found but does not answer keeps trying in the background, and joins the ride when it does; one that is not found is named in the status.
+
+A strap that will not pair is usually asleep or taken: put it on and wet the contacts, and disconnect it from watches, phones and other apps, since most straps take one Bluetooth connection at a time. Over ANT+, any number of devices can listen to it.
+
+### Readings
+
+The Devices page also sets where power, cadence and heart rate come from. Auto, the default, takes each one from the paired power meter or cadence sensor while it sends, and from the trainer otherwise; heart rate comes from the monitor, or the trainer if it relays one. A choice of one device takes the reading from it alone, and heart rate can be off. In ERG the trainer holds the target by its own power reading, so a power meter's power can differ from the target.
 
 | System | Bluetooth |
 | --- | --- |
@@ -74,7 +88,7 @@ The iPad app does not find Wi-Fi trainers: iPadOS blocks mDNS queries from apps 
 
 ## Riding
 
-The home page lists the next 7 days of planned rides from Intervals.icu, plus a free ride, a generated route, and a ramp FTP test. The first Connect scans for devices and lets you pick a trainer, heart rate monitor, and Zwift controllers; later connects reuse the choice. The `?` button or F1 explains every number on the ride page.
+The home page lists the next 7 days of planned rides from Intervals.icu, plus a free ride, a generated route, and a ramp FTP test. Devices opens the Devices page to pair and connect them (see [Pairing](#pairing)); Start ride needs a connected trainer. The `?` button or F1 explains every number on the ride page.
 
 | Input | ERG step | Free ride or ERG off |
 | --- | --- | --- |
@@ -117,6 +131,7 @@ simple-bike-trainer-cli ride --event 91234567           # a planned ride
 simple-bike-trainer-cli ride --route 30 --climb 400     # a 30 km loop with 400 m of climbing
 simple-bike-trainer-cli ride --simulate --offline --file workout.txt
 simple-bike-trainer-cli scan                            # list and save devices
+simple-bike-trainer-cli config --power-from power-meter --hr-from off
 simple-bike-trainer-cli probe                           # print trainer data and Click presses
 ```
 
@@ -130,7 +145,7 @@ dotnet test --solution SimpleBikeTrainer.slnx
 dotnet tool restore && DOTNET_ROLL_FORWARD=Major dotnet xstyler --recursive --directory . --passive
 ```
 
-`dotnet run --project src/SimpleBikeTrainer.Desktop -- --test` (or `SimpleBikeTrainer.exe --test`) adds a Simulate checkbox to the Home page, for riding a pretend trainer and heart rate monitor without hardware.
+`dotnet run --project src/SimpleBikeTrainer.Desktop -- --test` (or `SimpleBikeTrainer.exe --test`) adds a Simulate checkbox to the Devices page, for riding a pretend trainer and heart rate monitor without hardware.
 
 The last command checks XAML formatting with [XamlStyler](https://github.com/Xavalon/XamlStyler); without `--passive` it rewrites the files. [tests/SimpleBikeTrainer.Desktop.Tests](tests/SimpleBikeTrainer.Desktop.Tests) drives every page headlessly with simulated devices and saves screenshots to `$SIMPLE_BIKE_TRAINER_SCREENSHOTS`; the images above come from it.
 

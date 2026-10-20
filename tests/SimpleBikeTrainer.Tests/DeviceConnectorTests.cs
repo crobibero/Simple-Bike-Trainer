@@ -12,6 +12,7 @@ public sealed class DeviceConnectorTests : IDisposable
     private static readonly DiscoveredDevice Kickr = new(null!, DeviceId.Bluetooth("CE:D1:96:5E:7A:BB"), "KICKR CORE 6107", DeviceKind.Trainer, -58);
     private static readonly DiscoveredDevice Strap = new(null!, DeviceId.Bluetooth("E1:22:33:44:55:66"), "HRM-Pro:123456", DeviceKind.HeartRate, -71);
     private static readonly DiscoveredDevice Click = new(null!, DeviceId.Bluetooth("C8:A3:BD:AE:3B:B6"), "Zwift Click", DeviceKind.Shifter, -64);
+    private static readonly DiscoveredDevice Meter = new(null!, DeviceId.Bluetooth("F0:11:22:33:44:55"), "4iiii PRECISION", DeviceKind.PowerMeter, -60);
 
     [Fact]
     public void PickedDevicesWithNoControllerStopTheScanOnceTheyAreInView()
@@ -41,17 +42,118 @@ public sealed class DeviceConnectorTests : IDisposable
     }
 
     [Fact]
+    public void ABluetoothDeviceBlueZOnlyRemembersIsNotInView()
+    {
+        var saved = Saved(Kickr, Strap);
+        var asleep = Strap with { Rssi = null };
+
+        Assert.False(DeviceConnector.AllInView(saved, [Kickr, asleep], wantHeartRate: true, wantShifters: false));
+        Assert.True(DeviceConnector.AllInView(saved, [Kickr, Strap], wantHeartRate: true, wantShifters: false));
+
+        // ANT+ sticks and Wi-Fi give no signal strength at all.
+        var antStrap = new DiscoveredDevice(null!, DeviceId.AntPlus(12345), "HRM-Dual", DeviceKind.HeartRate, null);
+        Assert.True(DeviceConnector.AllInView(Saved(Kickr, antStrap), [Kickr, antStrap], wantHeartRate: true, wantShifters: false));
+    }
+
+    [Fact]
+    public void PairedSensorsAreWaitedForAndOnlyThePairedOnesAreWanted()
+    {
+        var saved = Saved(Kickr, Meter);
+        DiscoveredDevice other = new(null!, DeviceId.Bluetooth("F0:00:00:00:00:09"), "Assioma", DeviceKind.PowerMeter, -50);
+
+        Assert.False(DeviceConnector.AllInView(saved, [Kickr, other], wantHeartRate: false, wantShifters: false));
+        Assert.True(DeviceConnector.AllInView(saved, [Kickr, Meter], wantHeartRate: false, wantShifters: false));
+        Assert.False(DeviceConnector.IsWanted(saved, other, wantHeartRate: true, wantShifters: true));
+        Assert.False(DeviceConnector.IsWanted(new DevicesConfig(), Meter, wantHeartRate: true, wantShifters: true));
+    }
+
+    [Fact]
+    public void ConnectedDevicesNeedNotBeInView()
+    {
+        var saved = Saved(Kickr, Strap);
+        var set = new DeviceSet();
+        set.Put(DeviceKind.Trainer, new TestTrainer(Kickr.Id));
+
+        Assert.True(DeviceConnector.AllInView(saved, [Strap], wantHeartRate: true, wantShifters: false, set));
+    }
+
+    [Fact]
+    public async Task AMonitorThatWillNotConnectYetKeepsTryingAndAControllerIsLeftOut()
+    {
+        var link = new TestLink(fails: [Strap.Id, Click.Id]);
+        var set = new DeviceSet();
+        var warnings = new List<string>();
+
+        var connected = await DeviceConnector.ConnectIntoAsync(
+            set,
+            [Kickr with { Link = link }, Strap with { Link = link }, Click with { Link = link }],
+            (message, warning) =>
+            {
+                if (warning)
+                {
+                    warnings.Add(message);
+                }
+            },
+            TestContext.Current.CancellationToken);
+
+        Assert.Equal([Kickr.Id], connected.Select(d => d.Id));
+        Assert.Equal(Kickr.Id, set.Trainer?.Id);
+        var strap = Assert.IsType<TestStrap>(set.HeartRate);
+        Assert.True(strap.InBackground);
+        Assert.Empty(set.Shifters);
+        Assert.True(link.Opened.Single(d => d.Id == Click.Id).Disposed);
+
+        // The monitor is tried once, as it keeps trying in the background; the controller twice, the first failure only progress.
+        Assert.Equal(1, link.Attempts[Strap.Id]);
+        Assert.Equal(2, link.Attempts[Click.Id]);
+        Assert.Equal(2, warnings.Count);
+        Assert.Contains("still trying", warnings[0], StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task AMonitorBlueZOnlyRemembersIsLeftToConnectInTheBackground()
+    {
+        var link = new TestLink(fails: [Strap.Id]);
+        var set = new DeviceSet();
+
+        var connected = await DeviceConnector.ConnectIntoAsync(
+            set,
+            [Kickr with { Link = link }, Strap with { Link = link, Rssi = null }],
+            (_, _) => { },
+            TestContext.Current.CancellationToken);
+
+        Assert.Equal([Kickr.Id], connected.Select(d => d.Id));
+        Assert.True(Assert.IsType<TestStrap>(set.HeartRate).InBackground);
+        Assert.False(link.Attempts.ContainsKey(Strap.Id));
+    }
+
+    [Fact]
+    public async Task ATrainerThatWillNotConnectFailsTheConnectAndLeavesTheSetAsItWas()
+    {
+        var link = new TestLink(fails: [Kickr.Id]);
+        var set = new DeviceSet();
+
+        var e = await Assert.ThrowsAsync<InvalidOperationException>(() => DeviceConnector.ConnectIntoAsync(
+            set, [Kickr with { Link = link }, Strap with { Link = link }], (_, _) => { }, TestContext.Current.CancellationToken));
+
+        Assert.Contains(Kickr.Name, e.Message, StringComparison.Ordinal);
+        Assert.Equal(0, set.Count);
+        Assert.All(link.Opened, d => Assert.True(d.Disposed));
+    }
+
+    [Fact]
     public async Task AddingAHeartRateMonitorKeepsTheTrainerConnected()
     {
         var config = Config();
         var trainer = new TestTrainer(Kickr.Id);
-        var current = new ConnectedDevices(trainer, null, []);
+        var set = Set(trainer);
 
-        var devices = await DeviceConnector.AddAsync(config, current, [Strap], Connect, (_, _) => { }, TestContext.Current.CancellationToken);
+        var added = await DeviceConnector.AddAsync(config, set, [Strap], Connect, (_, _) => { }, TestContext.Current.CancellationToken);
 
-        Assert.Same(trainer, devices.Trainer);
+        Assert.Same(trainer, set.Trainer);
         Assert.False(trainer.Disposed);
-        Assert.Equal(Strap.Id, devices.HeartRate?.Id);
+        Assert.Equal(Strap.Id, set.HeartRate?.Id);
+        Assert.Equal([Strap.Id], added.Select(d => d.Id));
         var saved = AppConfig.Load(config.Path).Devices;
         Assert.Equal(Kickr.Id, saved.Trainer);
         Assert.Equal(Strap.Id, saved.HeartRate);
@@ -66,18 +168,18 @@ public sealed class DeviceConnectorTests : IDisposable
         var trainer = new TestTrainer(Kickr.Id);
         var strap = new TestStrap(Strap.Id);
         var click = new TestClick(Click.Id);
-        var current = new ConnectedDevices(trainer, strap, [click]);
+        var set = Set(trainer, strap, click);
         config.Devices.Pick(DeviceKind.HeartRate, Strap.Id, Strap.Name);
         config.Devices.Pick(DeviceKind.Shifter, Click.Id, Click.Name);
         DiscoveredDevice bike = new(null!, DeviceId.Bluetooth("D4:00:00:00:00:01"), "KICKR BIKE 0001", DeviceKind.Trainer, -60);
         DiscoveredDevice watch = new(null!, DeviceId.Bluetooth("E1:00:00:00:00:02"), "Forerunner 965", DeviceKind.HeartRate, -70);
         DiscoveredDevice right = new(null!, DeviceId.Bluetooth("C8:00:00:00:00:03"), "Zwift Click", DeviceKind.Shifter, -65);
 
-        var devices = await DeviceConnector.AddAsync(config, current, [bike, watch, right], Connect, (_, _) => { }, TestContext.Current.CancellationToken);
+        await DeviceConnector.AddAsync(config, set, [bike, watch, right], Connect, (_, _) => { }, TestContext.Current.CancellationToken);
 
-        Assert.Equal(bike.Id, devices.Trainer.Id);
-        Assert.Equal(watch.Id, devices.HeartRate?.Id);
-        Assert.Equal([Click.Id, right.Id], devices.Shifters.Select(s => s.Id));
+        Assert.Equal(bike.Id, set.Trainer?.Id);
+        Assert.Equal(watch.Id, set.HeartRate?.Id);
+        Assert.Equal([Click.Id, right.Id], set.Shifters.Select(s => s.Id));
         Assert.True(trainer.Disposed);
         Assert.True(strap.Disposed);
         Assert.False(click.Disposed);
@@ -94,9 +196,10 @@ public sealed class DeviceConnectorTests : IDisposable
         DiscoveredDevice watch = new(null!, DeviceId.Bluetooth("E1:00:00:00:00:02"), "Forerunner 965", DeviceKind.HeartRate, -70);
         var warnings = new List<string>();
 
-        var devices = await DeviceConnector.AddAsync(
+        var set = Set(trainer, strap);
+        var added = await DeviceConnector.AddAsync(
             config,
-            new ConnectedDevices(trainer, strap, []),
+            set,
             [watch],
             (found, progress, _) =>
             {
@@ -112,7 +215,8 @@ public sealed class DeviceConnectorTests : IDisposable
             },
             TestContext.Current.CancellationToken);
 
-        Assert.Same(strap, devices.HeartRate);
+        Assert.Empty(added);
+        Assert.Same(strap, set.HeartRate);
         Assert.False(strap.Disposed);
         Assert.Equal(Strap.Id, config.Devices.HeartRate);
         Assert.Equal(["Forerunner 965 would not connect"], warnings);
@@ -125,9 +229,10 @@ public sealed class DeviceConnectorTests : IDisposable
         var trainer = new TestTrainer(Kickr.Id);
         TestStrap? added = null;
 
+        var set = Set(trainer);
         await Assert.ThrowsAsync<OperationCanceledException>(() => DeviceConnector.AddAsync(
             config,
-            new ConnectedDevices(trainer, null, []),
+            set,
             [Strap, Click],
             (found, _, _) => found.Kind == DeviceKind.HeartRate
                 ? Task.FromResult<ISensorDevice?>(added = new TestStrap(found.Id))
@@ -137,6 +242,8 @@ public sealed class DeviceConnectorTests : IDisposable
 
         Assert.True(added?.Disposed);
         Assert.False(trainer.Disposed);
+        Assert.Equal([Kickr.Id], set.All.Select(d => d.Id));
+        Assert.Null(config.Devices.HeartRate);
         Assert.False(File.Exists(config.Path));
     }
 
@@ -197,6 +304,23 @@ public sealed class DeviceConnectorTests : IDisposable
         return saved;
     }
 
+    private static DeviceSet Set(TestTrainer trainer, TestStrap? strap = null, TestClick? click = null)
+    {
+        var set = new DeviceSet();
+        set.Put(DeviceKind.Trainer, trainer);
+        if (strap is not null)
+        {
+            set.Put(DeviceKind.HeartRate, strap);
+        }
+
+        if (click is not null)
+        {
+            set.Put(DeviceKind.Shifter, click);
+        }
+
+        return set;
+    }
+
     private static Task<ISensorDevice?> Connect(DiscoveredDevice found, Action<string, bool> progress, CancellationToken ct) =>
         Task.FromResult<ISensorDevice?>(found.Kind switch
         {
@@ -205,22 +329,74 @@ public sealed class DeviceConnectorTests : IDisposable
             _ => new TestClick(found.Id),
         });
 
-    private class TestDevice(DeviceId id) : ISensorDevice
+    private class TestDevice(DeviceId id) : IConnectableDevice
     {
         public string Name => Id.Address;
 
         public DeviceId Id { get; } = id;
 
-        public bool IsConnected => true;
+        public bool IsConnected { get; private set; } = true;
 
         public string? Status => null;
 
         public bool Disposed { get; private set; }
 
+        public bool InBackground { get; private set; }
+
+        /// <summary>Set by <see cref="TestLink"/>: each connect fails.</summary>
+        public Action? Connecting { get; set; }
+
+        public Task ConnectAsync(CancellationToken cancellationToken)
+        {
+            if (Connecting is { } connecting)
+            {
+                IsConnected = false;
+                connecting();
+            }
+
+            return Task.CompletedTask;
+        }
+
+        public void ConnectInBackground()
+        {
+            InBackground = true;
+            IsConnected = Connecting is null;
+        }
+
         public ValueTask DisposeAsync()
         {
             Disposed = true;
             return ValueTask.CompletedTask;
+        }
+    }
+
+    /// <summary>Opens test devices; the ones in <paramref name="fails"/> time out on every connect.</summary>
+    private sealed class TestLink(IReadOnlyList<DeviceId> fails) : IDeviceLink
+    {
+        public List<TestDevice> Opened { get; } = [];
+
+        public Dictionary<DeviceId, int> Attempts { get; } = [];
+
+        public IConnectableDevice Open(DiscoveredDevice found)
+        {
+            TestDevice device = found.Kind switch
+            {
+                DeviceKind.Trainer => new TestTrainer(found.Id),
+                DeviceKind.HeartRate => new TestStrap(found.Id),
+                _ => new TestClick(found.Id),
+            };
+
+            if (fails.Contains(found.Id))
+            {
+                device.Connecting = () =>
+                {
+                    Attempts[found.Id] = Attempts.GetValueOrDefault(found.Id) + 1;
+                    throw new TimeoutException("The operation has timed out.");
+                };
+            }
+
+            Opened.Add(device);
+            return device;
         }
     }
 

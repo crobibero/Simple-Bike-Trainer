@@ -13,6 +13,11 @@ public static class GattUuids
     public static readonly string HeartRate = Short(0x180D);
     public static readonly string HeartRateMeasurement = Short(0x2A37);
 
+    public static readonly string CyclingPower = Short(0x1818);
+    public static readonly string CyclingPowerMeasurement = Short(0x2A63);
+    public static readonly string CyclingSpeedCadence = Short(0x1816);
+    public static readonly string CscMeasurement = Short(0x2A5B);
+
     public static readonly string Battery = Short(0x180F);
     public static readonly string BatteryLevel = Short(0x2A19);
 

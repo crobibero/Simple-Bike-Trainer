@@ -1,14 +1,26 @@
 namespace SimpleBikeTrainer.Devices;
 
-/// <summary>ANT+ data pages, per the Fitness Equipment (FE-C) and Heart Rate device profiles. Each page is 8 bytes.</summary>
+/// <summary>
+/// ANT+ data pages, per the Fitness Equipment (FE-C), Heart Rate, Bicycle Power and Bike Speed and Cadence device
+/// profiles. Each page is 8 bytes.
+/// </summary>
 public static class AntPlusPages
 {
     public const byte FitnessEquipmentType = 17;
     public const byte HeartRateType = 120;
+    public const byte BikePowerType = 11;
+    public const byte BikeCadenceType = 122;
+    public const byte BikeSpeedCadenceType = 121;
 
     /// <summary>Channel periods in 1/32768 s: about 4 Hz each.</summary>
     public const ushort FitnessEquipmentPeriod = 8192;
     public const ushort HeartRatePeriod = 8070;
+    public const ushort BikePowerPeriod = 8182;
+    public const ushort BikeCadencePeriod = 8102;
+    public const ushort BikeSpeedCadencePeriod = 8086;
+
+    /// <summary>Bicycle Power page 16, power only. Torque meters send it too, between their torque pages.</summary>
+    public const byte PowerOnlyPage = 0x10;
 
     public const byte GeneralFePage = 0x10;
     public const byte TrainerPage = 0x19;
@@ -51,6 +63,19 @@ public static class AntPlusPages
 
     /// <summary>Every heart rate page carries the computed heart rate in its last byte; 0 means none.</summary>
     public static int? HeartRate(ReadOnlySpan<byte> page) => page.Length >= 8 && page[7] > 0 ? page[7] : null;
+
+    /// <summary>Power page 16: the instantaneous power, and the cadence when the meter measures it (0xFF when not).</summary>
+    public static (int Power, int? Cadence)? BikePower(ReadOnlySpan<byte> page) =>
+        page.Length >= 8 && page[0] == PowerOnlyPage ? (page[6] | (page[7] << 8), page[3] == 0xFF ? null : page[3]) : null;
+
+    /// <summary>
+    /// The crank revolutions of a cadence sensor: bytes 4 to 7 of every page, after the page number and three page
+    /// bytes. A combined speed and cadence sensor has no page number and puts them in bytes 0 to 3.
+    /// </summary>
+    public static CrankData? Crank(ReadOnlySpan<byte> page, bool combined) =>
+        page.Length < 8 ? null
+        : combined ? new CrankData(page[2] | (page[3] << 8), page[0] | (page[1] << 8))
+        : new CrankData(page[6] | (page[7] << 8), page[4] | (page[5] << 8));
 
     /// <summary>Heart rate page 7, battery status: the level in percent, when the strap reports one.</summary>
     public static int? HeartRateBattery(ReadOnlySpan<byte> page) =>

@@ -24,6 +24,8 @@ public abstract class DeviceConnection : IConnectableDevice
 
     public abstract Task ConnectAsync(CancellationToken cancellationToken);
 
+    public abstract void ConnectInBackground();
+
     public abstract ValueTask DisposeAsync();
 
     protected void SetBattery(int percent) => _battery = Math.Clamp(percent, 0, 100);

@@ -2,35 +2,13 @@ using System.Globalization;
 using AsyncAwaitBestPractices;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using SimpleBikeTrainer.Ble;
 using SimpleBikeTrainer.Desktop.Resources;
 using SimpleBikeTrainer.Resources;
 using SimpleBikeTrainer.Uploads;
 
 namespace SimpleBikeTrainer.Desktop.ViewModels;
 
-/// <summary>A saved device on the Settings page, to rename or forget.</summary>
-public sealed partial class SavedDeviceSetting : ObservableObject
-{
-    public required string Kind { get; init; }
-
-    public required DeviceId Id { get; init; }
-
-    /// <summary>What the device calls itself, shown when the name box is empty; Save then goes back to it.</summary>
-    public required string AdvertisedName { get; init; }
-
-    [ObservableProperty]
-    public partial string Name { get; set; } = string.Empty;
-
-    /// <summary>Forget was pressed once; a second press forgets the device.</summary>
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(ForgetLabel))]
-    public partial bool ConfirmForget { get; set; }
-
-    public string ForgetLabel => ConfirmForget ? Strings.Settings_ConfirmForget : Strings.Settings_Forget;
-}
-
-/// <summary>Intervals.icu, rider, upload and Garmin settings.</summary>
+/// <summary>Intervals.icu, rider, upload and Garmin settings. Devices have a page of their own.</summary>
 public sealed partial class SettingsViewModel : ViewModelBase
 {
     private readonly MainWindowViewModel _main;
@@ -61,19 +39,6 @@ public sealed partial class SettingsViewModel : ViewModelBase
         StartCountdown = _config.StartCountdown;
         GarminSignedIn = GarminClient.IsSignedIn(_config);
         GarminStatus = GarminSignedIn ? Strings.Settings_SignedIn : Strings.Settings_NotSignedIn;
-        var saved = _config.Devices;
-        foreach (var device in saved.Saved.OrderBy(d => d.Kind))
-        {
-            SavedDevices.Add(new SavedDeviceSetting
-            {
-                Kind = Services.CandidateRow.LabelOf(device.Kind),
-                Id = device.Id,
-                AdvertisedName = saved.AdvertisedName(device.Id),
-                Name = saved.NameOf(device.Id),
-            });
-        }
-
-        HasDevices = SavedDevices.Count > 0;
         RefreshGarminAsync().SafeFireAndForget();
     }
 
@@ -219,18 +184,6 @@ public sealed partial class SettingsViewModel : ViewModelBase
 
     [ObservableProperty] public partial string GarminStatus { get; set; }
 
-    /// <summary>The saved devices, to rename or forget.</summary>
-    public System.Collections.ObjectModel.ObservableCollection<SavedDeviceSetting> SavedDevices { get; } = [];
-
-    [ObservableProperty] public partial bool HasDevices { get; set; }
-
-    /// <summary>Forget all was pressed once; a second press forgets every device.</summary>
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(ForgetAllLabel))]
-    public partial bool ConfirmForgetAll { get; set; }
-
-    public string ForgetAllLabel => ConfirmForgetAll ? Strings.Settings_ConfirmForgetAll : Strings.Settings_ForgetDevices;
-
     [ObservableProperty] public partial string? Error { get; set; }
 
     public bool GarminSignedOut => !GarminSignedIn;
@@ -354,47 +307,18 @@ public sealed partial class SettingsViewModel : ViewModelBase
         GarminStatus = Strings.Settings_NotSignedIn;
     }
 
-    /// <summary>Forgets one device on the second press; the first only asks.</summary>
+    /// <summary>Opens the Devices page; Save or Cancel there comes back here, with the fields as they were.</summary>
     [RelayCommand]
-    private void ForgetDevice(SavedDeviceSetting device)
-    {
-        if (!device.ConfirmForget)
-        {
-            device.ConfirmForget = true;
-            return;
-        }
-
-        _main.Devices.Forget(device.Id);
-        SavedDevices.Remove(device);
-        HasDevices = SavedDevices.Count > 0;
-    }
-
-    [RelayCommand]
-    private static void KeepDevice(SavedDeviceSetting device) => device.ConfirmForget = false;
-
-    /// <summary>Forgets every device on the second press; the first only asks.</summary>
-    [RelayCommand]
-    private void ForgetDevices()
-    {
-        if (!ConfirmForgetAll)
-        {
-            ConfirmForgetAll = true;
-            return;
-        }
-
-        _config.Devices = new DevicesConfig { Adapter = _config.Devices.Adapter, WifiTrainers = _config.Devices.WifiTrainers };
-        _config.Save();
-        _main.Devices.SavedChanged();
-        SavedDevices.Clear();
-        HasDevices = false;
-        ConfirmForgetAll = false;
-    }
-
-    [RelayCommand]
-    private void KeepDevices() => ConfirmForgetAll = false;
+    private void ManageDevices() => _main.ShowDevices(this);
 
     public override void OnLeaving()
     {
+        // The Devices page comes back here, so a sign-in waiting for its code carries on.
+        if (_main.Current is DevicesViewModel)
+        {
+            return;
+        }
+
         _garmin?.Dispose();
         _garmin = null;
     }
@@ -439,10 +363,6 @@ public sealed partial class SettingsViewModel : ViewModelBase
         _config.Uploads.Intervals = UploadIntervals;
         _config.Uploads.Garmin = UploadGarmin;
         _config.Uploads.Automatic = Automatic;
-        foreach (var device in SavedDevices)
-        {
-            _config.Devices.Rename(device.Id, device.Name);
-        }
         _config.Theme = Theme;
         _config.SoundCues = SoundCues;
         _config.StartCountdown = StartCountdown;

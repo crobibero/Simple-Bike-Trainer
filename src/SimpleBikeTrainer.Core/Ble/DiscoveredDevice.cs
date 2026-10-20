@@ -2,10 +2,15 @@ using SimpleBikeTrainer.Devices;
 
 namespace SimpleBikeTrainer.Ble;
 
+/// <summary>Stored by name in the config, so the order here is only the order lists show the kinds in.</summary>
 public enum DeviceKind
 {
     Other,
     Trainer,
+    PowerMeter,
+
+    /// <summary>A cadence sensor, or a combined speed and cadence sensor, of which the app uses the cadence.</summary>
+    CadenceSensor,
     HeartRate,
     Shifter,
 }

@@ -1,8 +1,7 @@
 using System.Collections.ObjectModel;
-using System.ComponentModel;
+using System.Diagnostics;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
-using SimpleBikeTrainer.AntPlus;
 using SimpleBikeTrainer.Ble;
 using SimpleBikeTrainer.Desktop.Resources;
 using SimpleBikeTrainer.Devices;
@@ -10,13 +9,43 @@ using SimpleBikeTrainer.Resources;
 
 namespace SimpleBikeTrainer.Desktop.Services;
 
-public partial class DeviceRow : ObservableObject
+/// <summary>A connected device, with what it reports now.</summary>
+public sealed partial class DeviceRow : ObservableObject
 {
-    public required string Kind { get; init; }
+    // Matches RideSession.SensorTimeout: an idle KICKR notifies only every 1-4 s.
+    private static readonly TimeSpan FreshFor = TimeSpan.FromSeconds(5);
 
-    public required ISensorDevice Device { get; init; }
+    private readonly Lock _lock = new();
+    private long _seen;
+    private int? _power;
+    private double? _cadence;
+    private int? _heartRate;
 
-    /// <summary>The name the rider gave the device in Settings, if any.</summary>
+    public DeviceRow(DeviceKind kind, ISensorDevice device)
+    {
+        DeviceKind = kind;
+        Device = device;
+        switch (device)
+        {
+            case ITrainer trainer:
+                trainer.DataReceived += OnTrainerData;
+                break;
+            case IHeartRateMonitor monitor:
+                monitor.HeartRateReceived += OnHeartRate;
+                break;
+            case ICyclingSensor sensor:
+                sensor.ReadingReceived += OnReading;
+                break;
+        }
+    }
+
+    public DeviceKind DeviceKind { get; }
+
+    public string Kind => CandidateRow.LabelOf(DeviceKind);
+
+    public ISensorDevice Device { get; }
+
+    /// <summary>The name the rider gave the device on the Devices page, if any.</summary>
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(Name))]
     public partial string? Alias { get; set; }
@@ -26,19 +55,94 @@ public partial class DeviceRow : ObservableObject
     [ObservableProperty]
     public partial bool Connected { get; set; }
 
+    /// <summary>Its readings and battery while connected, such as "182 W · 88 rpm"; otherwise why it is not.</summary>
     [ObservableProperty]
     public partial string Detail { get; set; } = string.Empty;
+
+    /// <summary>The device's own reading of <paramref name="metric"/>, while fresh.</summary>
+    public double? Value(Metric metric)
+    {
+        lock (_lock)
+        {
+            if (_seen == 0 || Stopwatch.GetElapsedTime(_seen) >= FreshFor)
+            {
+                return null;
+            }
+
+            return metric switch
+            {
+                Metric.Power => _power,
+                Metric.Cadence => _cadence,
+                _ => _heartRate,
+            };
+        }
+    }
 
     public void Refresh()
     {
         Connected = Device.IsConnected;
+        List<string> parts = [];
+        if (Value(Metric.Power) is { } power)
+        {
+            parts.Add(Loc.Format(Strings.Device_Watts, power));
+        }
+
+        if (Value(Metric.Cadence) is { } cadence)
+        {
+            parts.Add(Loc.Format(Strings.Device_Rpm, Math.Round(cadence)));
+        }
+
+        if (Value(Metric.HeartRate) is { } bpm)
+        {
+            parts.Add(Loc.Format(Strings.Device_Bpm, bpm));
+        }
+
+        if (Device.Battery is { } battery)
+        {
+            parts.Add(Loc.Format(Strings.Device_Battery, battery));
+        }
+
         Detail = Device switch
         {
             _ when !Device.IsConnected => Device.Status ?? Strings.Device_Disconnected,
             ITrainer { LastError: { } e } => e,
-            { Battery: { } b } => Loc.Format(Strings.Device_Battery, b),
+            _ when parts.Count > 0 => string.Join("  ·  ", parts),
             _ => Strings.Device_Connected,
         };
+    }
+
+    /// <summary>Stops listening, once the device has left the list.</summary>
+    public void Detach()
+    {
+        switch (Device)
+        {
+            case ITrainer trainer:
+                trainer.DataReceived -= OnTrainerData;
+                break;
+            case IHeartRateMonitor monitor:
+                monitor.HeartRateReceived -= OnHeartRate;
+                break;
+            case ICyclingSensor sensor:
+                sensor.ReadingReceived -= OnReading;
+                break;
+        }
+    }
+
+    private void OnTrainerData(IndoorBikeData data) => Update(data.PowerWatts, data.CadenceRpm, data.HeartRate is > 0 ? data.HeartRate : null);
+
+    private void OnHeartRate(int bpm) => Update(null, null, bpm);
+
+    private void OnReading(SensorReading reading) => Update(reading.PowerWatts, reading.CadenceRpm, null);
+
+    private void Update(int? power, double? cadence, int? heartRate)
+    {
+        lock (_lock)
+        {
+            _seen = Stopwatch.GetTimestamp();
+            _power = power ?? _power;
+            _cadence = cadence ?? _cadence;
+            _heartRate = heartRate ?? _heartRate;
+        }
     }
 }
 
@@ -52,7 +156,7 @@ public sealed class SavedDeviceRow
     public required DeviceId Id { get; init; }
 }
 
-/// <summary>A device found by a scan, for the rider to tick.</summary>
+/// <summary>A device found by a scan, to pair.</summary>
 public sealed partial class CandidateRow : ObservableObject
 {
     public required DiscoveredDevice Found { get; set; }
@@ -68,6 +172,8 @@ public sealed partial class CandidateRow : ObservableObject
     public static string LabelOf(DeviceKind kind) => kind switch
     {
         DeviceKind.Trainer => Strings.Device_Trainer,
+        DeviceKind.PowerMeter => Strings.Device_PowerMeter,
+        DeviceKind.CadenceSensor => Strings.Device_CadenceSensor,
         DeviceKind.HeartRate => Strings.Device_HeartRate,
         DeviceKind.Shifter => Strings.Device_Controller,
         _ => Strings.Device_Other,
@@ -79,8 +185,15 @@ public sealed partial class CandidateRow : ObservableObject
         : Id.Transport == DeviceTransport.AntPlus ? Strings.Device_InRange
         : Strings.Device_OutOfRange;
 
+    /// <summary>Paired already but not connected, so the button only connects it.</summary>
     [ObservableProperty]
-    public partial bool Selected { get; set; }
+    [NotifyPropertyChangedFor(nameof(PairLabel))]
+    public partial bool IsPaired { get; set; }
+
+    [ObservableProperty]
+    public partial bool IsPairing { get; set; }
+
+    public string PairLabel => IsPaired ? Strings.Devices_ConnectOne : Strings.Devices_PairOne;
 
     public void Update(DiscoveredDevice found)
     {
@@ -94,7 +207,10 @@ public sealed partial class DeviceManager : ObservableRecipient, IAsyncDisposabl
     private readonly DispatcherTimer _timer;
     private readonly AppConfig _config;
     private readonly List<string> _warnings = [];
-    private DeviceScanner? _scanner;
+    private readonly DeviceSet _set = new();
+    private IDeviceScanner? _scanner;
+    private Task _stopping = Task.CompletedTask;
+    private bool _wantScan;
     private CancellationTokenSource? _cancel;
 
     public DeviceManager(AppConfig config, bool testMode = false)
@@ -106,41 +222,48 @@ public sealed partial class DeviceManager : ObservableRecipient, IAsyncDisposabl
         SavedChanged();
     }
 
-    /// <summary>The connected devices.</summary>
+    /// <summary>How long Connect on one paired device waits for the scan to find it; tests shorten it.</summary>
+    internal TimeSpan LookTime { get; set; } = TimeSpan.FromSeconds(20);
+
+    /// <summary>Opens the radios for the Devices page's scan; tests put in a scanner of their own.</summary>
+    internal Func<DevicesConfig, Task<IDeviceScanner>> OpenScanner { get; set; } = async devices => await DeviceScanner.CreateAsync(devices);
+
+    /// <summary>Raised after devices connect, disconnect, are paired or forgotten, for pages that show them.</summary>
+    public event Action? Changed;
+
+    /// <summary>The connected devices, trainer first.</summary>
     public ObservableCollection<DeviceRow> Rows { get; } = [];
 
     /// <summary>The saved devices that are not connected: all of them before Connect, and any that were not found after.</summary>
     public ObservableCollection<SavedDeviceRow> Saved { get; } = [];
 
-    /// <summary>What the current scan found, trainers first.</summary>
+    /// <summary>What the scan on the Devices page found, but for the connected devices, trainers first.</summary>
     public ObservableCollection<CandidateRow> Candidates { get; } = [];
 
-    public ConnectedDevices? Devices { get; private set; }
+    /// <summary>What a ride uses; null without a trainer.</summary>
+    public ConnectedDevices? Devices => _set.ForRide();
 
     /// <summary>Also sent as a message, so Start waits until a device being added is connected.</summary>
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(CanConnect), nameof(IsBusy), nameof(CanScan))]
+    [NotifyPropertyChangedFor(nameof(IsBusy), nameof(CanDisconnect))]
     [NotifyPropertyChangedRecipients]
     public partial bool IsConnecting { get; set; }
 
     /// <summary>Also sent as a message, so Start waits until the scan ends.</summary>
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(CanConnect), nameof(IsBusy), nameof(CanScan))]
+    [NotifyPropertyChangedFor(nameof(IsBusy), nameof(CanDisconnect))]
     [NotifyPropertyChangedRecipients]
     public partial bool IsScanning { get; set; }
 
-    /// <summary>Also sent as a <see cref="CommunityToolkit.Mvvm.Messaging.Messages.PropertyChangedMessage{T}"/>, so pages can follow it.</summary>
+    /// <summary>A trainer is connected, so a ride can start. Also sent as a message, so pages can follow it.</summary>
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(CanConnect), nameof(CanScan), nameof(ScanLabel), nameof(ScanTip))]
     [NotifyPropertyChangedRecipients]
     public partial bool IsConnected { get; set; }
 
+    /// <summary>Any device is connected, so Disconnect has something to do.</summary>
     [ObservableProperty]
-    public partial bool HasTrainerPicked { get; set; }
-
-    /// <summary>Connect selected works: something is ticked, and a trainer among them unless one is connected already.</summary>
-    [ObservableProperty]
-    public partial bool CanConnectPicked { get; set; }
+    [NotifyPropertyChangedFor(nameof(CanDisconnect))]
+    public partial bool HasConnected { get; set; }
 
     [ObservableProperty]
     public partial string Status { get; set; } = Strings.Devices_NotConnected;
@@ -150,192 +273,243 @@ public sealed partial class DeviceManager : ObservableRecipient, IAsyncDisposabl
 
     /// <summary>Use a pretend trainer and heart rate instead of Bluetooth.</summary>
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(ConnectLabel), nameof(CanScan))]
     public partial bool Simulate { get; set; }
 
-    /// <summary>Saved devices exist, so Connect skips the picker.</summary>
+    /// <summary>A trainer is paired, so Connect has something to look for.</summary>
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(ConnectLabel), nameof(CanScan))]
     public partial bool HasSaved { get; set; }
 
-    public bool CanConnect => !IsConnecting && !IsScanning && !IsConnected;
+    /// <summary>The Devices page scans the whole time it is open, so only a connect in progress holds this back.</summary>
+    public bool CanDisconnect => !IsConnecting && HasConnected;
 
-    /// <summary>A scan can start: to pick other devices, or to add one to those connected.</summary>
-    public bool CanScan => !IsBusy && !Simulate && (IsConnected || HasSaved);
-
-    public string ScanLabel => IsConnected ? Strings.Devices_Add : Strings.Home_ChooseDevices;
-
-    public string ScanTip => IsConnected ? Strings.Devices_AddTip : Strings.Home_ChooseDevicesTip;
-
-    /// <summary>Scanning or connecting, which Cancel stops.</summary>
     public bool IsBusy => IsConnecting || IsScanning;
 
-    public string ConnectLabel => Simulate || HasSaved ? Strings.Devices_Connect : Strings.Devices_Find;
-
-    /// <summary>Connects the saved devices, or opens the picker when there are none.</summary>
+    /// <summary>
+    /// Connects the paired devices that are not connected yet, joining any that are. One that is found but will not
+    /// connect keeps trying in the background.
+    /// </summary>
     public async Task ConnectAsync(AppConfig config)
     {
         SavedChanged();
         if (Simulate)
         {
+            await DisconnectAsync();
             var trainer = new SimulatedTrainer();
-            Connected(new ConnectedDevices(trainer, new SimulatedHeartRate(trainer), []), Strings.Devices_Simulated);
+            _set.Put(DeviceKind.Trainer, trainer);
+            _set.Put(DeviceKind.HeartRate, new SimulatedHeartRate(trainer));
+            DevicesChanged();
+            Status = Strings.Devices_Simulated;
             return;
         }
 
-        if (!HasSaved)
+        if (!HasSaved || IsConnecting)
         {
-            await ScanAsync(config);
             return;
         }
 
-        await RunAsync(async ct =>
-        {
-            var devices = await DeviceConnector.ConnectAsync(config, wantHeartRate: true, wantShifters: true, Progress, ct);
-            Connected(devices, ConnectedStatus(devices));
-        });
+        await WithScanPausedAsync(config, () => RunAsync(
+            ct => DeviceConnector.ConnectSavedAsync(config, _set, wantHeartRate: true, wantShifters: true, Progress, ct),
+            () => _set.Shifters.Count == 0 ? Strings.Devices_NoClick : Strings.Devices_ConnectedStatus));
     }
 
-    /// <summary>Starts a scan; found devices appear in <see cref="Candidates"/> until the rider connects or cancels.</summary>
+    /// <summary>Scans until <see cref="StopScanAsync"/>; what it finds appears in <see cref="Candidates"/>.</summary>
     public async Task ScanAsync(AppConfig config)
     {
-        if (IsBusy)
+        _wantScan = true;
+        await StartScannerAsync(config);
+    }
+
+    public async Task StopScanAsync()
+    {
+        _wantScan = false;
+        await StopScannerAsync();
+
+        // A scan started again while this one stopped keeps its list.
+        if (_wantScan)
         {
             return;
         }
 
         Candidates.Clear();
-        HasTrainerPicked = false;
-        CanConnectPicked = false;
-        IsScanning = true;
-        Status = IsConnected ? Strings.Devices_ScanningToAdd : Strings.Devices_Scanning;
-        try
+        if (!IsConnecting)
         {
-            _scanner = await DeviceScanner.CreateAsync(config.Devices);
-            _scanner.DeviceFound += found => Dispatcher.UIThread.Post(() => AddCandidate(found, config.Devices));
-            await _scanner.StartAsync();
-
-            // E.g. Bluetooth is off while an ANT+ stick scans, or a stick is plugged in that would not open.
-            if (_scanner.Warnings.Count > 0)
-            {
-                Status = string.Join(" ", [Status, .. _scanner.Warnings]);
-            }
-
-            foreach (var found in _scanner.Found)
-            {
-                AddCandidate(found, config.Devices);
-            }
-        }
-        catch (Exception e) when (e is not OperationCanceledException)
-        {
-            await StopScanAsync();
-            Status = e.Message;
+            Status = IsConnected ? Strings.Devices_ConnectedStatus : Strings.Devices_NotConnected;
         }
     }
 
     /// <summary>
-    /// Connects the ticked devices and saves them, so the next Connect goes straight to them. With devices connected
-    /// already, the ticked ones join them, and those stay connected.
+    /// Connects one device from the scan and saves it, in place of the paired one of its kind; controllers add up. It
+    /// stays connected, alongside the others. One that will not connect is not saved, and the status says what to try.
     /// </summary>
-    public async Task ConnectChosenAsync(AppConfig config)
+    public async Task PairAsync(CandidateRow row, AppConfig config)
     {
-        var picked = Candidates.Where(c => c.Selected).Select(c => c.Found).ToList();
-        if (Devices is { } current)
+        if (IsConnecting)
         {
-            if (picked.Count == 0)
+            return;
+        }
+
+        var paired = row.IsPaired;
+        row.IsPairing = true;
+        try
+        {
+            await WithScanPausedAsync(config, () => RunAsync(
+                async ct =>
+                {
+                    if ((await DeviceConnector.AddAsync(config, _set, [row.Found], Progress, ct)).Count == 0)
+                    {
+                        throw new PairException(PairHint(row.Kind));
+                    }
+
+                    Candidates.Remove(row);
+                },
+                () => Loc.Format(paired ? Strings.Devices_ConnectedOne : Strings.Devices_Paired, row.Name)));
+        }
+        finally
+        {
+            row.IsPairing = false;
+        }
+    }
+
+    /// <summary>
+    /// Connects one paired device alongside the others. It needs the scan to have found it, so it scans for it first,
+    /// for up to <see cref="LookTime"/>; one not found says what to try.
+    /// </summary>
+    public async Task ConnectPairedAsync(DeviceId id, AppConfig config)
+    {
+        if (IsConnecting || _set.Contains(id) || config.Devices.Find(id) is not { } saved)
+        {
+            return;
+        }
+
+        var found = Candidates.FirstOrDefault(c => c.Id == id);
+        if (found is null)
+        {
+            var name = config.Devices.NameOf(id);
+            var scanning = _scanner is not null;
+            await StartScannerAsync(config);
+            using var cancel = new CancellationTokenSource();
+            using var look = CancellationTokenSource.CreateLinkedTokenSource(cancel.Token);
+            look.CancelAfter(LookTime);
+            _cancel = cancel;
+            IsConnecting = true;
+            Status = Loc.Format(Strings.Devices_LookingFor, name);
+            try
+            {
+                while ((found = Candidates.FirstOrDefault(c => c.Id == id)) is null)
+                {
+                    await Task.Delay(250, look.Token);
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                Status = cancel.IsCancellationRequested ? Strings.Devices_Canceled : Loc.Format(Strings.Devices_NotFound, name, PairHint(saved.Kind));
+            }
+            finally
+            {
+                _cancel = null;
+                IsConnecting = false;
+                if (!scanning && !_wantScan)
+                {
+                    await StopScannerAsync();
+                }
+            }
+
+            if (found is null)
             {
                 return;
             }
-
-            await StopScanAsync();
-            await RunAsync(async ct =>
-            {
-                var devices = await DeviceConnector.AddAsync(config, current, picked, Progress, ct);
-                Candidates.Clear();
-                Connected(devices, Strings.Devices_ConnectedStatus);
-            });
-            return;
         }
 
-        if (picked.FirstOrDefault(d => d.Kind == DeviceKind.Trainer) is not { } trainer)
-        {
-            Status = Strings.Devices_PickTrainer;
-            return;
-        }
-
-        await StopScanAsync();
-        await RunAsync(async ct =>
-        {
-            var devices = await DeviceConnector.ConnectChosenAsync(
-                config,
-                trainer,
-                picked.FirstOrDefault(d => d.Kind == DeviceKind.HeartRate),
-                [.. picked.Where(d => d.Kind == DeviceKind.Shifter)],
-                Progress,
-                ct);
-            Candidates.Clear();
-            Connected(devices, ConnectedStatus(devices));
-        });
+        await PairAsync(found, config);
     }
 
-    /// <summary>Removes a saved device, so Connect no longer looks for it. A connected one stays connected until Disconnect.</summary>
-    public void Forget(DeviceId id)
+    /// <summary>Disconnects one device and leaves the others connected; it stays paired.</summary>
+    public async Task DisconnectOneAsync(DeviceId id)
     {
-        var saved = _config.Devices;
-        saved.Forget(id);
-        if (saved.Saved.Count == 0)
+        if (_set.Remove(id) is not { } device)
         {
-            saved.Picked = false;
+            return;
+        }
+
+        DevicesChanged();
+        Status = Loc.Format(Strings.Devices_DisconnectedOne, device.Name);
+        await device.DisposeAsync();
+    }
+
+    /// <summary>Removes a saved device, so Connect no longer looks for it, and disconnects it.</summary>
+    public async Task ForgetAsync(DeviceId id)
+    {
+        _config.Devices.Forget(id);
+        if (_config.Devices.Saved.Count == 0)
+        {
+            _config.Devices.Picked = false;
         }
 
         _config.Save();
+        var device = _set.Remove(id);
+        DevicesChanged();
+        if (device is not null)
+        {
+            await device.DisposeAsync();
+        }
+    }
+
+    /// <summary>Forgets every device, and disconnects them; where readings come from is kept.</summary>
+    public async Task ForgetAllAsync()
+    {
+        _config.Devices = _config.Devices.WithoutDevices();
+        _config.Save();
+        await DisconnectAsync();
         SavedChanged();
     }
 
-    /// <summary>Shows the saved devices again, after a connect, a disconnect, or Settings renaming or forgetting them.</summary>
+    /// <summary>Shows the saved devices again, after a connect, a disconnect, or a device renamed or forgotten.</summary>
     public void SavedChanged()
     {
         var saved = _config.Devices;
         HasSaved = saved.Trainer is not null;
         foreach (var row in Rows)
         {
-            row.Alias = AliasOf(row.Device);
+            row.Alias = row.Device.Id is { } id && saved.Find(id) is { Alias.Length: > 0 } s ? s.Alias : null;
         }
 
-        var connected = Devices?.All.Select(d => d.Id).OfType<DeviceId>().ToHashSet() ?? [];
         Saved.Clear();
-        foreach (var device in saved.Saved.OrderBy(d => d.Kind).Where(d => !connected.Contains(d.Id)))
+        foreach (var device in saved.Saved.OrderBy(d => d.Kind).Where(d => !_set.Contains(d.Id)))
         {
             Saved.Add(new SavedDeviceRow { Kind = CandidateRow.LabelOf(device.Kind), Name = saved.NameOf(device.Id), Id = device.Id });
         }
+
+        foreach (var candidate in Candidates)
+        {
+            candidate.IsPaired = saved.Find(candidate.Id) is not null;
+        }
+
+        Changed?.Invoke();
     }
 
-    /// <summary>Stops a scan or a connect in progress.</summary>
+    /// <summary>Stops a connect in progress.</summary>
     public async Task CancelAsync()
     {
         if (_cancel is { } cancel)
         {
             await cancel.CancelAsync();
         }
-
-        if (IsScanning)
-        {
-            await StopScanAsync();
-            Candidates.Clear();
-            Status = Strings.Devices_NotConnected;
-        }
     }
 
     public async Task DisconnectAsync()
     {
-        if (Devices is { } devices)
+        if (_set.Count == 0)
         {
-            Devices = null;
-            Rows.Clear();
-            IsConnected = false;
-            Status = Strings.Devices_NotConnected;
-            SavedChanged();
-            await devices.DisposeAsync();
+            return;
+        }
+
+        var devices = _set.All;
+        _set.Clear();
+        DevicesChanged();
+        Status = Strings.Devices_NotConnected;
+        foreach (var device in devices.Reverse())
+        {
+            await device.DisposeAsync();
         }
     }
 
@@ -343,14 +517,14 @@ public sealed partial class DeviceManager : ObservableRecipient, IAsyncDisposabl
     {
         _timer.Stop();
         await CancelAsync();
+        await StopScanAsync();
         await DisconnectAsync();
     }
 
-    /// <summary>Adds or updates a scan result. Saved devices start ticked; picking a trainer or monitor unticks the other ones.</summary>
+    /// <summary>Adds or updates a scan result; connected devices are left out, as they are in use.</summary>
     internal void AddCandidate(DiscoveredDevice found, DevicesConfig saved)
     {
-        // A connected device is already in use; the picker offers the others.
-        if (found.Kind == DeviceKind.Other || Devices?.All.Any(d => d.Id == found.Id) == true)
+        if (found.Kind == DeviceKind.Other || _set.Contains(found.Id))
         {
             return;
         }
@@ -361,55 +535,99 @@ public sealed partial class DeviceManager : ObservableRecipient, IAsyncDisposabl
             return;
         }
 
-        var row = new CandidateRow
-        {
-            Found = found,
-            Selected = found.Kind switch
-            {
-                DeviceKind.Trainer => saved.Trainer == found.Id,
-                DeviceKind.HeartRate => saved.HeartRate == found.Id,
-                DeviceKind.Shifter => saved.Shifters.Contains(found.Id),
-                _ => false,
-            },
-        };
-        row.PropertyChanged += OnCandidateChanged;
-
         var index = 0;
         while (index < Candidates.Count && Candidates[index].Kind <= found.Kind)
         {
             index++;
         }
 
-        Candidates.Insert(index, row);
-        UpdatePicked();
+        Candidates.Insert(index, new CandidateRow { Found = found, IsPaired = saved.Find(found.Id) is not null });
     }
 
-    private void OnCandidateChanged(object? sender, PropertyChangedEventArgs e)
+    /// <summary>What to try when a device will not pair, for the kind of device it is.</summary>
+    private static string PairHint(DeviceKind kind) => kind switch
     {
-        if (e.PropertyName != nameof(CandidateRow.Selected) || sender is not CandidateRow row)
+        DeviceKind.HeartRate => Strings.Devices_PairHintHeartRate,
+        DeviceKind.Trainer => Strings.Devices_PairHintTrainer,
+        DeviceKind.Shifter => Strings.Devices_PairHintController,
+        _ => Strings.Devices_PairHintSensor,
+    };
+
+    private async Task StartScannerAsync(AppConfig config)
+    {
+        // The radio is free once the last scan has let go of it, e.g. on coming back to the Devices page.
+        await _stopping.ConfigureAwait(ConfigureAwaitOptions.ContinueOnCapturedContext | ConfigureAwaitOptions.SuppressThrowing);
+        if (_scanner is not null || IsConnecting)
         {
             return;
         }
 
-        // One trainer and one heart rate monitor; any number of controllers.
-        if (row.Selected && row.Kind is DeviceKind.Trainer or DeviceKind.HeartRate)
+        IsScanning = true;
+        Status = Strings.Devices_Scanning;
+        try
         {
-            foreach (var other in Candidates.Where(c => c != row && c.Kind == row.Kind && c.Selected))
+            var scanner = _scanner = await OpenScanner(config.Devices);
+            scanner.DeviceFound += found => Dispatcher.UIThread.Post(() =>
             {
-                other.Selected = false;
+                if (_scanner == scanner)
+                {
+                    AddCandidate(found, config.Devices);
+                }
+            });
+            await scanner.StartAsync();
+
+            // E.g. Bluetooth is off while an ANT+ stick scans, or a stick is plugged in that would not open.
+            if (scanner is DeviceScanner { Warnings.Count: > 0 } radios)
+            {
+                Status = string.Join(" ", [Status, .. radios.Warnings]);
+            }
+
+            foreach (var found in scanner.Found)
+            {
+                AddCandidate(found, config.Devices);
             }
         }
-
-        UpdatePicked();
+        catch (Exception e) when (e is not OperationCanceledException)
+        {
+            await StopScannerAsync();
+            Status = e.Message;
+        }
     }
 
-    private void UpdatePicked()
+    /// <summary>Stops the radio but keeps the list, for a connect that needs the radio to itself.</summary>
+    private async Task StopScannerAsync()
     {
-        HasTrainerPicked = Candidates.Any(c => c.Selected && c.Kind == DeviceKind.Trainer);
-        CanConnectPicked = Devices is null ? HasTrainerPicked : Candidates.Any(c => c.Selected);
+        if (_scanner is { } scanner)
+        {
+            _scanner = null;
+            _stopping = scanner.DisposeAsync().AsTask();
+            await _stopping;
+        }
+
+        IsScanning = false;
     }
 
-    private async Task RunAsync(Func<CancellationToken, Task> connect)
+    /// <summary>BlueZ can fail a connection made while it scans, so the Devices page's scan stops for it and goes on after.</summary>
+    private async Task WithScanPausedAsync(AppConfig config, Func<Task> connect)
+    {
+        var scanning = _scanner is not null;
+        await StopScannerAsync();
+        try
+        {
+            await connect();
+        }
+        finally
+        {
+            if (scanning && _wantScan)
+            {
+                var status = Status;
+                await StartScannerAsync(config);
+                Status = status;
+            }
+        }
+    }
+
+    private async Task RunAsync(Func<CancellationToken, Task> connect, Func<string> succeeded)
     {
         using var cancel = new CancellationTokenSource();
         _cancel = cancel;
@@ -419,68 +637,62 @@ public sealed partial class DeviceManager : ObservableRecipient, IAsyncDisposabl
         }
 
         IsConnecting = true;
+        string? error = null;
         try
         {
             await connect(cancel.Token);
         }
         catch (OperationCanceledException)
         {
-            Status = Strings.Devices_Canceled;
+            error = Strings.Devices_Canceled;
         }
-        catch (Exception e) when (e is not OperationCanceledException)
+        catch (Exception e)
         {
-            Status = e.Message;
+            error = e.Message;
         }
         finally
         {
             _cancel = null;
             IsConnecting = false;
         }
-    }
 
-    private async Task StopScanAsync()
-    {
-        if (_scanner is { } scanner)
-        {
-            _scanner = null;
-            await scanner.DisposeAsync();
-        }
+        // Even a connect that failed can have connected some devices, such as a heart rate monitor without a trainer.
+        DevicesChanged();
 
-        IsScanning = false;
-    }
-
-    private void Connected(ConnectedDevices devices, string status)
-    {
-        Devices = devices;
-        Rows.Clear();
-        Rows.Add(new DeviceRow { Kind = Strings.Device_Trainer, Device = devices.Trainer });
-        if (devices.HeartRate is { } hr)
-        {
-            Rows.Add(new DeviceRow { Kind = Strings.Device_HeartRate, Device = hr });
-        }
-
-        foreach (var shifter in devices.Shifters)
-        {
-            Rows.Add(new DeviceRow { Kind = Strings.Device_Controller, Device = shifter });
-        }
-
-        RefreshRows();
-        IsConnected = true;
-        SavedChanged();
-
-        // A device that would not connect says why, instead of a plain Connected.
+        // A device that would not connect says why, before the outcome.
         lock (_warnings)
         {
-            Status = _warnings.Count > 0 ? string.Join(" ", _warnings) : status;
+            List<string> parts = [.. _warnings];
+            parts.Add(error ?? (parts.Count > 0 ? string.Empty : succeeded()));
+            Status = string.Join(" ", parts.Where(p => p.Length > 0));
             _warnings.Clear();
         }
     }
 
-    private string? AliasOf(ISensorDevice device) =>
-        device.Id is { } id && _config.Devices.Find(id) is { Alias.Length: > 0 } saved ? saved.Alias : null;
+    private void DevicesChanged()
+    {
+        foreach (var row in Rows)
+        {
+            row.Detach();
+        }
 
-    private static string ConnectedStatus(ConnectedDevices devices) =>
-        devices.Shifters.Count == 0 ? Strings.Devices_NoClick : Strings.Devices_ConnectedStatus;
+        Rows.Clear();
+        foreach (var (kind, device) in _set.Entries)
+        {
+            Rows.Add(new DeviceRow(kind, device));
+        }
+
+        foreach (var candidate in Candidates.Where(c => _set.Contains(c.Id)).ToList())
+        {
+            Candidates.Remove(candidate);
+        }
+
+        IsConnected = _set.Trainer is not null;
+        HasConnected = _set.Count > 0;
+        OnPropertyChanged(nameof(Devices));
+        SavedChanged();
+        RefreshRows();
+    }
 
     private void Progress(string message, bool warning)
     {
@@ -492,7 +704,15 @@ public sealed partial class DeviceManager : ObservableRecipient, IAsyncDisposabl
             }
         }
 
-        Dispatcher.UIThread.Post(() => Status = message);
+        // In order on the UI thread, where the connect runs, so a late message cannot hide the outcome.
+        if (Dispatcher.UIThread.CheckAccess())
+        {
+            Status = message;
+        }
+        else
+        {
+            Dispatcher.UIThread.Post(() => Status = message);
+        }
     }
 
     private void RefreshRows()
@@ -502,4 +722,7 @@ public sealed partial class DeviceManager : ObservableRecipient, IAsyncDisposabl
             row.Refresh();
         }
     }
+
+    /// <summary>A pairing that failed, with what to try; the device's own error is already among the warnings.</summary>
+    private sealed class PairException(string message) : Exception(message);
 }

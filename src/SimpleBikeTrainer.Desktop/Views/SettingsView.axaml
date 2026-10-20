@@ -1,6 +1,7 @@
 ﻿<UserControl x:Class="SimpleBikeTrainer.Desktop.Views.SettingsView"
              xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:c="using:SimpleBikeTrainer.Desktop.Controls"
              xmlns:r="using:SimpleBikeTrainer.Desktop.Resources"
              xmlns:shadui="clr-namespace:ShadUI;assembly=ShadUI"
              xmlns:vm="using:SimpleBikeTrainer.Desktop.ViewModels"
@@ -278,73 +279,15 @@
                         <StackPanel Spacing="8">
                             <TextBlock Classes="label"
                                        Text="{x:Static r:Strings.Common_Devices}" />
-                            <TextBlock IsVisible="{Binding !HasDevices}"
-                                       Text="{x:Static r:Strings.Settings_NoDevices}"
-                                       TextWrapping="Wrap" />
                             <TextBlock Classes="muted"
-                                       FontSize="12"
-                                       IsVisible="{Binding HasDevices}"
-                                       Text="{x:Static r:Strings.Settings_DevicesHint}"
+                                       Text="{x:Static r:Strings.Settings_DevicesNote}"
                                        TextWrapping="Wrap" />
-
-                            <!--  Each saved device: its name to edit, and Forget, which asks once before it acts.  -->
-                            <ItemsControl ItemsSource="{Binding SavedDevices}">
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate x:DataType="vm:SavedDeviceSetting">
-                                        <Grid Margin="0,3"
-                                              ColumnDefinitions="90,*,Auto">
-                                            <TextBlock Margin="0,10,0,0"
-                                                       VerticalAlignment="Top"
-                                                       Classes="muted"
-                                                       Text="{Binding Kind}" />
-                                            <StackPanel Grid.Column="1"
-                                                        Spacing="2">
-                                                <TextBox PlaceholderText="{Binding AdvertisedName}"
-                                                         Text="{Binding Name}" />
-                                                <!--  How it connects, as in the scan picker: one trainer can be saved over Bluetooth and over Wi-Fi.  -->
-                                                <StackPanel Orientation="Horizontal"
-                                                            Spacing="8">
-                                                    <TextBlock FontSize="12"
-                                                               FontWeight="SemiBold"
-                                                               Text="{Binding Id.TransportLabel}" />
-                                                    <TextBlock Classes="muted"
-                                                               FontSize="12"
-                                                               Text="{Binding Id.Address}" />
-                                                </StackPanel>
-                                            </StackPanel>
-                                            <StackPanel Grid.Column="2"
-                                                        Margin="8,0,0,0"
-                                                        VerticalAlignment="Top"
-                                                        Orientation="Horizontal"
-                                                        Spacing="8">
-                                                <Button Classes.Destructive="{Binding ConfirmForget}"
-                                                        Classes.Outline="{Binding !ConfirmForget}"
-                                                        Command="{Binding $parent[UserControl].((vm:SettingsViewModel)DataContext).ForgetDeviceCommand}"
-                                                        CommandParameter="{Binding}"
-                                                        Content="{Binding ForgetLabel}" />
-                                                <Button Classes="Outline"
-                                                        Command="{Binding $parent[UserControl].((vm:SettingsViewModel)DataContext).KeepDeviceCommand}"
-                                                        CommandParameter="{Binding}"
-                                                        Content="{x:Static r:Strings.Common_Cancel}"
-                                                        IsVisible="{Binding ConfirmForget}" />
-                                            </StackPanel>
-                                        </Grid>
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
-
-                            <StackPanel IsVisible="{Binding HasDevices}"
-                                        Orientation="Horizontal"
-                                        Spacing="8">
-                                <Button Classes.Destructive="{Binding ConfirmForgetAll}"
-                                        Classes.Outline="{Binding !ConfirmForgetAll}"
-                                        Command="{Binding ForgetDevicesCommand}"
-                                        Content="{Binding ForgetAllLabel}" />
-                                <Button Classes="Outline"
-                                        Command="{Binding KeepDevicesCommand}"
-                                        Content="{x:Static r:Strings.Common_Cancel}"
-                                        IsVisible="{Binding ConfirmForgetAll}" />
-                            </StackPanel>
+                            <Button HorizontalAlignment="Left"
+                                    Classes="Outline"
+                                    Command="{Binding ManageDevicesCommand}">
+                                <c:IconLabel Symbol="Bluetooth"
+                                             Text="{x:Static r:Strings.Settings_ManageDevices}" />
+                            </Button>
                         </StackPanel>
                     </Border>
                 </StackPanel>
