@@ -82,7 +82,7 @@
                                         IsVisible="{Binding IsRunning}" />
                         <icons:FluentIcon Foreground="{DynamicResource GoodBrush}"
                                           IsVisible="{Binding Succeeded, Converter={x:Static ObjectConverters.Equal}, ConverterParameter={x:True}}"
-                                          Size="Size28"
+                                          Size="Size32"
                                           Symbol="CheckmarkCircle" />
                     </StackPanel>
                 </StackPanel>
