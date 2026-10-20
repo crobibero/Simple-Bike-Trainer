@@ -155,6 +155,7 @@ internal sealed class AndroidPeripheral(BluetoothDevice device) : BlePeripheral
     private static readonly byte[] EnableIndications = [0x02, 0x00];
     private static readonly byte[] Disable = [0x00, 0x00];
     private static readonly TimeSpan OperationTimeout = TimeSpan.FromSeconds(5);
+    private static readonly TimeSpan SettleDelay = TimeSpan.FromMilliseconds(600);
 
     private readonly SemaphoreSlim _turn = new(1, 1);
     private readonly Lock _lock = new();
@@ -314,6 +315,9 @@ internal sealed class AndroidPeripheral(BluetoothDevice device) : BlePeripheral
         try
         {
             await connecting.Task.WaitAsync(timeout, cancellationToken);
+
+            // Android can still be setting up the link when it reports it connected; asking too soon fails with 133.
+            await Task.Delay(SettleDelay, cancellationToken);
 
             // Before discovery: FTMS data over 20 bytes needs more than Android's default MTU, and a KICKR asked after discovery can drop the connection.
             try
