@@ -152,7 +152,7 @@ public sealed partial class HomeViewModel : ViewModelBase, IRecipient<PropertyCh
 
     public bool HasLoadError => LoadError is not null;
 
-    /// <summary>Rides cut off by a crash or power loss, with only their last 5-minute checkpoint saved.</summary>
+    /// <summary>Rides cut off by a crash or power loss, with only their last 30-second checkpoint saved.</summary>
     public ObservableCollection<InterruptedRow> Interrupted { get; } = [];
 
     public Task InitializeAsync() => RefreshAsync();

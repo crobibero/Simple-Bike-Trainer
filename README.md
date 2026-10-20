@@ -98,7 +98,7 @@ Settings > Trainer picks how free rides, routes and ERG off set the resistance. 
 
 FE-C trainers get the rider and bike weights; FTMS has no weight in its simulation command, so Bluetooth trainers use the weight set in their own app. Rolling resistance (Crr) is a setting too: about 0.003 for fast road tires, 0.004 for typical ones, and 0.008 for gravel. A trainer that cannot simulate falls back to the app setting the power, and the ride page says so.
 
-The ride timer starts on the first pedal stroke and pauses after 3 seconds without power or cadence. Every 5 minutes the app saves a checkpoint; after a crash, the home page offers to save the unfinished ride.
+The ride timer starts on the first pedal stroke and pauses after 3 seconds without power or cadence. Every 30 seconds the app saves a checkpoint; after a crash, the home page offers to save the unfinished ride.
 
 ## Uploads
 

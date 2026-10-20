@@ -94,7 +94,7 @@ public sealed class RideSession
     private const int AutoPauseSeconds = 3;
     // An idle KICKR notifies only every 1-4 s.
     private static readonly TimeSpan SensorTimeout = TimeSpan.FromSeconds(5);
-    private static readonly TimeSpan CheckpointEvery = TimeSpan.FromMinutes(5);
+    private static readonly TimeSpan CheckpointEvery = TimeSpan.FromSeconds(30);
 
     private readonly Workout _workout;
     private readonly RideOptions _options;

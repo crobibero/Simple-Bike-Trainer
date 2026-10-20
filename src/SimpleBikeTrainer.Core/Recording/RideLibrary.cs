@@ -70,7 +70,7 @@ public sealed record RideSummary(
     double ElevationGain,
     IReadOnlyDictionary<string, string> Uploads);
 
-/// <summary>A ride whose app stopped before it finished: only the 5-minute checkpoint is on disk.</summary>
+/// <summary>A ride whose app stopped before it finished: only the last 30-second checkpoint is on disk.</summary>
 public sealed record InterruptedRide(string PartialPath, string FitPath, string Name, DateTime StartUtc, int MovingSeconds);
 
 /// <summary>A ride read back from its FIT file, with the samples for its chart.</summary>

@@ -198,7 +198,7 @@ public sealed class SessionTests : IDisposable
         // Ends on ride time, not wall time: Windows timers tick every 15.6 ms, so the clock runs slower there.
         session.Updated += s =>
         {
-            if (s.Moving.TotalSeconds >= 310)
+            if (s.Moving.TotalSeconds >= 40)
             {
                 session.Send(RideCommand.Finish);
             }
@@ -206,7 +206,7 @@ public sealed class SessionTests : IDisposable
 
         var result = await session.RunAsync(TestContext.Current.CancellationToken);
 
-        Assert.True(result.Metrics.Seconds > 300, $"rode {result.Metrics.Seconds} s, past the 5-minute checkpoint");
+        Assert.True(result.Metrics.Seconds > 30, $"rode {result.Metrics.Seconds} s, past the 30-second checkpoint");
         Assert.True(System.IO.File.Exists(path));
     }
 
