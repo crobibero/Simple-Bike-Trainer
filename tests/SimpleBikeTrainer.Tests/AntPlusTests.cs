@@ -54,6 +54,18 @@ public sealed class AntPlusTests : IDisposable
     }
 
     [Fact]
+    public void AStickThatCannotMeasureSignalGivesNoRssi()
+    {
+        // Heard from a heart rate strap through an ANTUSB2: the RSSI block is 0x10 0x00 0x68, not a dBm reading.
+        var received = AntReceived.Parse([0, 0x04, 0x21, 0xAD, 0xF8, 0xB3, 0xF9, 0x5B, 0x00, 0xC0, 0x5C, 0xAB, 0x78, 0x01, 0x10, 0x00, 0x68, 0x00]);
+
+        Assert.NotNull(received);
+        Assert.Equal(43868, received.Value.DeviceNumber);
+        Assert.Equal(0x78, received.Value.DeviceType);
+        Assert.Null(received.Value.Rssi);
+    }
+
+    [Fact]
     public void TrainerPagesBecomeOneReading()
     {
         var decoder = new FecDecoder();

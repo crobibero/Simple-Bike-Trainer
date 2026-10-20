@@ -137,9 +137,9 @@ internal readonly record struct AntReceived(byte[] Page, int? DeviceNumber, byte
         }
 
         sbyte? rssi = null;
-        if ((flags & AntMessage.ExtendedRssi) != 0 && data.Length >= at + 3)
+        // Measurement type, value, threshold. Only type 0x20 is dBm: an ANTUSB2 cannot measure and sends 0x10 with a value of 0.
+        if ((flags & AntMessage.ExtendedRssi) != 0 && data.Length >= at + 3 && data[at] == 0x20)
         {
-            // Measurement type, value in dBm, threshold.
             rssi = (sbyte)data[at + 1];
         }
 
