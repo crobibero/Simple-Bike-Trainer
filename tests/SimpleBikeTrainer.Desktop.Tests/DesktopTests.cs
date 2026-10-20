@@ -143,6 +143,7 @@ public sealed class DesktopTests(HeadlessSession headless) : IDisposable
             link.Opened.Single().Beat(72);
             paired.Live!.Refresh();
             Assert.Equal("72 bpm", paired.Live.Detail);
+            await ShootBoth(window, "0-devices");
 
             // A strap that will not answer is not saved, and the page says what to try.
             link.Fails.Add(DeviceId.AntPlus(12345));
@@ -151,7 +152,6 @@ public sealed class DesktopTests(HeadlessSession headless) : IDisposable
             Assert.Contains("HRM-Dual (ANT+ 12345) did not connect", main.Devices.Status, StringComparison.Ordinal);
             Assert.Equal(DeviceId.Bluetooth("E1:22:33:44:55:66"), AppConfig.Load(config.Path).Devices.HeartRate);
             Assert.True(link.Opened[^1].Disposed);
-            await ShootBoth(window, "0-devices");
 
             // Save goes back home and stops the scan; the strap stays connected until it is forgotten.
             pairing.SaveCommand.Execute(null);

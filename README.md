@@ -5,10 +5,14 @@ Simple Bike Trainer rides Intervals.icu workouts on a Wahoo KICKR or any other B
 | | Light | Dark |
 | --- | --- | --- |
 | Home | ![Home, light](docs/screenshots/home-light.png) | ![Home, dark](docs/screenshots/home-dark.png) |
+| Route | ![Route, light](docs/screenshots/route-light.png) | ![Route, dark](docs/screenshots/route-dark.png) |
+| Devices | ![Devices, light](docs/screenshots/devices-light.png) | ![Devices, dark](docs/screenshots/devices-dark.png) |
 | Ride | ![Ride, light](docs/screenshots/ride-light.png) | ![Ride, dark](docs/screenshots/ride-dark.png) |
+| Help | ![Help, light](docs/screenshots/help-light.png) | ![Help, dark](docs/screenshots/help-dark.png) |
 | Summary | ![Summary, light](docs/screenshots/summary-light.png) | ![Summary, dark](docs/screenshots/summary-dark.png) |
 | History | ![History, light](docs/screenshots/history-light.png) | ![History, dark](docs/screenshots/history-dark.png) |
 | Settings | ![Settings, light](docs/screenshots/settings-light.png) | ![Settings, dark](docs/screenshots/settings-dark.png) |
+| Calibration | ![Calibration, light](docs/screenshots/calibrate-light.png) | ![Calibration, dark](docs/screenshots/calibrate-dark.png) |
 
 ## Install
 
